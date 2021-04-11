@@ -8,13 +8,6 @@
 flex-shrink: 0;
 }
 
-#terminal {
-overflow: hidden;
-height: 200px; /* <- fixed height */
-font-size: 16px;
-line-height: 17px; /* <- initial line-height */
-}
-
 .grow {
 flex-grow: 1;
 }

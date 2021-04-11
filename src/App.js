@@ -1,64 +1,45 @@
 import logo from './logo.svg';
 import './App.css';
 import "xterm/css/xterm.css";
-import React, { useEffect } from 'react';
-import { Terminal } from 'xterm';
-import { FitAddon } from 'xterm-addon-fit';
-import figlet from 'figlet';
-import standard from 'figlet/importable-fonts/Standard.js'
-
+import React from 'react';
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route
+} from "react-router-dom";
+import Navbar from './components/Navbar/Navbar';
+import Contact from './components/Contact/Contact';
+import About from './components/About/About';
+import Resume from './components/Resume/Resume';
+import Home from './components/Home/Home';
+import Cli from './components/Cli/Cli';
 function App() {
-  useEffect(() => {
-    figlet.parseFont('Standard', standard);
-    let term = new Terminal();
-    const fitAddon = new FitAddon();
-    term.loadAddon(fitAddon);
-    let doc = document.getElementById('terminal');
-    term.open(doc);
-    fitAddon.fit();
-    term.focus();
-    figlet.text("Basilin Joe", {
-      font:'Standard',
-      whitespaceBreak: true
-    }, (err, str) => {
-      let res = str.split('\n').forEach(x=>term.writeln(x));
-      console.log(str);
-    });
-    term.setOption('cursorBlink', true);
-    let tprompt = () => term.write('\r\n$ ');
-    tprompt();
-    let cmd = '';
-    term.onKey((e) => {
-      const ev = e.domEvent;
-      const printable = !ev.altKey && !ev.ctrlKey && !ev.metaKey;
-
-      if (ev.keyCode === 13) {
-        if (cmd === 'clear') {
-          term.clear();
-        }
-        cmd = '';
-        tprompt();
-      } else if (ev.keyCode === 8) {
-        // Do not delete the prompt
-        if (term.buffer.active.cursorX > 2) {
-          term.write('\b \b');
-        }
-      } else if (printable) {
-        cmd += e.key;
-        term.write(e.key);
-      }
-    });
-  });
   return (
     <div className="App">
-      <header className="shrink">
-        Header
-      </header>
-      <main className="grow">
-      </main>
-      <footer className="shrink">
-        <div id="terminal"></div>
-      </footer>
+      <Router>
+        <header className="shrink">
+          <Navbar />
+        </header>
+        <main className="grow">
+          <Switch>
+            <Route path="/about">
+              <About />
+            </Route>
+            <Route path="/contact">
+              <Contact />
+            </Route>
+            <Route path="/resume">
+              <Resume />
+            </Route>
+            <Route path="/">
+              <Home />
+            </Route>
+          </Switch>
+        </main>
+        <footer className="shrink">
+          <Cli />
+        </footer>
+      </Router>
     </div>
   );
 }
