@@ -19,6 +19,7 @@ function setupTerminal(cb) {
     }, (err, str) => {
         str.split('\n').forEach(x => term.writeln(x));
     });
+    term.writeln("For now you can navigate this website using the following commands:- about, contact, resume");
     term.setOption('cursorBlink', true);
     let tprompt = () => term.write('\r\n$ ');
     tprompt();
