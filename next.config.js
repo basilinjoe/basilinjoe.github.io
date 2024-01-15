@@ -3,7 +3,7 @@ const ghPages = process.env.DEPLOY_TARGET === 'gh-pages';
 const nextConfig = {
     output: "export",
     basePath: ghPages? "/basilinjoe.github.io" : "",
-    assetPrefix: ghPages ? "/basilinjoe.github.io": ""
+    assetPrefix: ghPages ? "/basilinjoe.github.io/": ""
 }
 
 module.exports = nextConfig
