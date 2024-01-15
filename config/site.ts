@@ -1,11 +1,15 @@
 export type SiteConfig = typeof siteConfig
 
 export const siteConfig = {
+  title: "Basilin Joe",
+  description: "Portfolio Website",
   name: "Basilin Joe",
   position: "Technology Lead at Experion Technologies",
   aboutMe: "Results-driven Technology Lead with 7+ years' experience in software development, excelling in Azure, AWS, and Full Stack. Proven track record in delivering high-quality projects, optimizing processes, and leading cross-functional teams for enhanced efficiency and collaboration.",
   location: "Ernakulam,Kerala,India",
   email: "basilin@live.com",
+  skills: ["C#", "JavaScript", "Python", "TypeScript", "Angular", "ReactJS", "NextJS", ".Net", "Entityframework", "SQL Server", "Azure", "AWS", "Docker", "Kubernetes"],
+  tools: ["Visual Studio", "Visual Studio Code", "Github", "Jira", "Confluence"],
   mainNav: [
     {
       title: "Home",
@@ -106,7 +110,7 @@ export const siteConfig = {
             "Collaborated with developers and stakeholders to translate user requirements into actionable tasks.",
             "Actively participated in meetings, providing insights to enhance web application usability and effectiveness."
           ],
-          skills: ["Javascript","AngularJs", "SailsJs", "ExpressJs","Mongodb", "Html", "CSS"],
+          skills: ["Javascript", "AngularJs", "SailsJs", "ExpressJs", "Mongodb", "Html", "CSS"],
           current: false
         }
       ]

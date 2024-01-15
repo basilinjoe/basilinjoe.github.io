@@ -4,6 +4,7 @@ import { buttonVariants } from "@/components/ui/button"
 import { Github, InstagramIcon, Linkedin, Mail, MapPin, Rss } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
+
 export default function Home() {
   return (
     <section className="container grid items-center gap-6 pb-8 pt-6 md:py-10">
@@ -64,14 +65,23 @@ export default function Home() {
         </Link>
       </div>
       <div className="flex flex-col">
-        <h1 className="text-3xl font-extrabold leading-tight tracking-tighter md:text-4xl">
+        <h1 className="text-3xl mb-5 font-extrabold leading-tight tracking-tighter md:text-4xl">
           Skills
         </h1>
-        <div>
-          <Badge className="mr-1" variant="outline">Outline</Badge>
-          <Badge variant="outline">Outline</Badge>
-          <Badge variant="outline">Outline</Badge>
-          <Badge variant="outline">Outline</Badge>
+        <div className="max-w-[800px]">
+          {siteConfig.skills.map((skill, index) => (
+            <Badge key={index} className="text-sm mr-1" variant="outline">{skill}</Badge>
+          ))}
+        </div>
+      </div>
+      <div className="flex flex-col">
+        <h1 className="text-3xl mb-5 font-extrabold leading-tight tracking-tighter md:text-4xl">
+          Tools
+        </h1>
+        <div className="max-w-[800px]">
+          {siteConfig.tools.map((tool, i) => (
+            <Badge key={i} className="text-sm mr-1" variant="outline">{tool}</Badge>
+          ))}
         </div>
       </div>
     </section>
