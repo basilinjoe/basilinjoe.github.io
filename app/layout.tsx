@@ -8,10 +8,12 @@ import { siteConfig } from "@/config/site"
 
 import { ThemeProvider } from "@/components/theme-provider"
 import { SiteHeader } from '@/components/site-header'
+import { GoogleAnalytics } from '@/components/google-analytics'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteConfig.url),
   title: siteConfig.title,
   description: siteConfig.description,
   openGraph: siteConfig.openGraph,
@@ -45,6 +47,7 @@ export default function RootLayout({
               </div>
             </div>
           </ThemeProvider>
+          <GoogleAnalytics gaId={siteConfig.gaid}/>
         </body>
       </html>
   )

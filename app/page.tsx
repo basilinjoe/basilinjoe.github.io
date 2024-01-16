@@ -9,9 +9,9 @@ export default function Home() {
   return (
     <section className="container grid items-center gap-6 pb-8 pt-6 md:py-10">
       <div className="flex max-w-[980px] flex-col items-start gap-2">
-        <div className="flex flex-row">
-          <div className="flex basis-1/4">
-            <img className="rounded-full w-52 h-52" src="avatar.jpg" alt="image description" />
+        <div className="flex flex-col md:flex-row">
+          <div className="flex basis mr-5 justify-center">
+            <img className="rounded-full w-52 h-52" src="avatar.webp" alt="B" />
           </div>
           <div className="basis">
             <h1 className="text-4xl font-extrabold leading-tight tracking-tighter md:text-5xl">
@@ -22,16 +22,20 @@ export default function Home() {
             <p className="max-w-[700px] text-md text-muted-foreground">
               {siteConfig.aboutMe}
             </p>
-            <div className="flex flex-row">
-              <MapPin className="mt-1 mr-1 h-5 w-5" />
-              <p className="mt-1 mr-5" >{siteConfig.location}</p>
-              <Mail className="mt-1 mr-1 h-5 w-5" />
-              <p className="mt-1 mr-1" >{siteConfig.email}</p>
+            <div className="flex flex-col md:flex-row">
+              <div className="flex">
+                <MapPin className="mt-1 mr-1 h-5 w-5" />
+                <p className="mt-1 mr-5" >{siteConfig.location}</p>
+              </div>
+              <div className="flex">
+                <Mail className="mt-1 mr-1 h-5 w-5" />
+                <p className="mt-1 mr-1" >{siteConfig.email}</p>
+              </div>
             </div>
           </div>
         </div>
       </div>
-      <div className="flex gap-4">
+      <div className="flex gap-4 flex-col md:flex-row">
         <Link
           target="_blank"
           rel="noreferrer"
@@ -70,7 +74,7 @@ export default function Home() {
         </h1>
         <div className="max-w-[800px]">
           {siteConfig.skills.map((skill, index) => (
-            <Badge key={index} className="text-sm mr-1" variant="outline">{skill}</Badge>
+            <Badge key={index} className="text-sm mr-1 mb-1" variant="outline">{skill}</Badge>
           ))}
         </div>
       </div>
@@ -80,7 +84,7 @@ export default function Home() {
         </h1>
         <div className="max-w-[800px]">
           {siteConfig.tools.map((tool, i) => (
-            <Badge key={i} className="text-sm mr-1" variant="outline">{tool}</Badge>
+            <Badge key={i} className="text-sm mr-1 mb-1" variant="outline">{tool}</Badge>
           ))}
         </div>
       </div>
