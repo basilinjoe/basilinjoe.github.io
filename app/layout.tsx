@@ -1,7 +1,6 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import './mdx.css'
 import { fontSans } from "@/lib/fonts"
 import { cn } from "@/lib/utils"
 import { siteConfig } from "@/config/site"
@@ -9,6 +8,7 @@ import { siteConfig } from "@/config/site"
 import { ThemeProvider } from "@/components/theme-provider"
 import { SiteHeader } from '@/components/site-header'
 import { GoogleAnalytics } from '@/components/google-analytics'
+// import { ThemeSwitcher } from '@/components/theme-switcher'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -18,6 +18,13 @@ export const metadata: Metadata = {
   description: siteConfig.description,
   openGraph: siteConfig.openGraph,
   robots: "index, follow",
+}
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "white" },
+    { media: "(prefers-color-scheme: dark)", color: "black" },
+  ],
 }
 
 export default function RootLayout({
@@ -47,6 +54,7 @@ export default function RootLayout({
               </div>
             </div>
           </ThemeProvider>
+          {/* <ThemeSwitcher /> */}
           <GoogleAnalytics gaId={siteConfig.gaid}/>
         </body>
       </html>
