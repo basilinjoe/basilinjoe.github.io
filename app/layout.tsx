@@ -14,6 +14,8 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: siteConfig.title,
   description: siteConfig.description,
+  openGraph: siteConfig.openGraph,
+  robots: "index, follow",
 }
 
 export default function RootLayout({

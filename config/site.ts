@@ -2,7 +2,14 @@ export type SiteConfig = typeof siteConfig
 
 export const siteConfig = {
   title: "Basilin Joe",
-  description: "Portfolio Website",
+  description: "Basilin's Personal Website",
+  openGraph: {
+    type: "website",
+    title: "Basilin Joe",
+    url: "https://basilinjoe.github.io",
+    description: "Basilin's Personal Website",
+    siteName: "Basilin Joe"
+  },
   name: "Basilin Joe",
   position: "Technology Lead at Experion Technologies",
   aboutMe: "Results-driven Technology Lead with 7+ years' experience in software development, excelling in Azure, AWS, and Full Stack. Proven track record in delivering high-quality projects, optimizing processes, and leading cross-functional teams for enhanced efficiency and collaboration.",
