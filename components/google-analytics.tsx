@@ -56,17 +56,17 @@ export function GoogleAnalytics(props: GAParams) {
   )
 }
 
-export const sendGAEvent = (...args: Object[]) => {
-  if (currDataLayerName === undefined) {
-    console.warn(`@next/third-parties: GA has not been initialized`)
-    return
-  }
+// export const sendGAEvent = (...args: Object[]) => {
+//   if (currDataLayerName === undefined) {
+//     console.warn(`@next/third-parties: GA has not been initialized`)
+//     return
+//   }
 
-  if (window[currDataLayerName]) {
-    window[currDataLayerName].push(...args)
-  } else {
-    console.warn(
-      `@next/third-parties: GA dataLayer ${currDataLayerName} does not exist`
-    )
-  }
-}
+//   if (window[currDataLayerName]) {
+//     window[currDataLayerName].push(...args)
+//   } else {
+//     console.warn(
+//       `@next/third-parties: GA dataLayer ${currDataLayerName} does not exist`
+//     )
+//   }
+// }
