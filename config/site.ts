@@ -53,7 +53,7 @@ export const siteConfig = {
             "Implemented visual UI testing using Galen, ensuring consistent and visually appealing user interfaces across various devices and screen sizes.",
             "Developed a custom virtual infinite scrolling component using ReactJS, significantly improving performance and user experience in displaying timelines within the application."
           ],
-          skills: [],
+          skills: ["React", "NestJs", "NextJs"],
           current: true
         },
         {
@@ -68,7 +68,7 @@ export const siteConfig = {
             "Enforced adherence to industry standards and coding practices, upholding code quality and stability throughout software delivery, including designing intricate data models, leading a front-end team, crafting both front-end and back-end architectures",
             "Conducted thorough code reviews, worked in task planning and estimation activities, and mentored junior resources for their growth within the team."
           ],
-          skills: [],
+          skills: ["DevOps","Angular", "Azure DevOps", "Azure"],
           current: false
         },
         {
@@ -84,7 +84,7 @@ export const siteConfig = {
             "Led the development of micro-services for ETA calculation, scheduling, and tracking to optimse logistics and fleet management operations.",
             "Improved the Angular application's load time by deploying static resources to a Content Delivery Network (CDN), ensuring a faster and more responsive user experience."
           ],
-          skills: [],
+          skills: ["Angular",".Net Core", "python", "AWS", "EKS","CDN","micro-services"],
           current: false
         },
         {
@@ -98,7 +98,7 @@ export const siteConfig = {
             "Developed RESTful web APIs in .NET for a robust and user-friendly application interface, ensuring scalability.",
             "Conducted comprehensive unit tests, ensuring codebase quality and reliability, contributing to application stability and performance."
           ],
-          skills: [],
+          skills: ["Typescript", "Angular", ".Net", "SQL Server", "API"],
           current: false
         }
       ]
