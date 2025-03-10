@@ -1,0 +1,97 @@
+/* Base content styles */
+.markdown {
+  @apply max-w-none;
+}
+
+/* Heading styles */
+.markdown h1 {
+  @apply mt-8 mb-4 text-4xl font-extrabold tracking-tight scroll-mt-16;
+}
+
+.markdown h2 {
+  @apply mt-8 mb-4 text-3xl font-bold tracking-tight scroll-mt-16;
+}
+
+.markdown h3 {
+  @apply mt-6 mb-3 text-2xl font-bold tracking-tight scroll-mt-16;
+}
+
+.markdown h4 {
+  @apply mt-4 mb-2 text-xl font-bold tracking-tight scroll-mt-16;
+}
+
+/* Paragraph and list styles */
+.markdown p {
+  @apply mb-4 leading-7;
+}
+
+.markdown ul {
+  @apply my-6 ml-6 list-disc;
+}
+
+.markdown ol {
+  @apply my-6 ml-6 list-decimal;
+}
+
+.markdown li {
+  @apply mb-2;
+}
+
+/* Code block styles */
+.markdown pre {
+  @apply my-6 rounded-lg bg-zinc-900 p-4 overflow-x-auto;
+}
+
+.markdown code {
+  @apply rounded bg-muted px-1.5 py-0.5 font-mono text-sm;
+}
+
+.markdown pre code {
+  @apply bg-transparent p-0 text-sm leading-7;
+}
+
+/* Link styles */
+.markdown a {
+  @apply underline decoration-primary/50 underline-offset-2 hover:decoration-primary transition-all;
+}
+
+/* Blockquote styles */
+.markdown blockquote {
+  @apply my-6 border-l-2 border-primary pl-6 italic;
+}
+
+/* Table styles */
+.markdown table {
+  @apply my-6 w-full text-sm;
+}
+
+.markdown th {
+  @apply border px-4 py-2 text-left font-semibold bg-muted;
+}
+
+.markdown td {
+  @apply border px-4 py-2;
+}
+
+/* Image styles */
+.markdown img {
+  @apply my-6 rounded-lg;
+}
+
+/* Horizontal rule */
+.markdown hr {
+  @apply my-8 border-border;
+}
+
+/* Dark mode adjustments */
+.dark .markdown pre {
+  @apply bg-zinc-900;
+}
+
+.dark .markdown code {
+  @apply bg-zinc-800;
+}
+
+.dark .markdown pre code {
+  @apply bg-transparent;
+}

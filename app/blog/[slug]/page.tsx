@@ -1,5 +1,10 @@
 import { getAllPosts, getPostById } from "@/lib/blog"
 import { notFound } from "next/navigation"
+import ReactMarkdown from "react-markdown"
+import rehypeRaw from "rehype-raw"
+import remarkGfm from 'remark-gfm'
+import remarkImages from 'remark-images'
+import { MarkdownContent } from "@/components/markdown-content"
 
 interface BlogPostPageProps {
   params: Promise<{
@@ -24,19 +29,25 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   }
 
   return (
-    <article className="container py-6 prose dark:prose-invert max-w-4xl">
-      <h1 className="mb-2">{post.title}</h1>
-      <time className="text-sm text-muted-foreground">
-        {new Date(post.date).toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        })}
-      </time>
-      <div 
-        className="mt-8"
-        dangerouslySetInnerHTML={{ __html: post.content }}
-      />
+    <article className="container mx-auto py-6">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="mb-2 text-4xl font-bold tracking-tight">{post.title}</h1>
+        <time className="text-sm text-muted-foreground">
+          {new Date(post.date).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })}
+        </time>
+        <MarkdownContent className="mt-8">
+          <ReactMarkdown 
+            rehypePlugins={[rehypeRaw]}
+            remarkPlugins={[remarkGfm, remarkImages]}
+          >
+            {post.content}
+          </ReactMarkdown>
+        </MarkdownContent>
+      </div>
     </article>
   )
 }
