@@ -3,36 +3,55 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-
+import { motion } from "framer-motion"
 import { siteConfig } from "@/config/site"
 import { cn } from "@/lib/utils"
 import { Icons } from "@/components/icons"
+import { slideIn } from "@/lib/animations"
 
 export function MainNav() {
   const pathname = usePathname()
 
   return (
-    <div className="mr-4 flex">
+    <motion.div 
+      initial="hidden"
+      animate="visible"
+      variants={slideIn}
+      className="mr-4 flex"
+    >
       <Link href="/" className="mr-6 flex items-center space-x-2">
-        <Icons.logo className="h-6 w-6" />
-        <span className="hidden font-bold sm:inline-block">
+        <motion.div
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <Icons.logo className="h-6 w-6" />
+        </motion.div>
+        <motion.span 
+          className="hidden font-bold sm:inline-block"
+          variants={slideIn}
+        >
           {siteConfig.name}
-        </span>
+        </motion.span>
       </Link>
       <nav className="flex items-center gap-6 text-sm">
         {siteConfig.mainNav.map((item) => (
-          <Link
+          <motion.div
             key={item.href}
-            href={item.href}
-            className={cn(
-              "transition-colors hover:text-foreground/80",
-              pathname === item.href ? "text-foreground" : "text-foreground/60"
-            )}
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.95 }}
           >
-            {item.title}
-          </Link>
+            <Link
+              href={item.href}
+              className={cn(
+                "transition-colors hover:text-foreground/80",
+                pathname === item.href ? "text-foreground" : "text-foreground/60"
+              )}
+            >
+              {item.title}
+            </Link>
+          </motion.div>
         ))}
       </nav>
-    </div>
+    </motion.div>
   )
 }

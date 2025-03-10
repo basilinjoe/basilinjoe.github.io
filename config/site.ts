@@ -17,8 +17,13 @@ export const siteConfig = {
   aboutMe: "Results-driven Technology Lead with 7+ years' experience in software development, excelling in Azure, AWS, and Full Stack. Proven track record in delivering high-quality projects, optimizing processes, and leading cross-functional teams for enhanced efficiency and collaboration.",
   location: "Ernakulam,Kerala,India",
   email: "basilin@live.com",
-  skills: ["C#", "JavaScript", "Python", "TypeScript", "Angular", "ReactJS", "NextJS", ".Net", "Entityframework", "SQL Server", "Azure", "AWS", "Docker", "Kubernetes"],
-  tools: ["Visual Studio", "Visual Studio Code", "Github", "Jira", "Confluence"],
+  skills: [
+    "Azure", "AWS", "DevOps", "Bicep", "Terraform", "Kubernetes", "Docker",
+    "C#", "JavaScript", "Python", "TypeScript",
+    "Angular", "ReactJS", "NextJS", ".Net",
+    "Entityframework", "SQL Server", "AKS", "Azure DevOps"
+  ],
+  tools: ["Visual Studio", "Visual Studio Code", "Github", "Azure Portal", "Azure DevOps", "Jira", "Confluence"],
   mainNav: [
     {
       title: "Home",
@@ -50,45 +55,48 @@ export const siteConfig = {
           name: "Technology Lead",
           startDate: "01/04/2022",
           responsibilities: [
-            "Led the development of a Micro-frontend-based front-end application framework, incorporating MVVM pattern and atomic design principles.",
-            "Utilised technologies such as Single-SPA, ReactJS, Inversify, and Mobx to establish a modular and scalable application structure, fostering enhanced collaboration and efficiency in development.",
-            "Introduced and implemented Test-Driven Development (TDD) practices, ensuring optimal development processes, code reliability, and comprehensive test coverage from project inception.",
-            "Led initiatives to educate the team on TDD implementation and its benefits, contributing to the establishment of a culture centered on quality-driven development.",
-            "Implemented visual UI testing using Galen, ensuring consistent and visually appealing user interfaces across various devices and screen sizes.",
-            "Developed a custom virtual infinite scrolling component using ReactJS, significantly improving performance and user experience in displaying timelines within the application."
+            "Architected and implemented enterprise-scale Azure cloud solutions using Infrastructure as Code (IaC) with Bicep templates, ensuring consistent and repeatable deployments",
+            "Designed and implemented comprehensive DevOps pipelines using Azure DevOps, incorporating automated testing, security scanning, and deployment strategies",
+            "Led the development of Micro-frontend architecture using Single-SPA and ReactJS, implementing atomic design principles for scalable application structure",
+            "Established cloud-native deployment patterns using Azure Kubernetes Service (AKS) and Azure Container Registry (ACR) for containerized applications",
+            "Implemented robust monitoring and observability using Azure Monitor, Application Insights, and Log Analytics",
+            "Developed reusable Bicep modules for standardized resource provisioning across multiple Azure environments",
+            "Introduced and implemented Test-Driven Development (TDD) practices, ensuring optimal development processes and code reliability",
+            "Mentored team members in cloud-native development practices, DevOps methodologies, and Azure best practices"
           ],
-          skills: ["React", "NestJs", "NextJs"],
+          skills: ["Azure", "Bicep", "DevOps", "Kubernetes", "React", "NestJs", "Azure DevOps", "AKS", "IaC"],
           current: true
         },
         {
           name: "Lead Software Engineer",
           startDate: "01/04/2020",
           responsibilities: [
-            "Led the conceptualisation and implementation of an Azure DevOps-driven build and deployment pipeline,ensuring a seamless delivery of application updates.",
-            "Engineered an optimised deployment process, enhancing the efficiency of application updates and enhancements.",
-            "Utilised Azure DevOps tools to manage the entire software delivery lifecycle, including code compilation,testing, and deployment.",
-            "Collaborated with the development team to instill best practices for continuous integration and continuous deployment (CI/CD) within the pipeline.",
-            "Designed and executed automation protocols, minimising manual intervention and ensuring overall deployment consistency.",
-            "Enforced adherence to industry standards and coding practices, upholding code quality and stability throughout software delivery, including designing intricate data models, leading a front-end team, crafting both front-end and back-end architectures",
-            "Conducted thorough code reviews, worked in task planning and estimation activities, and mentored junior resources for their growth within the team."
+            "Architected and implemented CI/CD pipelines in Azure DevOps with multi-stage deployments and environment-specific configurations",
+            "Established infrastructure provisioning workflows using ARM templates for consistent Azure resource deployment",
+            "Implemented automated security scanning and compliance checks in the build pipeline using Azure Security Center",
+            "Set up automated testing frameworks and quality gates in Azure Pipelines for ensuring code quality",
+            "Designed and implemented blue-green deployment strategies for zero-downtime releases",
+            "Created reusable pipeline templates and task groups for standardizing deployment processes across projects",
+            "Integrated SonarQube analysis into the CI pipeline for continuous code quality monitoring",
+            "Mentored team members in DevOps practices and Azure cloud services adoption"
           ],
-          skills: ["DevOps","Angular", "Azure DevOps", "Azure"],
+          skills: ["Azure", "DevOps", "Azure Pipelines", "ARM Templates", "CI/CD", "SonarQube", "Azure Security"],
           current: false
         },
         {
           name: "Senior Software Engineer",
           startDate: "01/04/2018",
           responsibilities: [
-            "Implemented a custom task scheduler with a priority queue for efficient task execution and resource allocation.",
-            "Configured Application Performance Monitoring (APM) tools to proactively monitor and address performance issues, ensuring optimal system health.",
-            "Demonstrated leadership by prioritising and assigning tasks to junior team members, effectively utilising their skills for successful project delivery.",
-            "Established build and deployment processes using Jenkins, enabling continuous integration and deployment for improved development efficiency.",
-            "Implemented Redis cache to reduce API request latency, significantly improving system responsiveness and overall performance.",
-            "Collaborated with stakeholders and product owners to understand project requirements, providing valuable technical insights and recommendations.",
-            "Led the development of micro-services for ETA calculation, scheduling, and tracking to optimse logistics and fleet management operations.",
-            "Improved the Angular application's load time by deploying static resources to a Content Delivery Network (CDN), ensuring a faster and more responsive user experience."
+            "Orchestrated containerized microservices deployment on Amazon EKS, improving system scalability and reliability",
+            "Implemented Jenkins pipelines for automated build, test, and deployment workflows across multiple environments",
+            "Configured AWS CloudWatch and Application Performance Monitoring (APM) tools for comprehensive system monitoring",
+            "Designed and implemented microservices architecture for logistics operations, leveraging AWS managed services",
+            "Established infrastructure monitoring and alerting using CloudWatch and custom metrics",
+            "Optimized application performance using Redis caching and AWS CloudFront CDN integration",
+            "Led the development of scalable APIs using .NET Core, deployed on AWS ECS with auto-scaling capabilities",
+            "Mentored junior developers in cloud-native development practices and microservices architecture"
           ],
-          skills: ["Angular",".Net Core", "python", "AWS", "EKS","CDN","micro-services"],
+          skills: ["AWS", "EKS", "Jenkins", "Docker", "Microservices", "CloudWatch", ".NET Core", "Redis", "CloudFront"],
           current: false
         },
         {
