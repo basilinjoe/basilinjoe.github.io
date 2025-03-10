@@ -1,9 +1,9 @@
 import Link from "next/link"
+import Image from "next/image"
 import { siteConfig } from "@/config/site"
 import { buttonVariants } from "@/components/ui/button"
 import { Github, InstagramIcon, Linkedin, Mail, MapPin, Rss } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-
 
 export default function Home() {
   return (
@@ -11,7 +11,14 @@ export default function Home() {
       <div className="flex max-w-[980px] flex-col items-start gap-2">
         <div className="flex flex-col md:flex-row">
           <div className="flex basis mr-5 justify-center">
-            <img className="rounded-full w-52 h-52" src="avatar.webp" alt="B" />
+            <Image
+              className="rounded-full"
+              src="/avatar.webp"
+              alt="Profile Picture"
+              width={208}
+              height={208}
+              priority
+            />
           </div>
           <div className="basis">
             <h1 className="text-4xl font-extrabold leading-tight tracking-tighter md:text-5xl">
