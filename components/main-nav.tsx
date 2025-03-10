@@ -20,15 +20,18 @@ export function MainNav() {
         </span>
       </Link>
       <nav className="flex items-center gap-6 text-sm">
-        <Link
-          href="/about"
-          className={cn(
-            "transition-colors hover:text-foreground/80",
-            pathname === "/docs" ? "text-foreground" : "text-foreground/60"
-          )}
-        >
-          About
-        </Link>
+        {siteConfig.mainNav.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={cn(
+              "transition-colors hover:text-foreground/80",
+              pathname === item.href ? "text-foreground" : "text-foreground/60"
+            )}
+          >
+            {item.title}
+          </Link>
+        ))}
       </nav>
     </div>
   )
