@@ -8,12 +8,15 @@ import { SocialLinks } from "./sections/social-links"
 import { FeaturedPosts } from "./sections/featured-posts"
 import { WorkHighlights } from "./sections/work-highlights"
 import { SkillsAndTools } from "./sections/skills-and-tools"
+import { GithubProjects } from "./sections/github-projects"
+import { Repository } from "@/lib/github"
 
 interface HomePageProps {
   posts: BlogPost[];
+  projects: Repository[]
 }
 
-export default function HomePage({ posts: featuredPosts }: HomePageProps) {
+export default function HomePage({ posts: featuredPosts, projects: githubProjects}: HomePageProps) {
   return (
     <motion.section 
       initial="hidden"
@@ -23,6 +26,7 @@ export default function HomePage({ posts: featuredPosts }: HomePageProps) {
     >
       <ProfileSection />
       <SocialLinks />
+      {/* <GithubProjects repos={githubProjects}/> */}
       <FeaturedPosts posts={featuredPosts} />
       <WorkHighlights />
       <SkillsAndTools />
