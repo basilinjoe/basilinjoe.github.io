@@ -13,7 +13,7 @@ export const siteConfig = {
     locale: "en_US",
     images: [
       {
-        url: "https://basilinjoe.github.io/og-image.jpg",
+        url: "https://basilinjoe.github.io/images/og-default.png",
         width: 1200,
         height: 630,
         alt: "Basilin Joe"
@@ -26,7 +26,7 @@ export const siteConfig = {
     creator: "@BasilinJoe",
     title: "Basilin Joe | Technology Lead & Cloud Solutions Architect",
     description: "Personal website of Basilin Joe, Technology Lead at Experion Technologies specializing in Azure, AWS, and Full Stack development with 7+ years of experience.",
-    images: ["https://basilinjoe.github.io/og-image.jpg"],
+    images: ["https://basilinjoe.github.io/images/og-default.png"],
   },
   gaid:"G-631LG05FS6",
   name: "Basilin Joe",

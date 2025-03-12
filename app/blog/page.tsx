@@ -1,5 +1,5 @@
 import { getAllPosts, getAllTags } from "@/lib/blog"
-import BlogList from "@/components/blog-list"
+import BlogListWrapper from "@/components/blog-list-wrapper"
 import { Metadata } from "next"
 import { siteConfig } from "@/config/site"
 import { BreadcrumbJsonLd } from "@/components/json-ld"
@@ -37,7 +37,7 @@ export default async function BlogPage() {
           { name: "Blog", url: `${siteConfig.url}/blog` },
         ]}
       />
-      <BlogList allPosts={allPosts} allTags={allTags} />
+      <BlogListWrapper allPosts={allPosts} allTags={allTags} />
     </>
   );
 }

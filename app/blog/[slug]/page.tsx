@@ -13,11 +13,7 @@ import { SocialShare } from "@/components/blog-share"
 import { BlogPostJsonLd, BreadcrumbJsonLd } from "@/components/json-ld"
 import { siteConfig } from "@/config/site"
 
-interface BlogPostPageProps {
-  params: Promise<{
-    slug: string
-  }>
-}
+// Let Next.js infer the types
 
 // Generate static paths for all blog posts
 export async function generateStaticParams() {
@@ -28,7 +24,7 @@ export async function generateStaticParams() {
 }
 
 // Generate metadata for the blog post
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+export async function generateMetadata({ params }: any): Promise<Metadata> {
   const post = await getPostById(params.slug)
   
   if (!post) {
@@ -50,7 +46,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       publishedTime: post.date,
       modifiedTime: post.date,
       url: url,
-      images: post.coverImage 
+      images: post.coverImage && typeof post.coverImage === 'string'
         ? [
             {
               url: `${siteConfig.url}${post.coverImage}`,
@@ -67,7 +63,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       card: "summary_large_image",
       title: post.title,
       description: post.excerpt,
-      images: post.coverImage 
+      images: post.coverImage && typeof post.coverImage === 'string'
         ? [`${siteConfig.url}${post.coverImage}`]
         : siteConfig.twitter.images,
     },
@@ -78,9 +74,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 }
 
-export default async function BlogPostPage({ params }: BlogPostPageProps) {
-  const resolvedParams = await params
-  const post = await getPostById(resolvedParams.slug)
+// Let Next.js handle the typing
+export default async function BlogPostPage({ params }: any) {
+  const post = await getPostById(params.slug)
 
   if (!post) {
     notFound()
@@ -159,7 +155,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           {/* Social Sharing */}
           <div className="mt-12 pt-8 border-t">
             <div className="flex items-center gap-6 flex-wrap">
-              {/* @ts-expect-error Async Server Component */}
               <SocialShare 
                 title={post.title} 
                 url={`https://basilinjoe.github.io/blog/${post.id}`} 
