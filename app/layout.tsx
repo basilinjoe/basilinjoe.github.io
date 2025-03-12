@@ -8,16 +8,37 @@ import { siteConfig } from "@/config/site"
 import { ThemeProvider } from "@/components/theme-provider"
 import { SiteHeader } from '@/components/site-header'
 import { GoogleAnalytics } from '@/components/google-analytics'
+import { PersonJsonLd, WebsiteJsonLd } from '@/components/json-ld'
 // import { ThemeSwitcher } from '@/components/theme-switcher'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
-  title: siteConfig.title,
+  title: {
+    default: siteConfig.title,
+    template: `%s | ${siteConfig.openGraph.siteName}`
+  },
   description: siteConfig.description,
+  keywords: ["Technology Lead", "Azure", "AWS", "Cloud Solutions", "Full Stack", "DevOps", "Software Engineer", "Basilin Joe", "React", "TypeScript"],
+  authors: [{ name: siteConfig.name, url: siteConfig.url }],
+  creator: siteConfig.name,
   openGraph: siteConfig.openGraph,
-  robots: "index, follow",
+  twitter: siteConfig.twitter,
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  alternates: {
+    canonical: siteConfig.url,
+  },
 }
 
 export const viewport: Viewport = {
@@ -56,6 +77,8 @@ export default function RootLayout({
           </ThemeProvider>
           {/* <ThemeSwitcher /> */}
           <GoogleAnalytics gaId={siteConfig.gaid}/>
+          <PersonJsonLd />
+          <WebsiteJsonLd />
         </body>
       </html>
   )

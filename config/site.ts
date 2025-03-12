@@ -1,15 +1,32 @@
 export type SiteConfig = typeof siteConfig
 
 export const siteConfig = {
-  title: "Basilin Joe",
-  description: "Basilin's Personal Website",
+  title: "Basilin Joe | Technology Lead & Cloud Solutions Architect",
+  description: "Personal website of Basilin Joe, Technology Lead at Experion Technologies specializing in Azure, AWS, and Full Stack development with 7+ years of experience.",
   url: "https://basilinjoe.github.io",
   openGraph: {
     type: "website",
-    title: "Basilin Joe",
+    title: "Basilin Joe | Technology Lead & Cloud Solutions Architect",
     url: "https://basilinjoe.github.io",
-    description: "Basilin's Personal Website",
-    siteName: "Basilin Joe"
+    description: "Personal website of Basilin Joe, Technology Lead at Experion Technologies specializing in Azure, AWS, and Full Stack development with 7+ years of experience.",
+    siteName: "Basilin Joe",
+    locale: "en_US",
+    images: [
+      {
+        url: "https://basilinjoe.github.io/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Basilin Joe"
+      }
+    ]
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@BasilinJoe",
+    creator: "@BasilinJoe",
+    title: "Basilin Joe | Technology Lead & Cloud Solutions Architect",
+    description: "Personal website of Basilin Joe, Technology Lead at Experion Technologies specializing in Azure, AWS, and Full Stack development with 7+ years of experience.",
+    images: ["https://basilinjoe.github.io/og-image.jpg"],
   },
   gaid:"G-631LG05FS6",
   name: "Basilin Joe",

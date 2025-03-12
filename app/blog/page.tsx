@@ -1,15 +1,27 @@
 import { getAllPosts, getAllTags } from "@/lib/blog"
 import BlogList from "@/components/blog-list"
 import { Metadata } from "next"
+import { siteConfig } from "@/config/site"
+import { BreadcrumbJsonLd } from "@/components/json-ld"
 
 export const metadata: Metadata = {
-  title: "Blog | Basil's Digital Garden",
-  description: "Articles on web development, AI, and technology",
+  title: "Blog",
+  description: "Articles on cloud architecture, web development, AI, and technology by Basilin Joe",
   openGraph: {
-    title: "Blog | Basil's Digital Garden",
-    description: "Articles on web development, AI, and technology",
+    title: "Basilin Joe's Blog",
+    description: "Articles on cloud architecture, web development, AI, and technology by Basilin Joe",
     type: "website",
+    url: `${siteConfig.url}/blog`,
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "Basilin Joe's Blog",
+    description: "Articles on cloud architecture, web development, AI, and technology",
+  },
+  alternates: {
+    canonical: `${siteConfig.url}/blog`,
+  },
+  keywords: ["blog", "tech blog", "web development", "cloud architecture", "Azure", "AWS", "React", "TypeScript", "Basilin Joe"],
 }
 
 export default async function BlogPage() {
@@ -17,6 +29,15 @@ export default async function BlogPage() {
   const allPosts = await getAllPosts();
   const allTags = getAllTags();
   
-  // Pass all data to the client component, filtering will happen on the client
-  return <BlogList allPosts={allPosts} allTags={allTags} />;
+  return (
+    <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: siteConfig.url },
+          { name: "Blog", url: `${siteConfig.url}/blog` },
+        ]}
+      />
+      <BlogList allPosts={allPosts} allTags={allTags} />
+    </>
+  );
 }

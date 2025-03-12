@@ -1,4 +1,20 @@
-# Allow all crawlers
+# Allow all user agents
 User-agent: *
 Allow: /
+
+# Disallow access to specific files if needed
+# Disallow: /private/
+
+# Sitemap locations
 Sitemap: https://basilinjoe.github.io/sitemap.xml
+
+# Crawl delay for better server performance
+Crawl-delay: 10
+
+# Google-specific crawl rate
+User-agent: Googlebot
+Crawl-delay: 5
+
+# Bing-specific crawl rate
+User-agent: Bingbot
+Crawl-delay: 5
