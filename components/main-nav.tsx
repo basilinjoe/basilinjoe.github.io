@@ -33,7 +33,7 @@ export function MainNav() {
           {siteConfig.name}
         </motion.span>
       </Link>
-      <nav className="flex items-center gap-6 text-sm">
+      <nav className="hidden md:flex items-center gap-3 lg:gap-6 text-sm">
         {siteConfig.mainNav.map((item) => (
           <motion.div
             key={item.href}
@@ -44,7 +44,7 @@ export function MainNav() {
               href={item.href}
               className={cn(
                 "transition-colors hover:text-foreground/80",
-                pathname === item.href ? "text-foreground" : "text-foreground/60"
+                pathname === item.href ? "text-foreground font-medium" : "text-foreground/60"
               )}
             >
               {item.title}
