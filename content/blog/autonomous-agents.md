@@ -2,6 +2,8 @@
 title: "Autonomous Agents: The Future of AI Automation"
 date: "2024-01-19"
 excerpt: "Exploring the fascinating world of autonomous agents - what they are, how they work, and their potential impact on the future of automation."
+tags: ["AI", "Automation", "LLMs", "Future Tech"]
+coverImage: "/blog/autonomous-agents-cover.jpg"
 ---
 
 Ever wondered what it would be like to have an AI that can independently plan and execute complex tasks? That's exactly what autonomous agents do! In this post, we'll explore these fascinating AI systems that are pushing the boundaries of automation. Let's dive into how they work, their current capabilities, and what the future might hold.

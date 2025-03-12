@@ -2,6 +2,8 @@
 title: "Generative AI: A Friendly Introduction for Everyone"
 date: "2024-01-18"
 excerpt: "A comprehensive guide to understanding generative AI, from the basics to future possibilities, explained in a casual and engaging way."
+tags: ["AI", "Machine Learning", "Beginner", "Technology", "ChatGPT"]
+coverImage: "/blog/generative-ai-cover.jpg"
 ---
 
 Ever asked ChatGPT a question or marveled at an AI-generated painting? If so, you've already encountered *generative AI*. It's one of the buzziest topics in tech today, but you don't need a computer science degree to get what it's all about. In this post, we'll break down generative AI in simple terms – what it is, how it works, some cool tools (like ChatGPT and DALL·E), fun uses you might not expect, and what the future might hold. Let's dive in with a casual, friendly tour of this exciting technology!

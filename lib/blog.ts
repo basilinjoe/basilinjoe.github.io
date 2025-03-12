@@ -12,6 +12,9 @@ export interface BlogPost {
   date: string
   excerpt: string
   content: string
+  tags: string[]
+  readingTime: string
+  coverImage?: string
 }
 
 export function getAllPosts(): BlogPost[] {
@@ -34,12 +37,22 @@ export function getAllPosts(): BlogPost[] {
           const fileContents = fs.readFileSync(fullPath, 'utf8');
           const { data, content } = matter(fileContents);
 
+          // Calculate reading time (average reading speed: 200 words per minute)
+          const wordCount = content.split(/\s+/).length;
+          const readingTimeMinutes = Math.ceil(wordCount / 200);
+          const readingTime = readingTimeMinutes === 1 
+            ? '1 min read' 
+            : `${readingTimeMinutes} mins read`;
+
           return {
             id,
             content,
             title: data.title || 'Untitled',
             date: data.date || new Date().toISOString(),
-            excerpt: data.excerpt || ''
+            excerpt: data.excerpt || '',
+            tags: data.tags || [],
+            readingTime,
+            coverImage: data.coverImage || undefined
           } as BlogPost;
         } catch (error) {
           console.error(`Error processing blog post ${fileName}:`, error);
@@ -67,12 +80,51 @@ export async function getPostById(id: string): Promise<BlogPost | null> {
     const fileContents = fs.readFileSync(fullPath, 'utf8')
     const { data, content } = matter(fileContents)
     
+    // Calculate reading time (average reading speed: 200 words per minute)
+    const wordCount = content.split(/\s+/).length;
+    const readingTimeMinutes = Math.ceil(wordCount / 200);
+    const readingTime = readingTimeMinutes === 1 
+      ? '1 min read' 
+      : `${readingTimeMinutes} mins read`;
+    
     return {
       id,
       content,
-      ...(data as { title: string; date: string; excerpt: string })
+      title: data.title || 'Untitled',
+      date: data.date || new Date().toISOString(),
+      excerpt: data.excerpt || '',
+      tags: data.tags || [],
+      readingTime,
+      coverImage: data.coverImage || undefined
     }
   } catch (error) {
+    console.error(`Error getting post by id ${id}:`, error);
     return null
   }
+}
+
+/**
+ * Get all unique tags from all blog posts
+ */
+export function getAllTags(): string[] {
+  const posts = getAllPosts();
+  const tagsSet = new Set<string>();
+  
+  posts.forEach(post => {
+    if (post.tags && Array.isArray(post.tags)) {
+      post.tags.forEach(tag => tagsSet.add(tag));
+    }
+  });
+  
+  return Array.from(tagsSet).sort();
+}
+
+/**
+ * Get all posts that have a specific tag
+ */
+export function getPostsByTag(tag: string): BlogPost[] {
+  const posts = getAllPosts();
+  return posts.filter(post => 
+    post.tags && Array.isArray(post.tags) && post.tags.includes(tag)
+  );
 }
