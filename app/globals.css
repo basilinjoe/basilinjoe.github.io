@@ -6,48 +6,110 @@
 
 @layer base {
   :root {
+    /* Base colors */
     --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
+    --background-subtle: 240 20% 98%;
+    --subtle-foreground: 240 3.8% 46.1%;
+    
+    /* Component colors */
     --card: 0 0% 100%;
     --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
+    
+    /* Primary colors with shades */
+    --primary: 230 100% 50%; /* Vibrant blue as primary */
+    --primary-50: 230 100% 95%;
+    --primary-100: 230 100% 90%;
+    --primary-200: 230 95% 80%;
+    --primary-300: 230 90% 70%;
+    --primary-400: 230 85% 60%;
+    --primary-500: 230 100% 50%; /* Same as primary */
+    --primary-600: 230 95% 45%;
+    --primary-700: 230 90% 40%;
+    --primary-800: 230 85% 35%;
+    --primary-900: 230 80% 30%;
     --primary-foreground: 0 0% 98%;
+    
+    /* UI Colors */
     --secondary: 240 4.8% 95.9%;
     --secondary-foreground: 240 5.9% 10%;
     --muted: 240 4.8% 95.9%;
     --muted-foreground: 240 3.8% 46.1%;
     --accent: 240 4.8% 95.9%;
     --accent-foreground: 240 5.9% 10%;
+    
+    /* State colors */
     --destructive: 0 72.22% 50.59%;
     --destructive-foreground: 0 0% 98%;
+    --success: 142 70% 45%;
+    --success-foreground: 142 100% 98%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 48 100% 96%;
+    --info: 217 100% 60%;
+    --info-foreground: 0 0% 98%;
+    
+    /* UI Element colors */
     --border: 240 5.9% 90%;
+    --border-subtle: 240 5.9% 95%;
     --input: 240 5.9% 90%;
-    --ring: 240 5% 64.9%;
+    --ring: 230 100% 50%;
+    
+    /* Border radius */
     --radius: 0.5rem;
   }
 
   .dark {
+    /* Base colors */
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
+    --background-subtle: 240 10% 5%;
+    --subtle-foreground: 240 5% 65%;
+    
+    /* Component colors */
     --card: 240 10% 3.9%;
     --card-foreground: 0 0% 98%;
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
+    
+    /* Primary colors with shades */
+    --primary: 225 90% 60%; /* Slightly less saturated in dark mode */
+    --primary-50: 225 90% 10%;
+    --primary-100: 225 85% 15%;
+    --primary-200: 225 80% 20%;
+    --primary-300: 225 75% 30%;
+    --primary-400: 225 70% 40%;
+    --primary-500: 225 90% 60%; /* Same as primary */
+    --primary-600: 225 85% 70%;
+    --primary-700: 225 80% 80%;
+    --primary-800: 225 75% 85%;
+    --primary-900: 225 70% 90%;
     --primary-foreground: 240 5.9% 10%;
+    
+    /* UI Colors */
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
     --accent: 240 3.7% 15.9%;
     --accent-foreground: 0 0% 98%;
+    
+    /* State colors */
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 85.7% 97.3%;
+    --success: 142 70% 35%;
+    --success-foreground: 142 100% 92%;
+    --warning: 38 92% 40%;
+    --warning-foreground: 48 100% 92%;
+    --info: 217 100% 50%;
+    --info-foreground: 0 0% 98%;
+    
+    /* UI Element colors */
     --border: 240 3.7% 15.9%;
+    --border-subtle: 240 3.7% 12%;
     --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    --ring: 225 90% 60%;
   }
 }
 
