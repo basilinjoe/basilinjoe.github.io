@@ -95,73 +95,84 @@ export function ProjectsPage({ repos }: ProjectsPageProps) {
                 </div>
 
                 <div className="mt-4 sm:mt-5 flex flex-wrap gap-1.5 sm:gap-2 overflow-x-auto max-w-full">
-                  {repo.topics?.slice(0, 5).map((topic) => (                    <Badge
+                  {repo.topics?.slice(0, 5).map((topic) => (
+                    <Badge
                       key={topic}
                       variant="tech"
                       className="whitespace-nowrap text-xs"
                     >
                       {topic}
-                    </Badge>                  ))}
+                    </Badge>
+                  ))}
                   {repo.topics && repo.topics.length > 5 && (
                     <span className="text-xs text-muted-foreground">+{repo.topics.length - 5} more</span>
                   )}
                 </div>
 
-                <div className="mt-3 sm:mt-4 flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
+                <div className="mt-4 sm:mt-5 pt-3 border-t border-border/30 flex flex-wrap items-center gap-3 sm:gap-4">
                   {repo.language && (
-                    <span className="flex items-center gap-1 whitespace-nowrap">
+                    <span className="flex items-center gap-1 whitespace-nowrap text-xs">
                       <span className="relative flex h-2 w-2 rounded-full bg-primary"></span>
-                      {repo.language}
+                      <span className="text-muted-foreground">{repo.language}</span>
                     </span>
-              )}
-              {repo.stargazers_count > 0 && (
-                <span className="flex items-center gap-1 whitespace-nowrap">
-                  <Star className="h-3 w-3 sm:h-4 sm:w-4" />
-                  {repo.stargazers_count}
-                </span>
-              )}
-              {repo.forks_count && repo.forks_count > 0 && (
-                <span className="flex items-center gap-1 whitespace-nowrap">
-                  <GitFork className="h-3 w-3 sm:h-4 sm:w-4" />
-                  {repo.forks_count}
-                </span>
-              )}
-              {repo.watchers_count && repo.watchers_count > 0 && (
-                <span className="flex items-center gap-1 whitespace-nowrap">
-                  <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
-                  {repo.watchers_count}
-                </span>
-              )}
-            </div>
+                  )}
+                  
+                  {repo.stargazers_count > 0 && (
+                    <span className="flex items-center gap-1 whitespace-nowrap text-xs">
+                      <Star className="h-3.5 w-3.5 text-amber-500" />
+                      <span className="text-muted-foreground">{repo.stargazers_count.toLocaleString()}</span>
+                    </span>
+                  )}
+                  
+                  {repo.forks_count > 0 && (
+                    <span className="flex items-center gap-1 whitespace-nowrap text-xs">
+                      <GitFork className="h-3.5 w-3.5 text-blue-500" />
+                      <span className="text-muted-foreground">{repo.forks_count.toLocaleString()}</span>
+                    </span>
+                  )}
+                  
+                  {repo.watchers_count > 0 && (
+                    <span className="flex items-center gap-1 whitespace-nowrap text-xs">
+                      <Eye className="h-3.5 w-3.5 text-emerald-500" />
+                      <span className="text-muted-foreground">{repo.watchers_count.toLocaleString()}</span>
+                    </span>
+                  )}
+                </div>
 
-            {repo.homepage && (
-              <Link
-                href={repo.homepage}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-3 sm:mt-4 text-xs sm:text-sm text-primary hover:underline inline-flex items-center"
-              >
-                View Demo
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="ml-1 h-3 w-3"
-                >
-                  <path d="M7 7h10v10" />
-                  <path d="M7 17L17 7" />
-                </svg>
-              </Link>
-            )}
-          </motion.div>
-        ))}
-      </div>
-    </motion.section>
-  )
+                {repo.homepage && (
+                  <Link
+                    href={repo.homepage}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-3 text-xs text-primary hover:text-primary/80 transition-colors inline-flex items-center"
+                  >
+                    View Demo
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="ml-1 h-3 w-3"
+                    >
+                      <path d="M7 7h10v10" />
+                      <path d="M7 17L17 7" />
+                    </svg>
+                  </Link>
+                )}
+              </motion.div>
+            );
+          })}
+        </div>
+        
+        {/* Decorative elements */}
+        <div className="absolute top-60 right-10 w-16 h-16 border border-primary/10 rounded-full animate-pulse-slow opacity-30 hidden md:block"></div>
+        <div className="absolute bottom-40 left-10 w-10 h-10 border border-primary/10 rounded-full animate-float opacity-30 hidden md:block"></div>
+      </motion.section>
+    </div>
+  );
 }

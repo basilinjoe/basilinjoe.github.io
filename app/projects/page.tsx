@@ -1,5 +1,5 @@
 import { getGithubRepos } from "@/lib/github"
-import { ProjectsPage } from "@/components/projects-page"
+import { ProjectsPage } from "@/components/projects-page-new"
 import { siteConfig } from "@/config/site"
 import { Metadata } from "next"
 import { BreadcrumbJsonLd } from "@/components/json-ld"
