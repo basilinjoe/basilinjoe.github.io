@@ -49,7 +49,7 @@ export function ProfileSection() {
             <h2 className="text-lg sm:text-xl leading-tight tracking-tighter">
               {siteConfig.position}
             </h2>
-            <Badge variant="featured" animate size="md" className="font-normal">Available for work</Badge>
+            <Badge variant="featured" className="font-normal">Available for work</Badge>
           </div>
           <p className="max-w-full sm:max-w-[600px] md:max-w-[700px] text-sm sm:text-md text-foreground pt-2">
             {siteConfig.aboutMe}

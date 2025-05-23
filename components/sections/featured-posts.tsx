@@ -63,7 +63,7 @@ export function FeaturedPosts({ posts }: FeaturedPostsProps) {
                   <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent rounded-lg opacity-30"></div>
                   <div className="relative z-10">
                     <div className="mb-2">
-                      <Badge variant={category.variant} size="sm" animate>{category.name}</Badge>
+                      <Badge variant={category.variant} size="sm">{category.name}</Badge>
                     </div>
                     <h3 className="font-semibold group-hover:text-primary transition-colors text-lg">
                       {post.title}

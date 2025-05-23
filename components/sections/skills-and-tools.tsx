@@ -113,9 +113,7 @@ export function SkillsAndTools() {
               >
                 <Badge 
                   variant={category.variant}
-                  size="md" 
                   className="text-sm px-3 hover:shadow-md transition-all" 
-                  animate
                 >
                   <span className="mr-1 text-primary/70">{category.icon}</span> {skill}
                 </Badge>
@@ -156,9 +154,7 @@ export function SkillsAndTools() {
             >
               <Badge 
                 variant={getToolCategory(tool) as any} 
-                size="md"
                 className="text-sm px-3 hover:shadow-md transition-all"
-                animate
               >
                 {tool}
               </Badge>

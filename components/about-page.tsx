@@ -14,8 +14,8 @@ export default function AboutPage() {
       {/* Colorful background elements */}
       <div className="absolute top-20 left-10 w-64 h-64 bg-primary/5 rounded-full filter blur-3xl opacity-40 -z-10"></div>
       <div className="absolute bottom-40 right-10 w-80 h-80 bg-blue-500/5 rounded-full filter blur-3xl opacity-40 -z-10"></div>
-      
-      <motion.section 
+
+      <motion.section
         initial="hidden"
         animate="visible"
         variants={staggerContainer}
@@ -30,9 +30,9 @@ export default function AboutPage() {
             My professional journey and experience building software solutions.
           </p>
         </motion.div>
-        
+
         {siteConfig.experience.map((exp, index) => (
-          <motion.div 
+          <motion.div
             key={`exp-${index}`}
             variants={fadeInUp}
             transition={{ delay: index * 0.2 }}
@@ -45,7 +45,7 @@ export default function AboutPage() {
             </div>
             <ol className="relative border-s border-primary-300/30 dark:border-primary-800/30 space-y-8 ml-3">
               {exp.roles.map((role, roleIndex) => (
-                <motion.div 
+                <motion.div
                   key={`role-${roleIndex}`}
                   variants={slideIn}
                   transition={{ delay: roleIndex * 0.1 }}
@@ -59,7 +59,8 @@ export default function AboutPage() {
                     <div className="flex flex-row items-center">
                       <h3 className="text-lg font-semibold text-foreground">{role.name}</h3>
                       {role.current && <Badge variant="featured" size="sm" className="ml-3">Current</Badge>}
-                    </div>                    <ul className="mt-3 mb-4 space-y-2 text-muted-foreground">
+                    </div>                    
+                    <ul className="mt-3 mb-4 space-y-2 text-muted-foreground">
                       {role.responsibilities.map((res, i) => (
                         <motion.li 
                           key={`resp-${roleIndex}-${i}`} 
@@ -71,41 +72,42 @@ export default function AboutPage() {
                         </motion.li>
                       ))}
                     </ul>
+                    <div className="mb-5">
+                      {role.skills.map((skill, i) => {
+                        // Determine skill category based on content
+                        const skillLower = skill.toLowerCase();
+                        let variant: "default" | "secondary" | "skill" | "tech" | "featured" = "skill";
+                        
+                        // Frontend skills
+                        if (skillLower.includes('react') || skillLower.includes('typescript') || 
+                            skillLower.includes('javascript') || skillLower.includes('html') || 
+                            skillLower.includes('css') || skillLower.includes('ui')) {
+                          variant = "featured";
+                        } 
+                        // Backend skills
+                        else if (skillLower.includes('node') || skillLower.includes('.net') || 
+                                 skillLower.includes('c#') || skillLower.includes('java') || 
+                                 skillLower.includes('python') || skillLower.includes('api')) {
+                          variant = "secondary";
+                        }
+                        // DevOps/Cloud skills
+                        else if (skillLower.includes('cloud') || skillLower.includes('azure') || 
+                                 skillLower.includes('aws') || skillLower.includes('devops')) {
+                          variant = "tech";
+                        }
+                        
+                        return (
+                          <motion.span
+                            key={`skill-${roleIndex}-${i}`}
+                            variants={fadeInUp}
+                            transition={{ delay: i * 0.05 }}
+                          >
+                            <Badge className="mr-1.5 mb-1.5" variant={variant}>{skill}</Badge>
+                          </motion.span>
+                        );
+                      })}
+                    </div>
                 </li>
-                <li className="mb-5 ms-4">
-                  {role.skills.map((skill, i) => {
-                    // Determine skill category based on content
-                    const skillLower = skill.toLowerCase();
-                    let variant = "skill";
-                    
-                    // Frontend skills
-                    if (skillLower.includes('react') || skillLower.includes('typescript') || 
-                        skillLower.includes('javascript') || skillLower.includes('html') || 
-                        skillLower.includes('css') || skillLower.includes('ui')) {
-                      variant = "featured";
-                    } 
-                    // Backend skills
-                    else if (skillLower.includes('node') || skillLower.includes('.net') || 
-                             skillLower.includes('c#') || skillLower.includes('java') || 
-                             skillLower.includes('python') || skillLower.includes('api')) {
-                      variant = "secondary";
-                    }
-                    // DevOps/Cloud skills
-                    else if (skillLower.includes('cloud') || skillLower.includes('azure') || 
-                             skillLower.includes('aws') || skillLower.includes('devops')) {
-                      variant = "tech";
-                    }
-                    
-                    return (
-                      <motion.span
-                        key={`skill-${roleIndex}-${i}`}
-                        variants={fadeInUp}
-                        transition={{ delay: i * 0.05 }}
-                      >
-                        <Badge className="mr-1.5 mb-1.5" variant={variant}>{skill}</Badge>
-                      </motion.span>
-                    );
-                  })}                </li>
               </motion.div>
             ))}
           </ol>
@@ -115,7 +117,7 @@ export default function AboutPage() {
       {/* Additional decorative elements */}
       <div className="absolute top-40 right-10 w-16 h-16 border border-primary/10 rounded-full animate-pulse-slow opacity-30 hidden md:block"></div>
       <div className="absolute bottom-60 left-10 w-10 h-10 border border-primary/10 rounded-full animate-float opacity-30 hidden md:block"></div>
-    </motion.section>
+      </motion.section>
     </div>
   )
 }
