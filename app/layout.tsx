@@ -9,6 +9,8 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { SiteHeader } from '@/components/site-header'
 import { GoogleAnalytics } from '@/components/google-analytics'
 import { PersonJsonLd, WebsiteJsonLd } from '@/components/json-ld'
+import { SkipNav } from '@/components/skip-nav'
+import { ScrollToTop } from '@/components/scroll-to-top'
 // import { ThemeSwitcher } from '@/components/theme-switcher'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -68,12 +70,14 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
+            <SkipNav />
             <div vaul-drawer-wrapper="">
               <div className="relative flex min-h-screen flex-col bg-background">
                 <SiteHeader />
-                <main className="flex-1">{children}</main>
+                <main id="main-content" className="flex-1">{children}</main>
               </div>
             </div>
+            <ScrollToTop />
           </ThemeProvider>
           {/* <ThemeSwitcher /> */}
           <GoogleAnalytics gaId={siteConfig.gaid}/>

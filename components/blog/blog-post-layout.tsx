@@ -1,6 +1,8 @@
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { BlogPostJsonLd, BreadcrumbJsonLd } from "@/components/json-ld"
+import { BlogBreadcrumb } from "@/components/blog/blog-breadcrumb"
+import { ReadingProgress } from "@/components/blog/reading-progress"
 import { ReactNode } from "react"
 
 interface BlogPostLayoutProps {
@@ -29,6 +31,8 @@ export function BlogPostLayout({
 }: BlogPostLayoutProps) {
   return (
     <div className="relative overflow-hidden">
+      <ReadingProgress />
+      
       {/* Colorful background elements */}
       <div className="absolute top-20 left-10 w-64 h-64 bg-primary/5 rounded-full filter blur-3xl opacity-40 -z-10"></div>
       <div className="absolute bottom-40 right-10 w-80 h-80 bg-blue-500/5 rounded-full filter blur-3xl opacity-40 -z-10"></div>
@@ -46,6 +50,7 @@ export function BlogPostLayout({
           items={breadcrumbs}
         />
         <div className="max-w-4xl mx-auto">
+          <BlogBreadcrumb postTitle={title} />
           <Link 
             href="/blog" 
             className="flex items-center text-sm text-primary hover:text-primary/80 mb-8 group transition-colors"

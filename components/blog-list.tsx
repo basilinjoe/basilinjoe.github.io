@@ -3,12 +3,15 @@
 import { motion } from "framer-motion"
 import { staggerContainer } from "@/lib/animations"
 import { BlogPost } from "@/lib/blog"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import BlogHeader from "@/components/blog/blog-header"
 import TagFilter from "@/components/blog/tag-filter"
 import BlogPostsGrid from "@/components/blog/blog-posts-grid"
 import PaginationControls from "@/components/blog/pagination-controls"
+import { BlogSearch } from "@/components/blog/blog-search"
+import { BlogBreadcrumb } from "@/components/blog/blog-breadcrumb"
+import { searchBlogPosts } from "@/lib/search"
 
 interface BlogListProps {
   allPosts: BlogPost[];
@@ -22,6 +25,7 @@ export default function BlogList({ allPosts, allTags }: BlogListProps) {
   // Client-side state to manage pagination and filtering
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedTag, setSelectedTag] = useState<string | undefined>(undefined);
+  const [searchQuery, setSearchQuery] = useState("");
   const [filteredPosts, setFilteredPosts] = useState<BlogPost[]>(allPosts);
   const [paginatedPosts, setPaginatedPosts] = useState<BlogPost[]>([]);
   const [totalPages, setTotalPages] = useState(1);
@@ -32,16 +36,26 @@ export default function BlogList({ allPosts, allTags }: BlogListProps) {
   useEffect(() => {
     const page = searchParams.get('page') ? Number(searchParams.get('page')) : 1;
     const tag = searchParams.get('tag') || undefined;
+    const search = searchParams.get('q') || "";
     
     setCurrentPage(page);
     setSelectedTag(tag);
+    setSearchQuery(search);
   }, [searchParams]);
   
-  // Filter posts when selectedTag changes
+  // Filter posts when selectedTag or searchQuery changes
   useEffect(() => {
-    const filtered = selectedTag 
-      ? allPosts.filter(post => post.tags && post.tags.includes(selectedTag))
-      : allPosts;
+    let filtered = allPosts;
+    
+    // Apply tag filter
+    if (selectedTag) {
+      filtered = filtered.filter(post => post.tags && post.tags.includes(selectedTag));
+    }
+    
+    // Apply search filter
+    if (searchQuery) {
+      filtered = searchBlogPosts(filtered, searchQuery);
+    }
       
     setFilteredPosts(filtered);
     
@@ -50,10 +64,10 @@ export default function BlogList({ allPosts, allTags }: BlogListProps) {
     setTotalPages(total);
     
     // Adjust currentPage if it's now out of bounds
-    if (currentPage > total) {
+    if (currentPage > total && total > 0) {
       setCurrentPage(1);
     }
-  }, [selectedTag, allPosts, currentPage]);
+  }, [selectedTag, searchQuery, allPosts, currentPage]);
   
   // Update paginated posts when filteredPosts or currentPage changes
   useEffect(() => {
@@ -81,6 +95,24 @@ export default function BlogList({ allPosts, allTags }: BlogListProps) {
     router.push(`/blog?${params.toString()}`, { scroll: false });
   };
   
+  // Handle search
+  const handleSearch = useCallback((query: string) => {
+    let params = new URLSearchParams(searchParams.toString());
+    
+    if (query) {
+      params.set('q', query);
+    } else {
+      params.delete('q');
+    }
+    
+    params.delete('page'); // Reset to first page when searching
+    setCurrentPage(1);
+    setSearchQuery(query);
+    
+    // Update URL without page reload
+    router.push(`/blog?${params.toString()}`, { scroll: false });
+  }, [searchParams, router]);
+  
   return (
     <div className="relative overflow-hidden">
       {/* Colorful background elements */}
@@ -93,7 +125,16 @@ export default function BlogList({ allPosts, allTags }: BlogListProps) {
         variants={staggerContainer}
         className="container grid items-center gap-8 pb-12 pt-8 md:py-10"
       >
+        <div className="px-4 sm:px-6 md:px-0">
+          <BlogBreadcrumb tag={selectedTag} />
+        </div>
+        
         <BlogHeader />
+        
+        <BlogSearch 
+          onSearch={handleSearch}
+          className="mb-6 px-4 sm:px-6 md:px-0 max-w-md"
+        />
         
         <TagFilter 
           allTags={allTags}
@@ -104,6 +145,8 @@ export default function BlogList({ allPosts, allTags }: BlogListProps) {
           posts={paginatedPosts}
           onTagClick={handleTagClick}
           selectedTag={selectedTag}
+          searchQuery={searchQuery}
+          totalResults={filteredPosts.length}
         />
         
         <PaginationControls 

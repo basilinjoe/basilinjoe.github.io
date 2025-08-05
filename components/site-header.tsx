@@ -22,7 +22,7 @@ export function SiteHeader() {
       <div className="container flex h-14 max-w-screen-2xl items-center px-4 sm:px-6 lg:px-8">
         <MainNav />
         <div className="flex flex-1 items-center justify-end space-x-2">
-          <nav className="flex items-center space-x-2">
+          <nav id="main-navigation" className="flex items-center space-x-2">
             <ModeToggle />
             <MobileNav />
           </nav>

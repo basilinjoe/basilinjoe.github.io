@@ -110,12 +110,18 @@ export function SkillsAndTools() {
                 key={index} 
                 variants={fadeInUp}
                 className="inline-block mr-2 mb-2"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
                 <Badge 
                   variant={category.variant}
-                  className="text-sm px-3 hover:shadow-md transition-all" 
+                  className="text-sm px-3 hover:shadow-md transition-all cursor-default group relative overflow-hidden" 
                 >
-                  <span className="mr-1 text-primary/70">{category.icon}</span> {skill}
+                  <motion.span 
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"
+                  />
+                  <span className="mr-1 text-primary/70 group-hover:rotate-12 transition-transform duration-300">{category.icon}</span> 
+                  <span className="relative z-10">{skill}</span>
                 </Badge>
               </motion.div>
             );
@@ -151,12 +157,18 @@ export function SkillsAndTools() {
               key={i}
               variants={fadeInUp}
               className="inline-block mr-2 mb-2"
+              whileHover={{ scale: 1.05, rotate: [-1, 1, -1, 0] }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ rotate: { duration: 0.3 } }}
             >
               <Badge 
                 variant={getToolCategory(tool) as any} 
-                className="text-sm px-3 hover:shadow-md transition-all"
+                className="text-sm px-3 hover:shadow-md transition-all cursor-default group relative overflow-hidden"
               >
-                {tool}
+                <motion.span 
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"
+                />
+                <span className="relative z-10">{tool}</span>
               </Badge>
             </motion.div>
           ))}
