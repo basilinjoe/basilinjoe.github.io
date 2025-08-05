@@ -31,6 +31,7 @@ export const siteConfig = {
   gaid:"G-631LG05FS6",
   name: "Basilin Joe",
   position: "Technology Lead at Experion Technologies",
+  tagline: "Building scalable cloud solutions that drive business growth",
   aboutMe: "Results-driven Technology Lead with 7+ years' experience in software development, excelling in Azure, AWS, and Full Stack. Proven track record in delivering high-quality projects, optimizing processes, and leading cross-functional teams for enhanced efficiency and collaboration.",
   location: "Ernakulam,Kerala,India",
   email: "basilin@live.com",

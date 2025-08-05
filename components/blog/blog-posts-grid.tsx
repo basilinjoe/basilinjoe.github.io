@@ -31,12 +31,12 @@ export default function BlogPostsGrid({
           {searchQuery && (
             <span>
               Found {totalResults} {totalResults === 1 ? 'post' : 'posts'} 
-              {selectedTag && ` tagged "${selectedTag}"`} matching "{searchQuery}"
+              {selectedTag && ` tagged &quot;${selectedTag}&quot;`} matching &quot;{searchQuery}&quot;
             </span>
           )}
           {!searchQuery && selectedTag && (
             <span>
-              Showing {totalResults} {totalResults === 1 ? 'post' : 'posts'} tagged "{selectedTag}"
+              Showing {totalResults} {totalResults === 1 ? 'post' : 'posts'} tagged &quot;{selectedTag}&quot;
             </span>
           )}
         </motion.div>

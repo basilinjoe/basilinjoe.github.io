@@ -99,7 +99,7 @@ export function BlogSearch({
             exit={{ opacity: 0, y: -10 }}
             className="absolute left-0 right-0 mt-1 text-sm text-muted-foreground"
           >
-            Searching for "{query}"
+            Searching for &quot;{query}&quot;
           </motion.div>
         )}
       </AnimatePresence>
