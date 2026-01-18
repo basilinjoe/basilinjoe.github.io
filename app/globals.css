@@ -2,18 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
-@import "../styles/markdown.css";
+
 
 @layer utilities {
   @keyframes fade-in {
     from {
       opacity: 0;
     }
+
     to {
       opacity: 1;
     }
   }
-  
+
   .animate-fade-in {
     animation: fade-in 1s ease-out;
   }
@@ -26,27 +27,29 @@
     --foreground: 240 10% 3.9%;
     --background-subtle: 240 20% 98%;
     --subtle-foreground: 240 3.8% 46.1%;
-    
+
     /* Component colors */
     --card: 0 0% 100%;
     --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
-    
+
     /* Primary colors with shades */
-    --primary: 230 100% 50%; /* Vibrant blue as primary */
+    --primary: 230 100% 50%;
+    /* Vibrant blue as primary */
     --primary-50: 230 100% 95%;
     --primary-100: 230 100% 90%;
     --primary-200: 230 95% 80%;
     --primary-300: 230 90% 70%;
     --primary-400: 230 85% 60%;
-    --primary-500: 230 100% 50%; /* Same as primary */
+    --primary-500: 230 100% 50%;
+    /* Same as primary */
     --primary-600: 230 95% 45%;
     --primary-700: 230 90% 40%;
     --primary-800: 230 85% 35%;
     --primary-900: 230 80% 30%;
     --primary-foreground: 0 0% 98%;
-    
+
     /* UI Colors */
     --secondary: 240 4.8% 95.9%;
     --secondary-foreground: 240 5.9% 10%;
@@ -54,7 +57,7 @@
     --muted-foreground: 240 3.8% 46.1%;
     --accent: 240 4.8% 95.9%;
     --accent-foreground: 240 5.9% 10%;
-    
+
     /* State colors */
     --destructive: 0 72.22% 50.59%;
     --destructive-foreground: 0 0% 98%;
@@ -64,13 +67,13 @@
     --warning-foreground: 48 100% 96%;
     --info: 217 100% 60%;
     --info-foreground: 0 0% 98%;
-    
+
     /* UI Element colors */
     --border: 240 5.9% 90%;
     --border-subtle: 240 5.9% 95%;
     --input: 240 5.9% 90%;
     --ring: 230 100% 50%;
-    
+
     /* Border radius */
     --radius: 0.5rem;
   }
@@ -81,27 +84,29 @@
     --foreground: 0 0% 98%;
     --background-subtle: 240 10% 5%;
     --subtle-foreground: 240 5% 65%;
-    
+
     /* Component colors */
     --card: 240 10% 3.9%;
     --card-foreground: 0 0% 98%;
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
-    
+
     /* Primary colors with shades */
-    --primary: 225 90% 60%; /* Slightly less saturated in dark mode */
+    --primary: 225 90% 60%;
+    /* Slightly less saturated in dark mode */
     --primary-50: 225 90% 10%;
     --primary-100: 225 85% 15%;
     --primary-200: 225 80% 20%;
     --primary-300: 225 75% 30%;
     --primary-400: 225 70% 40%;
-    --primary-500: 225 90% 60%; /* Same as primary */
+    --primary-500: 225 90% 60%;
+    /* Same as primary */
     --primary-600: 225 85% 70%;
     --primary-700: 225 80% 80%;
     --primary-800: 225 75% 85%;
     --primary-900: 225 70% 90%;
     --primary-foreground: 240 5.9% 10%;
-    
+
     /* UI Colors */
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
@@ -109,7 +114,7 @@
     --muted-foreground: 240 5% 64.9%;
     --accent: 240 3.7% 15.9%;
     --accent-foreground: 0 0% 98%;
-    
+
     /* State colors */
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 85.7% 97.3%;
@@ -119,7 +124,7 @@
     --warning-foreground: 48 100% 92%;
     --info: 217 100% 50%;
     --info-foreground: 0 0% 98%;
-    
+
     /* UI Element colors */
     --border: 240 3.7% 15.9%;
     --border-subtle: 240 3.7% 12%;
@@ -132,6 +137,7 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
     /* font-feature-settings: "rlig" 1, "calt" 1; */
@@ -156,4 +162,102 @@
   .container {
     @apply px-4;
   }
+}
+
+/* Base content styles */
+.markdown {
+  @apply max-w-none;
+}
+
+/* Heading styles */
+.markdown h1 {
+  @apply mt-8 mb-4 text-4xl font-extrabold tracking-tight scroll-mt-16;
+}
+
+.markdown h2 {
+  @apply mt-8 mb-4 text-3xl font-bold tracking-tight scroll-mt-16;
+}
+
+.markdown h3 {
+  @apply mt-6 mb-3 text-2xl font-bold tracking-tight scroll-mt-16;
+}
+
+.markdown h4 {
+  @apply mt-4 mb-2 text-xl font-bold tracking-tight scroll-mt-16;
+}
+
+/* Paragraph and list styles */
+.markdown p {
+  @apply mb-4 leading-7;
+}
+
+.markdown ul {
+  @apply my-6 ml-6 list-disc;
+}
+
+.markdown ol {
+  @apply my-6 ml-6 list-decimal;
+}
+
+.markdown li {
+  @apply mb-2;
+}
+
+/* Code block styles */
+.markdown pre {
+  @apply my-6 rounded-lg bg-zinc-900 p-4 overflow-x-auto;
+}
+
+.markdown code {
+  @apply rounded bg-muted px-1.5 py-0.5 font-mono text-sm;
+}
+
+.markdown pre code {
+  @apply bg-transparent p-0 text-sm leading-7;
+}
+
+/* Link styles */
+.markdown a {
+  @apply underline decoration-primary/50 underline-offset-2 hover:decoration-primary transition-all;
+}
+
+/* Blockquote styles */
+.markdown blockquote {
+  @apply my-6 border-l-2 border-primary pl-6 italic;
+}
+
+/* Table styles */
+.markdown table {
+  @apply my-6 w-full text-sm;
+}
+
+.markdown th {
+  @apply border px-4 py-2 text-left font-semibold bg-muted;
+}
+
+.markdown td {
+  @apply border px-4 py-2;
+}
+
+/* Image styles */
+.markdown img {
+  @apply my-6 rounded-lg;
+}
+
+/* Horizontal rule */
+.markdown hr {
+  @apply my-8 border-border;
+}
+
+/* Dark mode adjustments */
+.dark .markdown pre {
+  @apply bg-zinc-900;
+}
+
+.dark .markdown code {
+  @apply bg-zinc-800;
+}
+
+.dark .markdown pre code {
+  @apply bg-transparent;
 }

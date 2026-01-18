@@ -2,9 +2,8 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import { BlogPost } from "@/lib/blog"
 import { fadeInUp } from "@/lib/animations"
-import { ArrowRight, CalendarIcon, BookOpen } from "lucide-react"
+import { ArrowRight, CalendarIcon, BookOpen, Clock } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { BADGE_CATEGORIES } from "@/lib/design-system/badges"
 
 interface FeaturedPostsProps {
   posts: BlogPost[];
@@ -13,7 +12,7 @@ interface FeaturedPostsProps {
 // Function to assign a category badge style based on post title or content
 const getCategoryBadge = (post: BlogPost) => {
   const title = post.title.toLowerCase();
-  
+
   if (title.includes('ai') || title.includes('ml') || title.includes('machine learning')) {
     return { name: "AI & ML", variant: "tech" as const };
   } else if (title.includes('coding') || title.includes('development')) {
@@ -25,20 +24,27 @@ const getCategoryBadge = (post: BlogPost) => {
   }
 };
 
+// Deterministic rotation based on post id to avoid layout shifts
+const getRotation = (id: string) => {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = ((hash << 5) - hash) + id.charCodeAt(i);
+    hash |= 0;
+  }
+  return (hash % 200) / 100 - 1; // Returns value between -1 and 1
+};
+
 export function FeaturedPosts({ posts }: FeaturedPostsProps) {
   if (posts.length === 0) return null;
-
-  // Generate random rotation angles for cards
-  const rotations = posts.map(() => Math.random() * 2 - 1); // Between -1 and 1 degrees
 
   return (
     <motion.div variants={fadeInUp} className="flex flex-col">
       <div className="flex justify-between items-center mb-5">
-        <div className="flex items-center">
+        <div className="flex items-center flex-wrap gap-2">
           <h1 className="text-3xl font-extrabold leading-tight tracking-tighter md:text-4xl">
             Featured Posts
           </h1>
-          <div className="ml-3 bg-primary/10 dark:bg-primary/20 rounded-full px-3 py-1 text-xs font-medium text-primary flex items-center">
+          <div className="bg-primary/10 dark:bg-primary/20 rounded-full px-3 py-1 text-xs font-medium text-primary flex items-center">
             <BookOpen className="w-3 h-3 mr-1" />
             Latest insights
           </div>
@@ -50,12 +56,13 @@ export function FeaturedPosts({ posts }: FeaturedPostsProps) {
       <div className="grid gap-6 md:grid-cols-3 perspective">
         {posts.map((post, index) => {
           const category = getCategoryBadge(post);
+          const rotation = getRotation(post.id);
           return (
             <motion.div
               key={post.id}
               variants={fadeInUp}
               transition={{ delay: index * 0.1 }}
-              style={{ transform: `rotate(${rotations[index]}deg)` }}
+              style={{ transform: `rotate(${rotation}deg)` }}
               whileHover={{ rotate: 0, scale: 1.03, transition: { duration: 0.2 } }}
             >
               <Link href={`/blog/${post.id}`} className="group block h-full">
@@ -71,13 +78,21 @@ export function FeaturedPosts({ posts }: FeaturedPostsProps) {
                     <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
                       {post.excerpt}
                     </p>
-                    <div className="flex items-center text-xs text-muted-foreground mt-auto pt-2 border-t border-border/30">
-                      <CalendarIcon className="mr-1 h-3 w-3 text-primary/70" />
-                      {new Date(post.date).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
+                    <div className="flex items-center justify-between text-xs text-muted-foreground mt-auto pt-2 border-t border-border/30">
+                      <div className="flex items-center">
+                        <CalendarIcon className="mr-1 h-3 w-3 text-primary/70" />
+                        {new Date(post.date).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </div>
+                      {post.readingTime && (
+                        <div className="flex items-center">
+                          <Clock className="mr-1 h-3 w-3 text-primary/70" />
+                          {post.readingTime}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

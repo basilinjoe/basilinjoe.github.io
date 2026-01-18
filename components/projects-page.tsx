@@ -33,6 +33,14 @@ const categoryBackgrounds = {
   general: 'from-zinc-500/5 to-background'
 };
 
+const projectDescriptions: Record<string, string> = {
+  "basilinjoe.github.io": "My personal portfolio website built with Next.js, Tailwind CSS, and Framer Motion.",
+  "spellin-teacher": "Interactive spelling practice application designed to help students improve their vocabulary.",
+  "useful-docker-compose": "A collection of production-ready Docker Compose templates for common tech stacks.",
+  "IdentityServerSwagger": "Guide and examples for integrating IdentityServer authentication with Swagger UI.",
+  "helloStrapi": "Starter project demonstrating Headless CMS implementation with Strapi."
+};
+
 interface ProjectsPageProps {
   repos: Repository[];
 }
@@ -83,7 +91,7 @@ export function ProjectsPage({ repos }: ProjectsPageProps) {
                       </Link>
                     </h2>
                     <p className="mt-1.5 sm:mt-2 text-sm text-muted-foreground line-clamp-2">
-                      {repo.description || "No description available"}
+                      {projectDescriptions[repo.name] || repo.description || "No description available"}
                     </p>
                   </div>
                   <Link href={repo.html_url} target="_blank" rel="noreferrer" className="flex-shrink-0">

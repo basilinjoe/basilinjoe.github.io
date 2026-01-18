@@ -28,24 +28,24 @@ export default function BlogPostCard({ post, index, onTagClick }: BlogPostCardPr
       gradientClass = "from-amber-500/5 to-orange-500/5";
     }
   }
-  
+
   return (
     <motion.article
       variants={fadeInUp}
       transition={{ delay: index * 0.1 }}
       className={`group relative rounded-lg border border-border/60 p-5 sm:p-6 
-        hover:shadow-md transition-all flex flex-col
+        hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col
         bg-gradient-to-br ${gradientClass}`}
     >
       <h2 className="text-xl sm:text-2xl font-bold mb-2 group-hover:text-primary transition-colors">
         <Link
           href={`/blog/${post.id}`}
-          className="line-clamp-2 hover:underline"
+          className="line-clamp-2 hover:underline before:absolute before:inset-0 focus:outline-none"
         >
           {post.title}
         </Link>
       </h2>
-      <div className="flex flex-wrap items-center text-xs text-muted-foreground gap-2">
+      <div className="flex flex-wrap items-center text-xs text-muted-foreground gap-2 relative z-10">
         <time className="flex items-center">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1 text-primary/70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -65,14 +65,15 @@ export default function BlogPostCard({ post, index, onTagClick }: BlogPostCardPr
         </span>
       </div>
       {post.tags && post.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mt-3 mb-1">
+        <div className="flex flex-wrap gap-1.5 mt-3 mb-1 relative z-10">
           {post.tags.slice(0, 3).map(tag => (
-            <Badge 
-              key={tag} 
-              variant="tech" 
-              className="text-xs cursor-pointer"
+            <Badge
+              key={tag}
+              variant="tech"
+              className="text-xs cursor-pointer hover:bg-primary/20 transition-colors"
               onClick={(e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 onTagClick(tag);
               }}
             >
@@ -84,18 +85,17 @@ export default function BlogPostCard({ post, index, onTagClick }: BlogPostCardPr
           )}
         </div>
       )}
-      <p className="mt-3 text-sm text-muted-foreground line-clamp-3">{post.excerpt}</p>
-      <div className="mt-auto pt-5">
-        <Link
-          href={`/blog/${post.id}`}
-          className={buttonVariants({ 
-            variant: "outline", 
+      <p className="mt-3 text-sm text-muted-foreground line-clamp-3 relative z-10">{post.excerpt}</p>
+      <div className="mt-auto pt-5 relative z-10">
+        <span
+          className={buttonVariants({
+            variant: "outline",
             size: "sm",
-            className: "border-primary/30 hover:bg-primary/10 hover:text-primary hover:border-primary/50"
+            className: "border-primary/30 group-hover:bg-primary/10 group-hover:text-primary group-hover:border-primary/50 transition-all"
           })}
         >
           Read more
-        </Link>
+        </span>
       </div>
     </motion.article>
   );

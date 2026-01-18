@@ -4,11 +4,9 @@ import { motion } from "framer-motion"
 import { staggerContainer } from "@/lib/animations"
 import { BlogPost } from "@/lib/blog"
 import { ProfileSection } from "./sections/profile-section"
-import { SocialLinks } from "./sections/social-links"
 import { FeaturedPosts } from "./sections/featured-posts"
 import { WorkHighlights } from "./sections/work-highlights"
 import { SkillsAndTools } from "./sections/skills-and-tools"
-import { GithubProjects } from "./sections/github-projects"
 import { Repository } from "@/lib/github"
 import { HeroAnimation } from "./hero-animation"
 
@@ -17,24 +15,23 @@ interface HomePageProps {
   projects: Repository[]
 }
 
-export default function HomePage({ posts: featuredPosts, projects: githubProjects}: HomePageProps) {
+export default function HomePage({ posts: featuredPosts }: HomePageProps) {
   return (
     <div className="relative overflow-hidden">
       {/* Interactive animated background */}
       <HeroAnimation />
-      
-      <motion.section 
+
+      <motion.section
         initial="hidden"
         animate="visible"
         variants={staggerContainer}
         className="container grid items-center gap-12 pb-12 pt-8 md:py-10 relative z-10"
       >
         <ProfileSection />
-        {/* <GithubProjects repos={githubProjects}/> */}
+        <SkillsAndTools />
         <FeaturedPosts posts={featuredPosts} />
         <WorkHighlights />
-        <SkillsAndTools />
-        
+
         {/* Decorative elements */}
         <div className="absolute top-20 right-5 w-20 h-20 border border-primary/10 rounded-full animate-pulse opacity-30 hidden md:block"></div>
         <div className="absolute bottom-40 left-5 w-12 h-12 border border-primary/10 rounded-full animate-pulse opacity-30 hidden md:block"></div>

@@ -23,19 +23,22 @@ export default function AboutPage() {
       >
         <motion.div variants={fadeInUp} className="mb-4">
           <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl bg-gradient-to-r from-primary to-blue-500 bg-clip-text text-transparent mb-3">
-            About Me
+            Professional Experience
           </h1>
           <div className="h-1 w-20 bg-primary/50 rounded-full mb-6"></div>
           <p className="text-lg text-muted-foreground max-w-3xl">
-            My professional journey and experience building software solutions.
+            My journey, career highlights, and experience building software solutions.
           </p>
         </motion.div>
 
         {siteConfig.experience.map((exp, index) => (
           <motion.div
             key={`exp-${index}`}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
             variants={fadeInUp}
-            transition={{ delay: index * 0.2 }}
+            transition={{ delay: index * 0.1 }}
             className="p-6 rounded-lg border border-border/50 bg-gradient-to-br from-background to-primary-50/5 dark:from-background dark:to-primary-900/5 hover:shadow-md transition-all"
           >
             <div className="flex flex-row items-center mb-4">
@@ -59,11 +62,11 @@ export default function AboutPage() {
                     <div className="flex flex-row items-center">
                       <h3 className="text-lg font-semibold text-foreground">{role.name}</h3>
                       {role.current && <Badge variant="featured" size="sm" className="ml-3">Current</Badge>}
-                    </div>                    
+                    </div>
                     <ul className="mt-3 mb-4 space-y-2 text-muted-foreground">
                       {role.responsibilities.map((res, i) => (
-                        <motion.li 
-                          key={`resp-${roleIndex}-${i}`} 
+                        <motion.li
+                          key={`resp-${roleIndex}-${i}`}
                           variants={fadeInUp}
                           className="flex items-start"
                         >
@@ -77,25 +80,25 @@ export default function AboutPage() {
                         // Determine skill category based on content
                         const skillLower = skill.toLowerCase();
                         let variant: "default" | "secondary" | "skill" | "tech" | "featured" = "skill";
-                        
+
                         // Frontend skills
-                        if (skillLower.includes('react') || skillLower.includes('typescript') || 
-                            skillLower.includes('javascript') || skillLower.includes('html') || 
-                            skillLower.includes('css') || skillLower.includes('ui')) {
+                        if (skillLower.includes('react') || skillLower.includes('typescript') ||
+                          skillLower.includes('javascript') || skillLower.includes('html') ||
+                          skillLower.includes('css') || skillLower.includes('ui')) {
                           variant = "featured";
-                        } 
+                        }
                         // Backend skills
-                        else if (skillLower.includes('node') || skillLower.includes('.net') || 
-                                 skillLower.includes('c#') || skillLower.includes('java') || 
-                                 skillLower.includes('python') || skillLower.includes('api')) {
+                        else if (skillLower.includes('node') || skillLower.includes('.net') ||
+                          skillLower.includes('c#') || skillLower.includes('java') ||
+                          skillLower.includes('python') || skillLower.includes('api')) {
                           variant = "secondary";
                         }
                         // DevOps/Cloud skills
-                        else if (skillLower.includes('cloud') || skillLower.includes('azure') || 
-                                 skillLower.includes('aws') || skillLower.includes('devops')) {
+                        else if (skillLower.includes('cloud') || skillLower.includes('azure') ||
+                          skillLower.includes('aws') || skillLower.includes('devops')) {
                           variant = "tech";
                         }
-                        
+
                         return (
                           <motion.span
                             key={`skill-${roleIndex}-${i}`}
@@ -107,16 +110,16 @@ export default function AboutPage() {
                         );
                       })}
                     </div>
-                </li>
-              </motion.div>
-            ))}
-          </ol>
-        </motion.div>
-      ))}
-      
-      {/* Additional decorative elements */}
-      <div className="absolute top-40 right-10 w-16 h-16 border border-primary/10 rounded-full animate-pulse-slow opacity-30 hidden md:block"></div>
-      <div className="absolute bottom-60 left-10 w-10 h-10 border border-primary/10 rounded-full animate-float opacity-30 hidden md:block"></div>
+                  </li>
+                </motion.div>
+              ))}
+            </ol>
+          </motion.div>
+        ))}
+
+        {/* Additional decorative elements */}
+        <div className="absolute top-40 right-10 w-16 h-16 border border-primary/10 rounded-full animate-pulse-slow opacity-30 hidden md:block"></div>
+        <div className="absolute bottom-60 left-10 w-10 h-10 border border-primary/10 rounded-full animate-float opacity-30 hidden md:block"></div>
       </motion.section>
     </div>
   )

@@ -4,6 +4,7 @@ import { siteConfig } from "@/config/site"
 import { fadeInUp, scaleUp, slideIn } from "@/lib/animations"
 import { MapPin, Mail } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { InteractiveHero } from "@/components/interactive-hero"
 import { DynamicGreeting, Tagline } from "@/components/dynamic-greeting"
 import { SocialLinks } from "./social-links"
@@ -14,10 +15,10 @@ export function ProfileSection() {
       variants={fadeInUp} 
       className="flex flex-col items-start gap-4 px-4 sm:px-6 md:px-0"
     >
-      <div className="flex flex-col md:flex-row md:items-start">
-        <motion.div 
+      <div className="flex flex-col md:flex-row-reverse md:items-start md:justify-between">
+        <motion.div
           variants={scaleUp}
-          className="flex justify-center mb-6 md:mb-0 md:mr-8 relative group"
+          className="flex justify-center mb-6 md:mb-0 md:ml-8 relative group"
           whileHover={{ scale: 1.05 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
         >
@@ -49,7 +50,7 @@ export function ProfileSection() {
           <Image
             className="rounded-full ring-2 ring-white dark:ring-zinc-800 ring-offset-2 ring-offset-background relative z-10 shadow-lg group-hover:shadow-xl transition-shadow duration-300"
             src="/avatar.webp"
-            alt="Profile Picture"
+            alt={`Photo of ${siteConfig.name}`}
             width={160}
             height={160}
             sizes="(max-width: 640px) 160px, (max-width: 768px) 180px, 208px"
@@ -73,7 +74,15 @@ export function ProfileSection() {
             <h2 className="text-lg sm:text-xl leading-tight tracking-tighter">
               {siteConfig.position}
             </h2>
-            <Badge variant="featured" className="font-normal">Available for work</Badge>
+            <a href={`mailto:${siteConfig.email}?subject=Work Opportunity`}>
+              <Badge variant="featured" className="font-normal cursor-pointer hover:bg-primary/90 transition-colors">
+                <span className="relative flex h-2 w-2 mr-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                </span>
+                Available for work
+              </Badge>
+            </a>
           </div>
           <Tagline text={siteConfig.tagline} />
           <div className="mt-3 mb-2">
@@ -82,17 +91,33 @@ export function ProfileSection() {
           <p className="max-w-full text-sm sm:text-md text-foreground pt-2">
             {siteConfig.aboutMe}
           </p>
-          <div className="flex flex-col sm:flex-row mt-4">
-            <div className="flex items-center mb-2 sm:mb-0 sm:mr-6">
-              <MapPin className="mr-2 h-4 w-4 flex-shrink-0 text-primary" />
-              <p className="text-sm">{siteConfig.location}</p>
-            </div>
+          {/* Contact Info */}
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-6 mt-4 text-muted-foreground">
             <div className="flex items-center">
-              <Mail className="mr-2 h-4 w-4 flex-shrink-0 text-primary" />
-              <p className="text-sm">{siteConfig.email}</p>
+              <MapPin className="mr-2 h-4 w-4 flex-shrink-0 text-primary" />
+              <span className="text-sm">{siteConfig.location}</span>
             </div>
+            <a
+              href={`mailto:${siteConfig.email}`}
+              className="flex items-center hover:text-primary transition-colors group"
+            >
+              <Mail className="mr-2 h-4 w-4 flex-shrink-0 text-primary" />
+              <span className="text-sm group-hover:underline">{siteConfig.email}</span>
+            </a>
           </div>
+
+          {/* CTA Button */}
           <div className="mt-6">
+            <Button asChild size="lg" className="gap-2 shadow-md hover:shadow-lg transition-shadow">
+              <a href={`mailto:${siteConfig.email}?subject=Hello from your website`}>
+                <Mail className="h-4 w-4" />
+                Get in Touch
+              </a>
+            </Button>
+          </div>
+
+          {/* Social Links */}
+          <div className="mt-4">
             <SocialLinks />
           </div>
         </motion.div>
