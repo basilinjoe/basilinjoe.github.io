@@ -1,179 +1,194 @@
+"use client"
+
 import { motion } from "framer-motion"
 import { siteConfig } from "@/config/site"
-import { fadeInUp, staggerContainer } from "@/lib/animations"
-import { Badge } from "@/components/ui/badge"
-import { Code, Database, Globe, Laptop, LineChart, Server } from "lucide-react"
+import { fadeInUp } from "@/lib/animations"
+import { Cloud, Code2, Layers, Wrench } from "lucide-react"
 
-// Skill categorization functions for colorful display
-const getSkillCategory = (skill: string) => {
-  const s = skill.toLowerCase();
-  
-  // Frontend skills
-  if (s.includes('react') || s.includes('typescript') || s.includes('javascript') || 
-      s.includes('html') || s.includes('css') || s.includes('ui') || 
-      s.includes('ux') || s.includes('angular') || s.includes('vue')) {
-    return {
-      variant: 'featured' as const,
-      icon: <Code className="w-3 h-3" />
-    };
-  } 
-  // Backend skills
-  else if (s.includes('node') || s.includes('.net') || s.includes('c#') || 
-           s.includes('java') || s.includes('python') || s.includes('api') || s.includes('graphql')) {
-    return {
-      variant: 'secondary' as const,
-      icon: <Server className="w-3 h-3" />
-    };
-  }
-  // Cloud & DevOps
-  else if (s.includes('cloud') || s.includes('azure') || s.includes('aws') || 
-           s.includes('devops') || s.includes('docker') || s.includes('kubernetes')) {
-    return {
-      variant: 'tech' as const,
-      icon: <Globe className="w-3 h-3" />
-    };
-  }
-  // Data & ML
-  else if (s.includes('data') || s.includes('ml') || s.includes('ai') || 
-           s.includes('analytics') || s.includes('machine learning')) {
-    return {
-      variant: 'skill' as const,
-      icon: <LineChart className="w-3 h-3" />
-    };
-  }
-  // Default case
-  else {
-    return {
-      variant: 'skill' as const,
-      icon: <Laptop className="w-3 h-3" />
-    };
-  }
-};
+type SkillCategory = "cloud" | "backend" | "frontend"
 
-const getToolCategory = (tool: string) => {
-  const t = tool.toLowerCase();
-  
-  // Development tools
-  if (t.includes('visual studio') || t.includes('vscode') || t.includes('intellij') || 
-      t.includes('sublime') || t.includes('git') || t.includes('eclipse')) {
-    return 'tech';
-  } 
-  // Cloud tools
-  else if (t.includes('azure') || t.includes('aws') || t.includes('gcp') || 
-           t.includes('firebase') || t.includes('netlify')) {
-    return 'featured';
-  }
-  // Data tools
-  else if (t.includes('sql') || t.includes('mongodb') || t.includes('postgres') || 
-           t.includes('dynamo') || t.includes('cosmos')) {
-    return 'secondary';
-  }
-  // Default
-  else {
-    return 'skill';
-  }
-};
+const CATEGORIES: {
+  key: SkillCategory | "tools"
+  label: string
+  icon: React.ReactNode
+  gradient: string
+  bar: string
+  avatar: string
+  border: string
+}[] = [
+  {
+    key: "cloud",
+    label: "Cloud & DevOps",
+    icon: <Cloud className="w-4 h-4" />,
+    gradient: "from-sky-500/10 to-blue-500/5",
+    bar: "from-sky-500 to-blue-400",
+    avatar: "bg-sky-500/15 text-sky-600 dark:text-sky-400",
+    border: "border-sky-500/20",
+  },
+  {
+    key: "backend",
+    label: "Backend",
+    icon: <Layers className="w-4 h-4" />,
+    gradient: "from-violet-500/10 to-purple-500/5",
+    bar: "from-violet-500 to-purple-400",
+    avatar: "bg-violet-500/15 text-violet-600 dark:text-violet-400",
+    border: "border-violet-500/20",
+  },
+  {
+    key: "frontend",
+    label: "Frontend",
+    icon: <Code2 className="w-4 h-4" />,
+    gradient: "from-amber-500/10 to-orange-500/5",
+    bar: "from-amber-500 to-orange-400",
+    avatar: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
+    border: "border-amber-500/20",
+  },
+  {
+    key: "tools",
+    label: "Tools",
+    icon: <Wrench className="w-4 h-4" />,
+    gradient: "from-emerald-500/10 to-teal-500/5",
+    bar: "from-emerald-500 to-teal-400",
+    avatar: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
+    border: "border-emerald-500/20",
+  },
+]
+
+function proficiencyLabel(p: number): string {
+  if (p >= 90) return "Expert"
+  if (p >= 75) return "Advanced"
+  return "Proficient"
+}
+
+function skillInitials(name: string): string {
+  const words = name.split(/[\s.]+/)
+  if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase()
+  return name.slice(0, 2).toUpperCase()
+}
+
+function SkillRow({
+  skill,
+  index,
+  bar,
+  avatar,
+}: {
+  skill: { name: string; proficiency: number }
+  index: number
+  bar: string
+  avatar: string
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -12 }}
+      whileInView={{ opacity: 1, x: 0 }}
+      viewport={{ once: true, margin: "-20px" }}
+      transition={{ delay: index * 0.06, duration: 0.4 }}
+      className="flex items-center gap-3"
+    >
+      {/* Letter avatar */}
+      <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${avatar}`}>
+        {skillInitials(skill.name)}
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-sm font-medium text-foreground truncate">{skill.name}</span>
+          <span className="text-xs text-muted-foreground ml-2 flex-shrink-0">
+            {proficiencyLabel(skill.proficiency)}
+          </span>
+        </div>
+        {/* Animated proficiency bar */}
+        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+          <motion.div
+            className={`h-full rounded-full bg-gradient-to-r ${bar}`}
+            initial={{ width: "0%" }}
+            whileInView={{ width: `${skill.proficiency}%` }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.9, ease: "easeOut", delay: 0.1 + index * 0.06 }}
+          />
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+function ToolChip({ name, avatar, border }: { name: string; avatar: string; border: string }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.35 }}
+      className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${border} bg-background/60 hover:bg-muted/60 transition-colors cursor-default`}
+    >
+      <div className={`w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold flex-shrink-0 ${avatar}`}>
+        {skillInitials(name)}
+      </div>
+      <span className="text-sm font-medium text-foreground">{name}</span>
+    </motion.div>
+  )
+}
 
 export function SkillsAndTools() {
-  return (
-    <>
-      <motion.div 
-        variants={fadeInUp} 
-        className="flex flex-col p-6 rounded-lg bg-gradient-to-br from-background to-primary-50/10 dark:from-background dark:to-primary-900/10 border border-border/50"
-      >
-        <div className="flex items-center mb-5">
-          <h1 className="text-3xl font-extrabold leading-tight tracking-tighter md:text-4xl relative">
-            Skills
-            <span className="absolute -bottom-1 left-0 w-12 h-1 bg-primary rounded-full"></span>
-          </h1>
-          <div className="flex ml-auto gap-2">
-            <div className="flex items-center text-xs px-2 py-1 rounded-full bg-primary-200/20 dark:bg-primary-800/20 text-primary-700 dark:text-primary-300">
-              <Code className="w-3 h-3 mr-1" /> Frontend
-            </div>
-            <div className="flex items-center text-xs px-2 py-1 rounded-full bg-secondary/20 text-secondary-foreground/80">
-              <Server className="w-3 h-3 mr-1" /> Backend
-            </div>
-            <div className="flex items-center text-xs px-2 py-1 rounded-full bg-blue-100/30 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
-              <Globe className="w-3 h-3 mr-1" /> Cloud
-            </div>
-          </div>
-        </div>
-        
-        <motion.div 
-          variants={staggerContainer}
-          className="max-w-[800px]"
-        >
-          {siteConfig.skills.map((skill, index) => {
-            const category = getSkillCategory(skill);
-            return (
-              <motion.div 
-                key={index} 
-                variants={fadeInUp}
-                className="inline-block mr-2 mb-2"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Badge 
-                  variant={category.variant}
-                  className="text-sm px-3 hover:shadow-md transition-all cursor-default group relative overflow-hidden" 
-                >
-                  <motion.span 
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"
-                  />
-                  <span className="mr-1 text-primary/70 group-hover:rotate-12 transition-transform duration-300">{category.icon}</span> 
-                  <span className="relative z-10">{skill}</span>
-                </Badge>
-              </motion.div>
-            );
-          })}
-        </motion.div>
-      </motion.div>
+  const skills = siteConfig.skills
 
-      <motion.div 
-        variants={fadeInUp} 
-        className="flex flex-col p-6 rounded-lg mt-6 bg-gradient-to-tr from-background to-primary-50/5 dark:from-background dark:to-primary-900/5 border border-border/50"
-      >
-        <div className="flex items-center mb-5">
-          <h1 className="text-3xl font-extrabold leading-tight tracking-tighter md:text-4xl relative">
-            Tools
-            <span className="absolute -bottom-1 left-0 w-12 h-1 bg-primary rounded-full"></span>
-          </h1>
-          <div className="flex ml-auto gap-2">
-            <div className="flex items-center text-xs px-2 py-1 rounded-full bg-emerald-100/30 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">
-              <Laptop className="w-3 h-3 mr-1" /> Dev
-            </div>
-            <div className="flex items-center text-xs px-2 py-1 rounded-full bg-amber-100/30 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">
-              <Database className="w-3 h-3 mr-1" /> Data
-            </div>
-          </div>
-        </div>
-        
-        <motion.div 
-          variants={staggerContainer}
-          className="max-w-[800px]"
-        >
-          {siteConfig.tools.map((tool, i) => (
+  return (
+    <motion.div variants={fadeInUp} className="space-y-5">
+      {/* Section heading */}
+      <div>
+        <h2 className="text-3xl font-extrabold tracking-tight relative inline-block">
+          Skills &amp; Tools
+          <span className="absolute -bottom-1 left-0 w-12 h-1 bg-primary rounded-full" />
+        </h2>
+      </div>
+
+      {/* 2×2 grid — stacks to 1 column on mobile */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {CATEGORIES.map((cat, catIdx) => {
+          const isTools = cat.key === "tools"
+
+          return (
             <motion.div
-              key={i}
-              variants={fadeInUp}
-              className="inline-block mr-2 mb-2"
-              whileHover={{ scale: 1.05, rotate: [-1, 1, -1, 0] }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ rotate: { duration: 0.3 } }}
+              key={cat.key}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-40px" }}
+              transition={{ delay: catIdx * 0.1, duration: 0.45 }}
+              className={`rounded-xl border ${cat.border} bg-gradient-to-br ${cat.gradient} p-5 flex flex-col gap-4`}
             >
-              <Badge 
-                variant={getToolCategory(tool) as any} 
-                className="text-sm px-3 hover:shadow-md transition-all cursor-default group relative overflow-hidden"
-              >
-                <motion.span 
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"
-                />
-                <span className="relative z-10">{tool}</span>
-              </Badge>
+              {/* Card header */}
+              <div className="flex items-center gap-2">
+                <div className={`p-1.5 rounded-md ${cat.avatar}`}>{cat.icon}</div>
+                <h3 className="font-semibold text-sm text-foreground">{cat.label}</h3>
+              </div>
+
+              {isTools ? (
+                /* Tools chip grid */
+                <div className="flex flex-wrap gap-2">
+                  {siteConfig.tools.map((tool) => (
+                    <ToolChip key={tool} name={tool} avatar={cat.avatar} border={cat.border} />
+                  ))}
+                </div>
+              ) : (
+                /* Skill rows with proficiency bars */
+                <div className="space-y-3">
+                  {skills
+                    .filter((s) => s.category === cat.key)
+                    .map((skill, i) => (
+                      <SkillRow
+                        key={skill.name}
+                        skill={skill}
+                        index={i}
+                        bar={cat.bar}
+                        avatar={cat.avatar}
+                      />
+                    ))}
+                </div>
+              )}
             </motion.div>
-          ))}
-        </motion.div>
-      </motion.div>
-    </>
+          )
+        })}
+      </div>
+    </motion.div>
   )
 }

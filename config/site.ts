@@ -36,10 +36,28 @@ export const siteConfig = {
   location: "Ernakulam,Kerala,India",
   email: "basilin@live.com",
   skills: [
-    "Azure", "AWS", "DevOps", "Bicep", "Terraform", "Kubernetes", "Docker",
-    "C#", "JavaScript", "Python", "TypeScript",
-    "Angular", "ReactJS", "NextJS", ".Net",
-    "Entityframework", "SQL Server", "AKS", "Azure DevOps"
+    // Cloud & DevOps
+    { name: "Azure", category: "cloud", proficiency: 95 },
+    { name: "AWS", category: "cloud", proficiency: 80 },
+    { name: "DevOps", category: "cloud", proficiency: 90 },
+    { name: "Bicep", category: "cloud", proficiency: 85 },
+    { name: "Terraform", category: "cloud", proficiency: 75 },
+    { name: "Kubernetes", category: "cloud", proficiency: 85 },
+    { name: "Docker", category: "cloud", proficiency: 90 },
+    { name: "AKS", category: "cloud", proficiency: 85 },
+    { name: "Azure DevOps", category: "cloud", proficiency: 90 },
+    // Backend
+    { name: "C#", category: "backend", proficiency: 95 },
+    { name: "Python", category: "backend", proficiency: 75 },
+    { name: ".Net", category: "backend", proficiency: 90 },
+    { name: "SQL Server", category: "backend", proficiency: 80 },
+    { name: "Entityframework", category: "backend", proficiency: 85 },
+    // Frontend
+    { name: "JavaScript", category: "frontend", proficiency: 85 },
+    { name: "TypeScript", category: "frontend", proficiency: 85 },
+    { name: "Angular", category: "frontend", proficiency: 80 },
+    { name: "ReactJS", category: "frontend", proficiency: 90 },
+    { name: "NextJS", category: "frontend", proficiency: 80 },
   ],
   tools: ["Visual Studio", "Visual Studio Code", "Github", "Azure Portal", "Azure DevOps", "Jira", "Confluence"],
   mainNav: [
