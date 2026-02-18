@@ -13,7 +13,7 @@ export function MainNav() {
   const pathname = usePathname()
 
   return (
-    <motion.div 
+    <motion.div
       initial="hidden"
       animate="visible"
       variants={slideIn}
@@ -26,31 +26,51 @@ export function MainNav() {
         >
           <Icons.logo className="h-6 w-6" />
         </motion.div>
-        <motion.span 
+        <motion.span
           className="hidden font-bold sm:inline-block"
           variants={slideIn}
         >
           {siteConfig.name}
         </motion.span>
       </Link>
-      <nav className="hidden md:flex items-center gap-3 lg:gap-6 text-sm">
-        {siteConfig.mainNav.map((item) => (
-          <motion.div
-            key={item.href}
-            whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.95 }}
-          >
+
+      <nav className="hidden md:flex items-center gap-1 text-sm">
+        {siteConfig.mainNav.map((item) => {
+          const isActive = pathname === item.href
+          return (
             <Link
+              key={item.href}
               href={item.href}
               className={cn(
-                "transition-colors hover:text-foreground/80",
-                pathname === item.href ? "text-foreground font-medium" : "text-foreground/60"
+                "relative px-3 py-1.5 rounded-md transition-colors select-none",
+                isActive
+                  ? "text-foreground font-medium"
+                  : "text-foreground/60 hover:text-foreground/80"
               )}
             >
-              {item.title}
+              {/* Animated background pill for active item */}
+              {isActive && (
+                <motion.span
+                  layoutId="navActivePill"
+                  className="absolute inset-0 rounded-md bg-accent"
+                  style={{ zIndex: -1 }}
+                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                />
+              )}
+              {/* Animated underline dot */}
+              <span className="relative flex flex-col items-center gap-0.5">
+                <span>{item.title}</span>
+                {isActive && (
+                  <motion.span
+                    layoutId="navActiveDot"
+                    className="absolute -bottom-2 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-primary"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
+              </span>
             </Link>
-          </motion.div>
-        ))}
+          )
+        })}
       </nav>
     </motion.div>
   )
