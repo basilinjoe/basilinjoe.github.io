@@ -70,12 +70,14 @@ export const siteConfig = {
   experience: [
     {
       company: "Experion Technologies",
+      logo: "",
       link: "https://experionglobal.com/",
       current: true,
       roles: [
         {
           name: "Technology Lead",
           startDate: "01/04/2022",
+          endDate: "",
           responsibilities: [
             "Architected and implemented enterprise-scale Azure cloud solutions using Infrastructure as Code (IaC) with Bicep templates, ensuring consistent and repeatable deployments",
             "Designed and implemented comprehensive DevOps pipelines using Azure DevOps, incorporating automated testing, security scanning, and deployment strategies",
@@ -92,6 +94,7 @@ export const siteConfig = {
         {
           name: "Lead Software Engineer",
           startDate: "01/04/2020",
+          endDate: "01/04/2022",
           responsibilities: [
             "Architected and implemented CI/CD pipelines in Azure DevOps with multi-stage deployments and environment-specific configurations",
             "Established infrastructure provisioning workflows using ARM templates for consistent Azure resource deployment",
@@ -108,6 +111,7 @@ export const siteConfig = {
         {
           name: "Senior Software Engineer",
           startDate: "01/04/2018",
+          endDate: "01/04/2020",
           responsibilities: [
             "Orchestrated containerized microservices deployment on Amazon EKS, improving system scalability and reliability",
             "Implemented Jenkins pipelines for automated build, test, and deployment workflows across multiple environments",
@@ -124,6 +128,7 @@ export const siteConfig = {
         {
           name: "Software Engineer",
           startDate: "01/04/2016",
+          endDate: "01/04/2018",
           responsibilities: [
             "Implemented a label printing helper system, cutting printing time by 50%, boosting efficiency and productivity.",
             "Developed reusable AngularJS components for improved application maintainability, scalability, and consistent user experience.",
@@ -139,12 +144,14 @@ export const siteConfig = {
     },
     {
       company: "Vyooha Technologies Pvt Ltd.",
+      logo: "",
       link: "https://www.linkedin.com/company/vyooha-entertainment/",
       current: false,
       roles: [
         {
           name: "MEAN Stack Developer",
           startDate: "01/08/2015",
+          endDate: "01/04/2016",
           responsibilities: [
             "Designed and developed robust MEAN stack web applications, ensuring dynamic and efficient solutions.",
             "Wrote secure and scalable code adhering to industry best practices and coding standards.",
