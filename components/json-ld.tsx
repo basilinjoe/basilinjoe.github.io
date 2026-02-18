@@ -21,7 +21,7 @@ export function PersonJsonLd() {
       url: "https://experionglobal.com/"
     },
     description: siteConfig.aboutMe,
-    knowsAbout: siteConfig.skills.join(", ")
+    knowsAbout: siteConfig.skills.map(s => s.name).join(", ")
   }
 
   return (

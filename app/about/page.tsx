@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: `${siteConfig.url}/about`,
   },
-  keywords: ["professional experience", "resume", "CV", "work history", "skills", ...siteConfig.skills],
+  keywords: ["professional experience", "resume", "CV", "work history", "skills", ...siteConfig.skills.map(s => s.name)],
 }
 
 export default function About() {
