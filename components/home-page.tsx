@@ -3,8 +3,7 @@
 import { motion } from "framer-motion"
 import { staggerContainer } from "@/lib/animations"
 import { BlogPost } from "@/lib/blog"
-import { ProfileSection } from "./sections/profile-section"
-import { SocialLinks } from "./sections/social-links"
+import { HeroBentoGrid } from "./sections/hero-bento-grid"
 import { FeaturedPosts } from "./sections/featured-posts"
 import { WorkHighlights } from "./sections/work-highlights"
 import { SkillsAndTools } from "./sections/skills-and-tools"
@@ -29,7 +28,7 @@ export default function HomePage({ posts: featuredPosts, projects: githubProject
         variants={staggerContainer}
         className="container grid items-center gap-12 pb-12 pt-8 md:py-10 relative z-10"
       >
-        <ProfileSection />
+        <HeroBentoGrid />
         {/* <GithubProjects repos={githubProjects}/> */}
         <FeaturedPosts posts={featuredPosts} />
         <WorkHighlights />
