@@ -51,6 +51,7 @@ export default function BlogPostsGrid({
               post={post}
               index={index}
               onTagClick={onTagClick}
+              searchQuery={searchQuery}
             />
           ))
         ) : (
