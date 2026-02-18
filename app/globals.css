@@ -150,6 +150,14 @@
     @apply ml-[-50px] mt-[-4px];
     content: counter(step);
   }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @media (max-width: 640px) {
