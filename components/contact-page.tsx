@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState } from "react"
 import { motion } from "framer-motion"
 import { fadeInUp, staggerContainer } from "@/lib/animations"
 import { Mail, MapPin, Linkedin, Github, Send, Loader2 } from "lucide-react"
@@ -111,10 +111,16 @@ export function ContactPage() {
     setIsSubmitting(true)
 
     try {
-      const res = await fetch('/api/contact', {
+      const res = await fetch(`https://formspree.io/f/${siteConfig.formspreeId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, honeypot }),
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          _subject: formData.subject,
+          message: formData.message,
+          _gotcha: honeypot, // built-in Formspree honeypot field
+        }),
       })
 
       const data = await res.json()
@@ -127,7 +133,8 @@ export function ContactPage() {
         setErrors({})
         setSubmitted(true)
       } else {
-        toast.error("Failed to send", { description: data.error || "Please try again." })
+        const errMsg = data?.errors?.[0]?.message ?? "Please try again."
+        toast.error("Failed to send", { description: errMsg })
       }
     } catch {
       toast.error("Network error", { description: "Please check your connection and try again." })
