@@ -12,6 +12,7 @@ import { PersonJsonLd, WebsiteJsonLd } from '@/components/json-ld'
 import { SkipNav } from '@/components/skip-nav'
 import { ScrollToTop } from '@/components/scroll-to-top'
 import { CommandPaletteProvider } from '@/components/command-palette'
+import { Toaster } from '@/components/ui/sonner'
 // import { ThemeSwitcher } from '@/components/theme-switcher'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -80,6 +81,7 @@ export default function RootLayout({
                 </div>
               </div>
               <ScrollToTop />
+              <Toaster />
             </CommandPaletteProvider>
           </ThemeProvider>
           {/* <ThemeSwitcher /> */}

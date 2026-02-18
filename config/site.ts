@@ -35,6 +35,8 @@ export const siteConfig = {
   aboutMe: "Results-driven Technology Lead with 7+ years' experience in software development, excelling in Azure, AWS, and Full Stack. Proven track record in delivering high-quality projects, optimizing processes, and leading cross-functional teams for enhanced efficiency and collaboration.",
   location: "Ernakulam,Kerala,India",
   email: "basilin@live.com",
+  // Sign up at formspree.io, create a form, and paste the form ID here
+  formspreeId: "YOUR_FORM_ID",
   skills: [
     // Cloud & DevOps
     { name: "Azure", category: "cloud", proficiency: 95 },
@@ -76,6 +78,10 @@ export const siteConfig = {
     {
       title: "Blog",
       href: "/blog",
+    },
+    {
+      title: "Contact",
+      href: "/contact",
     }
   ],
   links: {
