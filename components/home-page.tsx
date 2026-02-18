@@ -29,7 +29,7 @@ export default function HomePage({ posts: featuredPosts, projects: githubProject
         className="container grid items-center gap-12 pb-12 pt-8 md:py-10 relative z-10"
       >
         <HeroBentoGrid />
-        {/* <GithubProjects repos={githubProjects}/> */}
+        <GithubProjects repos={githubProjects} />
         <FeaturedPosts posts={featuredPosts} />
         <WorkHighlights />
         <SkillsAndTools />
