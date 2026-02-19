@@ -7,13 +7,14 @@ import { motion } from "framer-motion"
 import { fadeInUp } from "@/lib/animations"
 import { BlogPost } from "@/lib/blog"
 import { siteConfig } from "@/config/site"
-import { Calendar, Clock } from "lucide-react"
+import { Calendar, Clock, ArrowRight } from "lucide-react"
 
 interface BlogPostCardProps {
   post: BlogPost;
   index: number;
   onTagClick: (tag: string) => void;
   searchQuery?: string;
+  featured?: boolean;
 }
 
 // Highlight matching text in search results
@@ -49,8 +50,106 @@ function getGradientClass(tags: string[]): string {
   return "from-primary/10 via-primary/5 to-background"
 }
 
-export default function BlogPostCard({ post, index, onTagClick, searchQuery }: BlogPostCardProps) {
+export default function BlogPostCard({ post, index, onTagClick, searchQuery, featured = false }: BlogPostCardProps) {
   const gradientClass = getGradientClass(post.tags ?? [])
+
+  if (featured) {
+    return (
+      <motion.article
+        variants={fadeInUp}
+        transition={{ delay: 0 }}
+        className="group relative rounded-xl border border-border/60 overflow-hidden
+          col-span-1 sm:col-span-2 flex flex-col sm:flex-row
+          transition-all duration-300
+          hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10 hover:border-primary/40"
+      >
+        {/* Cover image */}
+        <Link
+          href={`/blog/${post.id}`}
+          className="block relative overflow-hidden flex-shrink-0 sm:w-[52%]"
+          style={{ minHeight: '220px', height: '260px' }}
+        >
+          {post.coverImage ? (
+            <img
+              src={post.coverImage}
+              alt={post.title}
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+          ) : (
+            <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass}`} />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-background/10 to-transparent sm:bg-gradient-to-r" />
+
+          {/* Featured label */}
+          <div className="absolute top-3 left-3 flex gap-2">
+            <Badge className="text-xs bg-primary text-primary-foreground">
+              Featured
+            </Badge>
+            {post.tags && post.tags.length > 0 && (
+              <Badge variant="tech" className="text-xs backdrop-blur-sm">
+                {post.tags[0]}
+              </Badge>
+            )}
+          </div>
+        </Link>
+
+        {/* Card body */}
+        <div className="flex flex-col flex-1 p-5 sm:p-7 justify-center gap-3">
+          <h2 className="text-xl sm:text-2xl font-bold leading-snug group-hover:text-primary transition-colors">
+            <Link href={`/blog/${post.id}`} className="line-clamp-3">
+              <Highlight text={post.title} query={searchQuery} />
+            </Link>
+          </h2>
+
+          <p className="text-sm text-muted-foreground line-clamp-3">
+            <Highlight text={post.excerpt} query={searchQuery} />
+          </p>
+
+          {/* Extra tags */}
+          {post.tags && post.tags.length > 1 && (
+            <div className="flex flex-wrap gap-1.5">
+              {post.tags.slice(1, 5).map(tag => (
+                <Badge
+                  key={tag}
+                  variant="tech"
+                  className="text-xs cursor-pointer"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onTagClick(tag);
+                  }}
+                >
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          )}
+
+          {/* Meta + CTA */}
+          <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground pt-2 border-t border-border/30">
+            <span className="flex items-center gap-1">
+              <Calendar className="h-3.5 w-3.5" />
+              {new Date(post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+            </span>
+            <span className="flex items-center gap-1">
+              <Clock className="h-3.5 w-3.5" />
+              {post.readingTime}
+            </span>
+            <div className="ml-auto">
+              <Link
+                href={`/blog/${post.id}`}
+                className={buttonVariants({
+                  size: "sm",
+                  className: "gap-1.5 h-8 text-xs"
+                })}
+              >
+                Read article <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </motion.article>
+    )
+  }
 
   return (
     <motion.article
