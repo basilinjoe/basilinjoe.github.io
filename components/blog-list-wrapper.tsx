@@ -20,12 +20,12 @@ export default function BlogListWrapper({ allPosts, allTags }: BlogListWrapperPr
 
 function BlogListFallback() {
   return (
-    <div className="relative overflow-hidden">
+    <div className="relative overflow-x-hidden">
       {/* Background elements for visual consistency */}
       <div className="absolute top-20 left-10 w-64 h-64 bg-primary/5 rounded-full filter blur-3xl opacity-40 -z-10"></div>
       <div className="absolute bottom-40 right-10 w-80 h-80 bg-blue-500/5 rounded-full filter blur-3xl opacity-40 -z-10"></div>
       
-      <div className="container grid items-center gap-8 pb-12 pt-8 md:py-10">
+      <div className="container grid grid-cols-1 items-center gap-8 pb-12 pt-8 md:py-10">
         {/* Header skeleton */}
         <div className="flex max-w-[980px] flex-col items-start gap-2 px-4 sm:px-6 md:px-0">
           <Skeleton className="h-10 w-32" />

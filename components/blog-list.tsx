@@ -102,7 +102,7 @@ export default function BlogList({ allPosts, allTags }: BlogListProps) {
   }, [searchParams, router]);
 
   return (
-    <div className="relative overflow-hidden">
+    <div className="relative overflow-x-hidden">
       <div className="absolute top-20 left-10 w-64 h-64 bg-primary/5 rounded-full filter blur-3xl opacity-40 -z-10" />
       <div className="absolute bottom-40 right-10 w-80 h-80 bg-blue-500/5 rounded-full filter blur-3xl opacity-40 -z-10" />
 
@@ -110,7 +110,7 @@ export default function BlogList({ allPosts, allTags }: BlogListProps) {
         initial="hidden"
         animate="visible"
         variants={staggerContainer}
-        className="container grid items-center gap-6 pb-12 pt-8 md:py-10"
+        className="container grid grid-cols-1 items-center gap-6 pb-12 pt-8 md:py-10"
       >
         <div className="px-4 sm:px-6 md:px-0">
           <BlogBreadcrumb tag={selectedTag} />
