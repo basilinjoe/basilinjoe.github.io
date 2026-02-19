@@ -110,7 +110,7 @@ export default function BlogList({ allPosts, allTags }: BlogListProps) {
         initial="hidden"
         animate="visible"
         variants={staggerContainer}
-        className="container grid items-center gap-6 pb-12 pt-8 md:py-10"
+        className="container grid grid-cols-1 items-center gap-6 pb-12 pt-8 md:py-10"
       >
         <div className="px-4 sm:px-6 md:px-0">
           <BlogBreadcrumb tag={selectedTag} />
