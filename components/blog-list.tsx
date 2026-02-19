@@ -102,7 +102,7 @@ export default function BlogList({ allPosts, allTags }: BlogListProps) {
   }, [searchParams, router]);
 
   return (
-    <div className="relative overflow-hidden">
+    <div className="relative overflow-x-hidden">
       <div className="absolute top-20 left-10 w-64 h-64 bg-primary/5 rounded-full filter blur-3xl opacity-40 -z-10" />
       <div className="absolute bottom-40 right-10 w-80 h-80 bg-blue-500/5 rounded-full filter blur-3xl opacity-40 -z-10" />
 
