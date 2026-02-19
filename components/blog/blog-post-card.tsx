@@ -66,17 +66,17 @@ export default function BlogPostCard({ post, index, onTagClick, searchQuery, fea
         {/* Cover image */}
         <Link
           href={`/blog/${post.id}`}
-          className="block relative overflow-hidden flex-shrink-0 sm:w-[52%]"
-          style={{ minHeight: '220px', height: '260px' }}
+          className="block relative overflow-hidden flex-shrink-0 h-52 sm:h-auto sm:w-[52%]"
         >
-          {post.coverImage ? (
+          {/* Gradient always shown as background / fallback */}
+          <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass}`} />
+          {post.coverImage && (
             <img
               src={post.coverImage}
               alt={post.title}
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
             />
-          ) : (
-            <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass}`} />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-background/10 to-transparent sm:bg-gradient-to-r" />
 
@@ -160,15 +160,16 @@ export default function BlogPostCard({ post, index, onTagClick, searchQuery, fea
         hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/10 hover:border-primary/40"
     >
       {/* Cover image / gradient banner */}
-      <Link href={`/blog/${post.id}`} className="block relative overflow-hidden" style={{ height: '160px' }}>
-        {post.coverImage ? (
+      <Link href={`/blog/${post.id}`} className="block relative overflow-hidden h-40">
+        {/* Gradient always shown as background / fallback */}
+        <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass}`} />
+        {post.coverImage && (
           <img
             src={post.coverImage}
             alt={post.title}
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
           />
-        ) : (
-          <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass}`} />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
 
