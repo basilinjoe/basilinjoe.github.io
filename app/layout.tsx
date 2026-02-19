@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
 import './globals.css'
-import { fontSans } from "@/lib/fonts"
+import { fontSans, fontMono } from "@/lib/fonts"
 import { cn } from "@/lib/utils"
 import { siteConfig } from "@/config/site"
 
@@ -14,8 +13,6 @@ import { ScrollToTop } from '@/components/scroll-to-top'
 import { CommandPaletteProvider } from '@/components/command-palette'
 import { Toaster } from '@/components/ui/sonner'
 // import { ThemeSwitcher } from '@/components/theme-switcher'
-
-const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -58,14 +55,13 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={cn(fontSans.variable, fontMono.variable)}
+    >
         <head />
-        <body
-          className={cn(
-            "min-h-screen bg-background font-sans antialiased",
-            fontSans.className
-          )}
-        >
+        <body className="min-h-screen bg-background font-sans antialiased">
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
