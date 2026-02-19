@@ -92,8 +92,10 @@ export function GithubProjects({ repos }: ProjectsListProps) {
     <motion.div variants={fadeInUp} className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Featured Projects</h2>
-          <div className="h-0.5 w-16 bg-primary/50 rounded-full mt-1"></div>
+          <h2 className="text-3xl font-extrabold tracking-tight relative inline-block">
+            Featured Projects
+            <span className="absolute -bottom-1 left-0 w-12 h-1 bg-primary rounded-full" />
+          </h2>
         </div>
         <Link href="/projects">
           <Button variant="ghost" size="sm" className="gap-1.5">
