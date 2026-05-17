@@ -41,9 +41,9 @@ export function FeaturedPosts({ posts }: FeaturedPostsProps) {
     <motion.div variants={fadeInUp} className="flex flex-col">
       <div className="flex justify-between items-center mb-5">
         <div className="flex items-center flex-wrap gap-2">
-          <h1 className="text-3xl font-extrabold leading-tight tracking-tighter md:text-4xl">
+          <h2 className="text-3xl font-extrabold leading-tight tracking-tighter md:text-4xl">
             Featured Posts
-          </h1>
+          </h2>
           <div className="bg-primary/10 dark:bg-primary/20 rounded-full px-3 py-1 text-xs font-medium text-primary flex items-center">
             <BookOpen className="w-3 h-3 mr-1" />
             Latest insights

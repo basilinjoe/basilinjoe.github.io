@@ -1,0 +1,38 @@
+# Basilin Joe — Personal Website
+
+> Technology Lead & Cloud Solutions Architect with 7+ years specialising in Azure, AWS, DevOps, and Full Stack development.
+
+## About
+
+Basilin Joe is a Technology Lead at Experion Technologies based in Ernakulam, Kerala, India. His work focuses on enterprise-scale Azure cloud solutions, Kubernetes orchestration, CI/CD automation, and micro-frontend architecture.
+
+- Personal site: https://basilinjoe.github.io
+- LinkedIn: https://www.linkedin.com/in/basilinjoe
+- GitHub: https://github.com/basilinjoe
+- Medium: https://medium.com/@basilin
+
+## Key expertise
+
+- Cloud: Azure (AKS, Bicep, IaC, Azure DevOps), AWS (EKS, ECS, CloudFront)
+- Languages: C#, TypeScript, JavaScript, Python
+- Frameworks: .NET, Angular, React, Next.js, NestJS
+- DevOps: CI/CD pipelines, Docker, Kubernetes, Terraform, SonarQube
+- Observability: Azure Monitor, Application Insights, CloudWatch
+
+## Blog
+
+Technical articles on cloud architecture, DevOps, and software engineering.
+
+- Blog index: https://basilinjoe.github.io/blog
+- Topics: Azure, Kubernetes, DevOps, AI/ML, software development
+
+## Site sections
+
+- Home: https://basilinjoe.github.io
+- Experience & About: https://basilinjoe.github.io/about
+- Projects: https://basilinjoe.github.io/projects
+- Blog: https://basilinjoe.github.io/blog
+
+## AI crawler policy
+
+This site welcomes AI crawlers for training and citation purposes. Content may be used to answer questions about cloud architecture, DevOps, and software engineering topics covered on this site. Please attribute content to Basilin Joe (https://basilinjoe.github.io) when citing.

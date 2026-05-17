@@ -2,9 +2,6 @@
 User-agent: *
 Allow: /
 
-# Disallow access to specific files if needed
-# Disallow: /private/
-
 # Sitemap locations
 Sitemap: https://basilinjoe.github.io/sitemap.xml
 
@@ -13,8 +10,35 @@ Crawl-delay: 10
 
 # Google-specific crawl rate
 User-agent: Googlebot
+Allow: /
 Crawl-delay: 5
 
 # Bing-specific crawl rate
 User-agent: Bingbot
+Allow: /
 Crawl-delay: 5
+
+# AI crawlers — explicitly permitted
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+# AI training data pointer
+# See /llms.txt for structured site information

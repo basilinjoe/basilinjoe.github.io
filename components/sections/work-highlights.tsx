@@ -24,9 +24,9 @@ export function WorkHighlights() {
   return (
     <motion.div variants={fadeInUp} className="flex flex-col">      <div className="flex justify-between items-center mb-5">
         <div className="flex items-center flex-wrap gap-2">
-          <h1 className="text-3xl font-extrabold leading-tight tracking-tighter md:text-4xl bg-gradient-to-r from-primary-600 to-blue-500 bg-clip-text">
+          <h2 className="text-3xl font-extrabold leading-tight tracking-tighter md:text-4xl bg-gradient-to-r from-primary-600 to-blue-500 bg-clip-text">
             Work Highlights
-          </h1>
+          </h2>
           <div className="bg-primary/10 dark:bg-primary/20 rounded-full px-3 py-1 text-xs font-semibold text-primary dark:text-primary flex items-center shadow-sm">
             <Briefcase className="w-3 h-3 mr-1" />
             Professional experience

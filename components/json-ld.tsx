@@ -1,5 +1,8 @@
 import { siteConfig } from "@/config/site"
 
+const SITE_URL = siteConfig.url
+const OG_IMAGE = `${SITE_URL}/images/og-default.png`
+
 // Person structured data
 export function PersonJsonLd() {
   const personJsonLd = {
@@ -7,7 +10,8 @@ export function PersonJsonLd() {
     "@type": "Person",
     name: siteConfig.name,
     jobTitle: siteConfig.position,
-    url: siteConfig.url,
+    url: SITE_URL,
+    image: OG_IMAGE,
     sameAs: [
       siteConfig.links.linkedin,
       siteConfig.links.github,
@@ -38,11 +42,19 @@ export function WebsiteJsonLd() {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: siteConfig.title,
-    url: siteConfig.url,
+    url: SITE_URL,
     description: siteConfig.description,
     author: {
       "@type": "Person",
       name: siteConfig.name
+    },
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${SITE_URL}/blog?q={search_term_string}`
+      },
+      "query-input": "required name=search_term_string"
     }
   }
 
@@ -55,40 +67,49 @@ export function WebsiteJsonLd() {
 }
 
 // BlogPosting structured data
-export function BlogPostJsonLd({ 
-  title, 
-  description, 
-  date, 
-  url, 
+export function BlogPostJsonLd({
+  title,
+  description,
+  date,
+  modified,
+  url,
   tags,
-  readingTime
-}: { 
-  title: string; 
-  description: string; 
-  date: string; 
-  url: string; 
+  readingTime,
+  image
+}: {
+  title: string;
+  description: string;
+  date: string;
+  modified?: string;
+  url: string;
   tags?: string[];
   readingTime?: string;
+  image?: string;
 }) {
   const blogPostJsonLd = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
     headline: title,
     description: description,
+    image: image || OG_IMAGE,
     author: {
       "@type": "Person",
       name: siteConfig.name,
-      url: siteConfig.url
+      url: SITE_URL
     },
     datePublished: date,
-    dateModified: date,
+    dateModified: modified || date,
     url: url,
     keywords: tags?.join(", ") || "",
     timeRequired: readingTime,
     publisher: {
-      "@type": "Person",
+      "@type": "Organization",
       name: siteConfig.name,
-      url: siteConfig.url
+      url: SITE_URL,
+      logo: {
+        "@type": "ImageObject",
+        url: OG_IMAGE
+      }
     },
     mainEntityOfPage: {
       "@type": "WebPage",
@@ -105,10 +126,10 @@ export function BlogPostJsonLd({
 }
 
 // BreadcrumbList structured data
-export function BreadcrumbJsonLd({ 
-  items 
-}: { 
-  items: { name: string; url: string }[] 
+export function BreadcrumbJsonLd({
+  items
+}: {
+  items: { name: string; url: string }[]
 }) {
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
