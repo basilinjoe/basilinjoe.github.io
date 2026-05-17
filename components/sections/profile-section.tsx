@@ -6,7 +6,7 @@ import { MapPin, Mail } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { InteractiveHero } from "@/components/interactive-hero"
-import { DynamicGreeting, Tagline } from "@/components/dynamic-greeting"
+import { Tagline } from "@/components/dynamic-greeting"
 import { SocialLinks } from "./social-links"
 
 export function ProfileSection() {
