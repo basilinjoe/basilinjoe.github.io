@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion"
 
 export function HeroAnimation() {
@@ -57,73 +57,6 @@ export function HeroAnimation() {
         <div className="w-full h-full bg-primary/5 rounded-full filter blur-3xl opacity-50" />
       </motion.div>
 
-      {/* Floating particles */}
-      <FloatingParticles />
     </div>
-  )
-}
-
-function FloatingParticles() {
-  const [mounted, setMounted] = useState(false)
-  const [particles, setParticles] = useState<Array<{
-    id: number
-    initialX: number
-    initialY: number
-    animateX: number[]
-    animateY: number[]
-    duration: number
-  }>>([])
-
-  useEffect(() => {
-    setMounted(true)
-    
-    // Generate particles only on client side
-    const width = window.innerWidth
-    const height = window.innerHeight
-    
-    const newParticles = Array.from({ length: 15 }).map((_, i) => ({
-      id: i,
-      initialX: Math.random() * width,
-      initialY: Math.random() * height,
-      animateX: [
-        Math.random() * width,
-        Math.random() * width,
-        Math.random() * width,
-      ],
-      animateY: [
-        Math.random() * height,
-        Math.random() * height,
-        Math.random() * height,
-      ],
-      duration: Math.random() * 20 + 20,
-    }))
-    
-    setParticles(newParticles)
-  }, [])
-
-  if (!mounted) return null
-
-  return (
-    <>
-      {particles.map((particle) => (
-        <motion.div
-          key={particle.id}
-          className="absolute w-1 h-1 bg-primary/20 rounded-full"
-          initial={{
-            x: particle.initialX,
-            y: particle.initialY,
-          }}
-          animate={{
-            x: particle.animateX,
-            y: particle.animateY,
-          }}
-          transition={{
-            duration: particle.duration,
-            repeat: Infinity,
-            ease: "linear",
-          }}
-        />
-      ))}
-    </>
   )
 }
