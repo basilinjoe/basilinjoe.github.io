@@ -115,10 +115,6 @@ export default function BlogList({ allPosts, allTags }: BlogListProps) {
   
   return (
     <div className="relative overflow-hidden">
-      {/* Colorful background elements */}
-      <div className="absolute top-20 left-10 w-64 h-64 bg-primary/5 rounded-full filter blur-3xl opacity-40 -z-10"></div>
-      <div className="absolute bottom-40 right-10 w-80 h-80 bg-blue-500/5 rounded-full filter blur-3xl opacity-40 -z-10"></div>
-      
       <motion.section 
         initial="hidden"
         animate="visible"
@@ -154,9 +150,6 @@ export default function BlogList({ allPosts, allTags }: BlogListProps) {
           totalPages={totalPages}
         />
         
-        {/* Decorative elements */}
-        <div className="absolute top-40 right-10 w-16 h-16 border border-primary/10 rounded-full animate-pulse-slow opacity-30 hidden md:block"></div>
-        <div className="absolute bottom-60 left-10 w-10 h-10 border border-primary/10 rounded-full animate-float opacity-30 hidden md:block"></div>
       </motion.section>
     </div>  );
 }

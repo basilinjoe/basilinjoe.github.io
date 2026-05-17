@@ -9,6 +9,7 @@ interface BlogPostLayoutProps {
   title: string
   description: string
   date: string
+  modified?: string
   url: string
   tags?: string[]
   readingTime?: string
@@ -19,25 +20,27 @@ interface BlogPostLayoutProps {
   children: ReactNode
 }
 
-export function BlogPostLayout({ 
+export function BlogPostLayout({
   title,
   description,
   date,
+  modified,
   url,
   tags,
   readingTime,
   breadcrumbs,
-  children 
+  children
 }: BlogPostLayoutProps) {
   return (
     <div className="relative overflow-hidden">
       <ReadingProgress />
-      
+
       <div className="container mx-auto py-8">
         <BlogPostJsonLd
           title={title}
           description={description}
           date={date}
+          modified={modified}
           url={url}
           tags={tags}
           readingTime={readingTime}
@@ -47,18 +50,18 @@ export function BlogPostLayout({
         />
         <div className="max-w-4xl mx-auto">
           <BlogBreadcrumb postTitle={title} />
-          <Link 
-            href="/blog" 
+          <Link
+            href="/blog"
             className="flex items-center text-sm text-primary hover:text-primary/80 mb-8 group transition-colors"
           >
             <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-0.5 transition-transform" />
             Back to all posts
           </Link>
-          
+
           <article>
             {children}
           </article>
-          
+
         </div>
       </div>
     </div>

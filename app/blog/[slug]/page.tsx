@@ -39,7 +39,7 @@ export async function generateMetadata({ params }: any): Promise<Metadata> {
       description: post.excerpt,
       type: "article",
       publishedTime: post.date,
-      modifiedTime: post.date,
+      modifiedTime: post.modified || post.date,
       url: url,
       images: post.coverImage && typeof post.coverImage === 'string'
         ? [
@@ -91,6 +91,7 @@ export default async function BlogPostPage({ params }: any) {
       title={post.title}
       description={post.excerpt}
       date={post.date}
+      modified={post.modified}
       url={postUrl}
       tags={post.tags}
       readingTime={post.readingTime}

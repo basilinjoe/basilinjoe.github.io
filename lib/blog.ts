@@ -10,6 +10,7 @@ export interface BlogPost {
   id: string
   title: string
   date: string
+  modified?: string
   excerpt: string
   content: string
   tags: string[]
@@ -49,6 +50,7 @@ export function getAllPosts(): BlogPost[] {
             content,
             title: data.title || 'Untitled',
             date: data.date || new Date().toISOString(),
+            modified: data.modified || undefined,
             excerpt: data.excerpt || '',
             tags: data.tags || [],
             readingTime,
@@ -92,6 +94,7 @@ export async function getPostById(id: string): Promise<BlogPost | null> {
       content,
       title: data.title || 'Untitled',
       date: data.date || new Date().toISOString(),
+      modified: data.modified || undefined,
       excerpt: data.excerpt || '',
       tags: data.tags || [],
       readingTime,
