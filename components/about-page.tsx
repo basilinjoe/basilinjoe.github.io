@@ -11,10 +11,6 @@ import { Building, Calendar, Award } from "lucide-react"
 export default function AboutPage() {
   return (
     <div className="relative overflow-hidden">
-      {/* Colorful background elements */}
-      <div className="absolute top-20 left-10 w-64 h-64 bg-primary/5 rounded-full filter blur-3xl opacity-40 -z-10"></div>
-      <div className="absolute bottom-40 right-10 w-80 h-80 bg-blue-500/5 rounded-full filter blur-3xl opacity-40 -z-10"></div>
-
       <motion.section
         initial="hidden"
         animate="visible"
@@ -34,9 +30,6 @@ export default function AboutPage() {
         {siteConfig.experience.map((exp, index) => (
           <motion.div
             key={`exp-${index}`}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-50px" }}
             variants={fadeInUp}
             transition={{ delay: index * 0.1 }}
             className="p-6 rounded-lg border border-border/50 bg-gradient-to-br from-background to-primary-50/5 dark:from-background dark:to-primary-900/5 hover:shadow-md transition-all"
