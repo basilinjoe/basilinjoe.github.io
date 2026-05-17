@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: `${siteConfig.url}/projects`,
   },
-  keywords: ["projects", "portfolio", "open source", "github", "software development", ...siteConfig.skills],
+  keywords: ["projects", "portfolio", "open source", "github", "software development", ...siteConfig.skills.map(s => s.name)],
 }
 
 export default async function Projects() {

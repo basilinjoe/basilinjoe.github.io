@@ -8,6 +8,7 @@ export interface Repository {
   watchers_count: number;
   topics: string[];
   homepage: string | null;
+  updated_at: string;
 }
 
 export async function getGithubRepos(username: string, limit: number = 4): Promise<Repository[]> {
@@ -37,7 +38,8 @@ export async function getGithubRepos(username: string, limit: number = 4): Promi
       forks_count: repo.forks_count,
       watchers_count: repo.watchers_count,
       topics: repo.topics || [],
-      homepage: repo.homepage
+      homepage: repo.homepage,
+      updated_at: repo.updated_at || '',
     }));
   } catch (error) {
     console.error('Error fetching GitHub repositories:', error);
