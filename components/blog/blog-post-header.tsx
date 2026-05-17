@@ -1,8 +1,10 @@
 "use client"
 
+import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { BlogPost } from "@/lib/blog"
+import { siteConfig } from "@/config/site"
 
 interface BlogPostHeaderProps {
   post: BlogPost
@@ -14,8 +16,30 @@ export function BlogPostHeader({ post }: BlogPostHeaderProps) {
       <h1 className="mb-4 text-3xl sm:text-4xl font-extrabold tracking-tight lg:text-5xl bg-gradient-to-r from-primary to-blue-500 bg-clip-text text-transparent">
         {post.title}
       </h1>
-      
-      <div className="flex flex-wrap items-center text-sm text-muted-foreground gap-2 mt-4">
+
+      {/* Author byline */}
+      <div className="flex items-center gap-3 mt-5 mb-4">
+        <Image
+          src="/avatar.webp"
+          alt={siteConfig.name}
+          width={40}
+          height={40}
+          className="rounded-full ring-2 ring-primary/20"
+        />
+        <div>
+          <Link
+            href={siteConfig.links.linkedin}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-semibold hover:text-primary transition-colors"
+          >
+            {siteConfig.name}
+          </Link>
+          <p className="text-xs text-muted-foreground">{siteConfig.position}</p>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center text-sm text-muted-foreground gap-2">
         <time dateTime={post.date} className="flex items-center">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 text-primary/70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -34,14 +58,12 @@ export function BlogPostHeader({ post }: BlogPostHeaderProps) {
           {post.readingTime}
         </span>
       </div>
-      
+
       {post.tags && post.tags.length > 0 && (
         <div className="flex flex-wrap gap-2 mt-5">
           {post.tags.map(tag => {
-            // Determine tag category based on content
             const tagLower = tag.toLowerCase();
             let variant: "tech" | "featured" | "secondary" | "skill" | "default" = "tech";
-            
             if (tagLower.includes('react') || tagLower.includes('javascript') || tagLower.includes('frontend')) {
               variant = "featured";
             } else if (tagLower.includes('career') || tagLower.includes('productivity')) {
@@ -49,7 +71,6 @@ export function BlogPostHeader({ post }: BlogPostHeaderProps) {
             } else if (tagLower.includes('ai') || tagLower.includes('machine learning')) {
               variant = "skill";
             }
-            
             return (
               <Link key={tag} href={`/blog?tag=${tag}`}>
                 <Badge variant={variant} className="hover:bg-opacity-90 transition-all">

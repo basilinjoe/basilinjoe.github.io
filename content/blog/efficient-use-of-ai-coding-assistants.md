@@ -1,7 +1,7 @@
 ---
-title: "Efficient Use of AI Coding Assistants in Modern Software Development"
+title: "AI Coding Assistants: A Practical Developer's Guide"
 date: "2024-01-20"
-excerpt: "A comprehensive guide to understanding and effectively using AI coding assistants, with focus on GitHub Copilot and its alternatives in professional software development."
+excerpt: "How to effectively use AI coding assistants like GitHub Copilot in your development workflow, with practical tips and best practices for professional developers."
 tags: ["AI", "Software Development", "Programming", "Productivity", "GitHub Copilot"]
 coverImage: "/blog/ai-coding-assistants-cover.webp"
 ---

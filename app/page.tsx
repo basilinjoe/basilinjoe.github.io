@@ -3,7 +3,7 @@ import { getGithubRepos } from "@/lib/github"
 import { siteConfig } from "@/config/site"
 import HomePage from "../components/home-page"
 import { Metadata } from "next"
-import { BreadcrumbJsonLd } from "@/components/json-ld"
+import { BreadcrumbJsonLd, ProfilePageJsonLd } from "@/components/json-ld"
 
 export const metadata: Metadata = {
   title: siteConfig.title,
@@ -26,6 +26,7 @@ export default async function Home() {
           { name: "Home", url: siteConfig.url },
         ]}
       />
+      <ProfilePageJsonLd />
       <HomePage posts={featuredPosts} projects={repos} />
     </>
   );

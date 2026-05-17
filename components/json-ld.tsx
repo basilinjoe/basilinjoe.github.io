@@ -125,6 +125,37 @@ export function BlogPostJsonLd({
   )
 }
 
+// ProfilePage structured data for the homepage
+export function ProfilePageJsonLd() {
+  const profilePageJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    dateCreated: "2024-01-01",
+    dateModified: new Date().toISOString().split("T")[0],
+    mainEntity: {
+      "@type": "Person",
+      name: siteConfig.name,
+      jobTitle: siteConfig.position,
+      url: SITE_URL,
+      image: OG_IMAGE,
+      sameAs: [
+        siteConfig.links.linkedin,
+        siteConfig.links.github,
+        siteConfig.links.twitter,
+        siteConfig.links.medium,
+      ],
+      description: siteConfig.aboutMe,
+    }
+  }
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(profilePageJsonLd) }}
+    />
+  )
+}
+
 // BreadcrumbList structured data
 export function BreadcrumbJsonLd({
   items

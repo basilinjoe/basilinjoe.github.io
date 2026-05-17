@@ -7,6 +7,7 @@ import { BlogPostContent } from "@/components/blog/blog-post-content"
 import { BlogPostNavigation } from "@/components/blog/blog-post-navigation"
 import { BlogPostSharingSection } from "@/components/blog/blog-post-sharing-section"
 import { BlogPostLayout } from "@/components/blog/blog-post-layout"
+import { RelatedPosts } from "@/components/blog/related-posts"
 
 // Generate static paths for all blog posts
 export async function generateStaticParams() {
@@ -101,6 +102,7 @@ export default async function BlogPostPage({ params }: any) {
     >
       <BlogPostHeader post={post} />
       <BlogPostContent post={post} />
+      <RelatedPosts currentPostId={post.id} currentTags={post.tags} allPosts={allPosts} />
       <BlogPostSharingSection title={post.title} url={postUrl} />
       <BlogPostNavigation previousPost={previousPost} nextPost={nextPost} />
     </BlogPostLayout>
