@@ -43,7 +43,7 @@ export function MainNav() {
             <Link
               href={item.href}
               className={cn(
-                "transition-colors hover:text-foreground/80",
+                "flex items-center h-11 px-1 transition-colors hover:text-foreground/80",
                 pathname === item.href ? "text-foreground font-medium" : "text-foreground/60"
               )}
             >
