@@ -32,10 +32,6 @@ export default function HomePage({ posts: featuredPosts }: HomePageProps) {
         <FeaturedPosts posts={featuredPosts} />
         <WorkHighlights />
 
-        {/* Decorative elements */}
-        <div className="absolute top-20 right-5 w-20 h-20 border border-primary/10 rounded-full animate-pulse opacity-30 hidden md:block"></div>
-        <div className="absolute bottom-40 left-5 w-12 h-12 border border-primary/10 rounded-full animate-pulse opacity-30 hidden md:block"></div>
-        <div className="absolute bottom-96 right-1/4 w-8 h-8 bg-primary/10 rounded-lg rotate-45 animate-spin-slow opacity-30 hidden md:block"></div>
       </motion.section>
     </div>
   )
