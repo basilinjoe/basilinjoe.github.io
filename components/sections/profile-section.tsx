@@ -64,9 +64,8 @@ export function ProfileSection() {
           />
         </motion.div>
         <motion.div variants={slideIn} className="flex-1">
-          <DynamicGreeting />
           <div className="inline-block">
-            <h1 className="text-3xl sm:text-4xl font-extrabold leading-tight tracking-tighter md:text-5xl bg-gradient-to-r from-primary to-blue-500 bg-clip-text text-transparent mb-2">
+            <h1 className="text-4xl sm:text-5xl font-extrabold leading-tight tracking-tighter md:text-6xl bg-gradient-to-r from-primary to-blue-500 bg-clip-text text-transparent mb-2">
               {siteConfig.name}
             </h1>
           </div>
@@ -88,7 +87,7 @@ export function ProfileSection() {
           <div className="mt-3 mb-2">
             <InteractiveHero />
           </div>
-          <p className="max-w-full text-sm sm:text-md text-foreground pt-2">
+          <p className="max-w-full text-base sm:text-lg text-foreground pt-2">
             {siteConfig.aboutMe}
           </p>
           {/* Contact Info */}
