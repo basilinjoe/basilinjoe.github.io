@@ -21,7 +21,7 @@ const metrics = [
   { value: `${new Date().getFullYear() - 2015}+`, label: "Years shipping" },
   { value: "2", label: "Cloud platforms" },
   { value: `${siteConfig.skills.length}+`, label: "Technologies" },
-  { value: "50+", label: "Projects delivered" },
+  { value: "15+", label: "Projects delivered" },
 ]
 
 /**
