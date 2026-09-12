@@ -1,150 +1,123 @@
 "use client"
 
 import Link from "next/link"
-import { Badge } from "@/components/ui/badge"
-import { buttonVariants } from "@/components/ui/button"
 import { motion } from "framer-motion"
 import { fadeInUp } from "@/lib/animations"
 import { BlogPost } from "@/lib/blog"
-import { siteConfig } from "@/config/site"
-import { Calendar, Clock, ArrowRight } from "lucide-react"
 
 interface BlogPostCardProps {
-  post: BlogPost;
-  index: number;
-  onTagClick: (tag: string) => void;
-  searchQuery?: string;
-  featured?: boolean;
+  post: BlogPost
+  index: number
+  onTagClick: (tag: string) => void
+  searchQuery?: string
+  featured?: boolean
 }
 
-// Highlight matching text in search results
+/** Highlights matching text inside search results. */
 function Highlight({ text, query }: { text: string; query?: string }) {
   if (!query || !query.trim()) return <>{text}</>
-
-  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  const regex = new RegExp(`(${escaped})`, 'gi')
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+  const regex = new RegExp(`(${escaped})`, "gi")
   const parts = text.split(regex)
-
   return (
     <>
       {parts.map((part, i) =>
-        regex.test(part)
-          ? <mark key={i} className="bg-primary/20 text-foreground rounded px-0.5 not-italic">{part}</mark>
-          : part
+        regex.test(part) ? (
+          <mark
+            key={i}
+            className="bg-accent-lime px-0.5 not-italic text-accent-lime-foreground"
+          >
+            {part}
+          </mark>
+        ) : (
+          part
+        )
       )}
     </>
   )
 }
 
-// Gradient fallback colours keyed by tags
-function getGradientClass(tags: string[]): string {
-  const tagStr = tags.join(' ').toLowerCase()
-  if (tagStr.includes('react') || tagStr.includes('javascript') || tagStr.includes('typescript') || tagStr.includes('web'))
-    return "from-blue-500/15 via-primary/10 to-background"
-  if (tagStr.includes('ai') || tagStr.includes('machine learning') || tagStr.includes('artificial intelligence'))
-    return "from-violet-500/15 via-fuchsia-500/10 to-background"
-  if (tagStr.includes('devops') || tagStr.includes('cloud') || tagStr.includes('azure') || tagStr.includes('aws'))
-    return "from-sky-500/15 via-cyan-500/10 to-background"
-  if (tagStr.includes('career') || tagStr.includes('productivity'))
-    return "from-emerald-500/15 via-teal-500/10 to-background"
-  return "from-primary/10 via-primary/5 to-background"
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })
 }
 
-export default function BlogPostCard({ post, index, onTagClick, searchQuery, featured = false }: BlogPostCardProps) {
-  const gradientClass = getGradientClass(post.tags ?? [])
+/**
+ * Editorial post card — brutalist thick border, offset shadow, sticker
+ * metadata row. The featured variant spans two columns and gets a bigger
+ * type ramp so it reads as the lede.
+ */
+export default function BlogPostCard({
+  post,
+  index,
+  onTagClick,
+  searchQuery,
+  featured = false,
+}: BlogPostCardProps) {
+  const primaryTag = post.tags?.[0]
 
   if (featured) {
     return (
       <motion.article
         variants={fadeInUp}
         transition={{ delay: 0 }}
-        className="group relative rounded-xl border border-border/60 overflow-hidden
-          col-span-1 sm:col-span-2 flex flex-col sm:flex-row
-          transition-all duration-300
-          hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10 hover:border-primary/40"
+        className="card-brutal group col-span-1 flex flex-col sm:col-span-2"
       >
-        {/* Cover image */}
-        <Link
-          href={`/blog/${post.id}`}
-          className="block relative overflow-hidden flex-shrink-0 h-52 sm:h-auto sm:w-[52%]"
-        >
-          {/* Gradient always shown as background / fallback */}
-          <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass}`} />
-          {post.coverImage && (
-            <img
-              src={post.coverImage}
-              alt={post.title}
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-            />
+        {/* Kicker strip */}
+        <div className="flex items-center justify-between gap-2 border-b-2 border-foreground bg-accent-hot px-5 py-2 text-accent-hot-foreground">
+          <span className="font-mono text-micro font-bold uppercase tracking-widest">
+            Lede · 01
+          </span>
+          <span className="font-mono text-micro font-bold uppercase tracking-widest">
+            Featured
+          </span>
+        </div>
+
+        <div className="flex flex-col gap-3 p-6 md:p-8">
+          {primaryTag && (
+            <span className="font-mono text-micro font-bold uppercase tracking-widest text-muted-foreground">
+              Filed under {primaryTag}
+            </span>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-background/10 to-transparent sm:bg-gradient-to-r" />
 
-          {/* Featured label */}
-          <div className="absolute top-3 left-3 flex gap-2">
-            <Badge className="text-xs bg-primary text-primary-foreground">
-              Featured
-            </Badge>
-            {post.tags && post.tags.length > 0 && (
-              <Badge variant="tech" className="text-xs backdrop-blur-sm">
-                {post.tags[0]}
-              </Badge>
-            )}
-          </div>
-        </Link>
-
-        {/* Card body */}
-        <div className="flex flex-col flex-1 p-5 sm:p-7 justify-center gap-3">
-          <h2 className="text-xl sm:text-2xl font-bold leading-snug group-hover:text-primary transition-colors">
+          <h2 className="font-serif text-3xl leading-[1.05] tracking-tight transition-colors group-hover:text-accent-hot sm:text-4xl md:text-5xl">
             <Link href={`/blog/${post.id}`} className="line-clamp-3">
               <Highlight text={post.title} query={searchQuery} />
             </Link>
           </h2>
 
-          <p className="text-sm text-muted-foreground line-clamp-3">
+          <p className="max-w-2xl text-base text-muted-foreground md:text-lg">
             <Highlight text={post.excerpt} query={searchQuery} />
           </p>
 
-          {/* Extra tags */}
-          {post.tags && post.tags.length > 1 && (
-            <div className="flex flex-wrap gap-1.5">
-              {post.tags.slice(1, 5).map(tag => (
-                <Badge
-                  key={tag}
-                  variant="tech"
-                  className="text-xs cursor-pointer"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    onTagClick(tag);
-                  }}
-                >
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          )}
-
-          {/* Meta + CTA */}
-          <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground pt-2 border-t border-border/30">
-            <span className="flex items-center gap-1">
-              <Calendar className="h-3.5 w-3.5" />
-              {new Date(post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-            </span>
-            <span className="flex items-center gap-1">
-              <Clock className="h-3.5 w-3.5" />
-              {post.readingTime}
-            </span>
-            <div className="ml-auto">
-              <Link
-                href={`/blog/${post.id}`}
-                className={buttonVariants({
-                  size: "sm",
-                  className: "gap-1.5 h-8 text-xs"
-                })}
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {post.tags?.slice(1, 5).map((tag) => (
+              <button
+                key={tag}
+                onClick={(e) => {
+                  e.preventDefault()
+                  onTagClick(tag)
+                }}
+                className="sticker cursor-pointer transition-colors hover:bg-accent-lime hover:text-accent-lime-foreground"
               >
-                Read article <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
+                {tag}
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t-2 border-foreground/10 pt-4 font-mono text-micro uppercase tracking-widest text-muted-foreground">
+            <span>{formatDate(post.date)}</span>
+            <span>{post.readingTime}</span>
+            <Link
+              href={`/blog/${post.id}`}
+              className="inline-flex items-center gap-2 border-2 border-foreground bg-foreground px-3 py-1.5 text-background transition-all hover:-translate-x-[2px] hover:-translate-y-[2px] hover:bg-accent-hot hover:text-accent-hot-foreground hover:shadow-brutal-sm"
+            >
+              Read
+              <span aria-hidden>→</span>
+            </Link>
           </div>
         </div>
       </motion.article>
@@ -154,105 +127,53 @@ export default function BlogPostCard({ post, index, onTagClick, searchQuery, fea
   return (
     <motion.article
       variants={fadeInUp}
-      transition={{ delay: index * 0.07 }}
-      className="group relative rounded-xl border border-border/60 overflow-hidden flex flex-col
-        transition-all duration-300
-        hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/10 hover:border-primary/40"
+      transition={{ delay: index * 0.06 }}
+      className="card-brutal group flex flex-col"
     >
-      {/* Cover image / gradient banner */}
-      <Link href={`/blog/${post.id}`} className="block relative overflow-hidden h-40">
-        {/* Gradient always shown as background / fallback */}
-        <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass}`} />
-        {post.coverImage && (
-          <img
-            src={post.coverImage}
-            alt={post.title}
-            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-          />
+      <div className="flex items-center justify-between gap-2 border-b-2 border-foreground/70 px-4 py-1.5">
+        <span className="font-mono text-micro font-bold uppercase tracking-widest text-muted-foreground">
+          {String(index + 1).padStart(2, "0")}
+        </span>
+        {primaryTag && (
+          <span className="font-mono text-micro font-bold uppercase tracking-widest text-accent-hot">
+            {primaryTag}
+          </span>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
+      </div>
 
-        {/* Category badge on the image */}
-        {post.tags && post.tags.length > 0 && (
-          <div className="absolute top-3 left-3">
-            <Badge variant="tech" className="text-xs backdrop-blur-sm">
-              {post.tags[0]}
-            </Badge>
-          </div>
-        )}
-      </Link>
-
-      {/* Card body */}
-      <div className="flex flex-col flex-1 p-5">
-        {/* Title */}
-        <h2 className="text-base sm:text-lg font-bold mb-2 leading-snug group-hover:text-primary transition-colors">
-          <Link href={`/blog/${post.id}`} className="line-clamp-2">
+      <div className="flex flex-1 flex-col gap-3 p-5">
+        <h3 className="font-serif text-xl leading-tight transition-colors group-hover:text-accent-hot sm:text-2xl">
+          <Link href={`/blog/${post.id}`} className="line-clamp-3">
             <Highlight text={post.title} query={searchQuery} />
           </Link>
-        </h2>
+        </h3>
 
-        {/* Excerpt — 2 lines */}
-        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+        <p className="line-clamp-3 text-sm text-muted-foreground">
           <Highlight text={post.excerpt} query={searchQuery} />
         </p>
 
-        {/* Tags (skip first — already shown as category badge) */}
         {post.tags && post.tags.length > 1 && (
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            {post.tags.slice(1, 4).map(tag => (
-              <Badge
+          <div className="flex flex-wrap gap-1.5">
+            {post.tags.slice(1, 4).map((tag) => (
+              <button
                 key={tag}
-                variant="tech"
-                className="text-xs cursor-pointer"
                 onClick={(e) => {
-                  e.preventDefault();
-                  onTagClick(tag);
+                  e.preventDefault()
+                  onTagClick(tag)
                 }}
+                className="sticker cursor-pointer transition-colors hover:bg-accent-lime hover:text-accent-lime-foreground"
               >
                 {tag}
-              </Badge>
+              </button>
             ))}
-            {post.tags.length > 4 && (
-              <Badge variant="secondary" className="text-xs">+{post.tags.length - 4}</Badge>
-            )}
           </div>
         )}
 
-        {/* Spacer */}
-        <div className="mt-auto space-y-3">
-          {/* Author + metadata row */}
-          <div className="flex items-center gap-2 pt-3 border-t border-border/30">
-            {/* Avatar placeholder */}
-            <div className="flex-shrink-0 h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary">
-              {siteConfig.name.charAt(0)}
-            </div>
-            <span className="text-xs text-muted-foreground truncate flex-1">{siteConfig.name}</span>
-            <time className="flex items-center gap-1 text-xs text-muted-foreground whitespace-nowrap">
-              <Calendar className="h-3 w-3" />
-              {new Date(post.date).toLocaleDateString("en-US", { month: 'short', day: 'numeric', year: 'numeric' })}
-            </time>
-          </div>
-
-          {/* Read time + CTA */}
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Clock className="h-3 w-3" />
-              {post.readingTime}
-            </span>
-            <Link
-              href={`/blog/${post.id}`}
-              className={buttonVariants({
-                variant: "outline",
-                size: "sm",
-                className: "h-7 text-xs border-primary/30 hover:bg-primary/10 hover:text-primary hover:border-primary/50"
-              })}
-            >
-              Read more
-            </Link>
-          </div>
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t-2 border-foreground/10 pt-3 font-mono text-micro uppercase tracking-widest text-muted-foreground">
+          <span>{formatDate(post.date)}</span>
+          <span>{post.readingTime}</span>
         </div>
       </div>
     </motion.article>
-  );
+  )
 }

@@ -6,12 +6,12 @@ import BlogPostCard from "@/components/blog/blog-post-card"
 import { fadeInUp } from "@/lib/animations"
 
 interface BlogPostsGridProps {
-  posts: BlogPost[];
-  onTagClick: (tag: string) => void;
-  selectedTag?: string;
-  searchQuery?: string;
-  totalResults?: number;
-  showFeatured?: boolean;
+  posts: BlogPost[]
+  onTagClick: (tag: string) => void
+  selectedTag?: string
+  searchQuery?: string
+  totalResults?: number
+  showFeatured?: boolean
 }
 
 export default function BlogPostsGrid({
@@ -20,38 +20,43 @@ export default function BlogPostsGrid({
   selectedTag,
   searchQuery,
   totalResults,
-  showFeatured = false
+  showFeatured = false,
 }: BlogPostsGridProps) {
-
   const featuredPost = showFeatured && posts.length > 0 ? posts[0] : null
   const remainingPosts = featuredPost ? posts.slice(1) : posts
 
   return (
-    <div className="space-y-5 px-4 sm:px-6 md:px-0">
+    <div className="space-y-6">
       {/* Results summary */}
       {(searchQuery || selectedTag) && totalResults !== undefined && (
-        <motion.div
+        <motion.p
           variants={fadeInUp}
-          className="text-sm text-muted-foreground"
+          className="border-2 border-foreground bg-accent-lime px-4 py-2 font-mono text-micro font-bold uppercase tracking-widest text-accent-lime-foreground"
         >
-          {searchQuery && (
-            <span>
-              Found {totalResults} {totalResults === 1 ? 'post' : 'posts'}
-              {selectedTag && ` tagged &quot;${selectedTag}&quot;`} matching &quot;{searchQuery}&quot;
-            </span>
+          {searchQuery && selectedTag && (
+            <>
+              {totalResults} {totalResults === 1 ? "post" : "posts"} tagged
+              &quot;{selectedTag}&quot; matching &quot;{searchQuery}&quot;
+            </>
+          )}
+          {searchQuery && !selectedTag && (
+            <>
+              {totalResults} {totalResults === 1 ? "post" : "posts"} matching
+              &quot;{searchQuery}&quot;
+            </>
           )}
           {!searchQuery && selectedTag && (
-            <span>
-              Showing {totalResults} {totalResults === 1 ? 'post' : 'posts'} tagged &quot;{selectedTag}&quot;
-            </span>
+            <>
+              {totalResults} {totalResults === 1 ? "post" : "posts"} tagged
+              &quot;{selectedTag}&quot;
+            </>
           )}
-        </motion.div>
+        </motion.p>
       )}
 
-      {/* Bento grid */}
+      {/* Grid */}
       {posts.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-          {/* Featured card — spans 2 cols on sm+ */}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {featuredPost && (
             <BlogPostCard
               key={featuredPost.id}
@@ -62,8 +67,6 @@ export default function BlogPostsGrid({
               featured
             />
           )}
-
-          {/* Remaining cards */}
           {remainingPosts.map((post, index) => (
             <BlogPostCard
               key={post.id}
@@ -77,18 +80,17 @@ export default function BlogPostsGrid({
       ) : (
         <motion.div
           variants={fadeInUp}
-          className="text-center py-10"
+          className="border-2 border-dashed border-foreground/40 py-16 text-center"
         >
-          <p className="text-muted-foreground">
+          <p className="font-serif text-2xl italic text-muted-foreground">
             {searchQuery
-              ? `No posts found matching "${searchQuery}". Try a different search term.`
+              ? `Nothing filed under "${searchQuery}"`
               : selectedTag
-                ? "No posts found with this tag. Try a different tag."
-                : "No posts found."
-            }
+                ? `No posts tagged "${selectedTag}"`
+                : "The archive is empty for now."}
           </p>
         </motion.div>
       )}
     </div>
-  );
+  )
 }

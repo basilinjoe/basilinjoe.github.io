@@ -2,20 +2,20 @@ export type SiteConfig = typeof siteConfig
 
 export const siteConfig = {
   title: "Basilin Joe | Technology Lead & Cloud Solutions Architect",
-  description: "Personal website of Basilin Joe, Technology Lead at Experion Technologies specializing in Azure, AWS, and Full Stack development with 7+ years of experience.",
+  description: "Technology Lead with 11+ years building Azure cloud infrastructure, Kubernetes-based deployments, and full-stack applications. Writing about DevOps, IaC, and software engineering.",
   url: "https://basilinjoe.github.io",
   openGraph: {
     type: "website",
     title: "Basilin Joe | Technology Lead & Cloud Solutions Architect",
     url: "https://basilinjoe.github.io",
-    description: "Personal website of Basilin Joe, Technology Lead at Experion Technologies specializing in Azure, AWS, and Full Stack development with 7+ years of experience.",
+    description: "Personal website of Basilin Joe, Technology Lead at Experion Technologies specializing in Azure, AWS, and Full Stack development with 11+ years of experience.",
     siteName: "Basilin Joe",
     locale: "en_US",
     images: [
       {
-        url: "https://basilinjoe.github.io/images/og-default.png",
-        width: 1200,
-        height: 630,
+        url: "https://basilinjoe.github.io/avatar.webp",
+        width: 400,
+        height: 400,
         alt: "Basilin Joe"
       }
     ]
@@ -25,14 +25,14 @@ export const siteConfig = {
     site: "@BasilinJoe",
     creator: "@BasilinJoe",
     title: "Basilin Joe | Technology Lead & Cloud Solutions Architect",
-    description: "Personal website of Basilin Joe, Technology Lead at Experion Technologies specializing in Azure, AWS, and Full Stack development with 7+ years of experience.",
-    images: ["https://basilinjoe.github.io/images/og-default.png"],
+    description: "Personal website of Basilin Joe, Technology Lead at Experion Technologies specializing in Azure, AWS, and Full Stack development with 11+ years of experience.",
+    images: ["https://basilinjoe.github.io/avatar.webp"],
   },
   gaid:"G-631LG05FS6",
   name: "Basilin Joe",
   position: "Technology Lead at Experion Technologies",
   tagline: "Building scalable cloud solutions that drive business growth",
-  aboutMe: "Results-driven Technology Lead with 7+ years' experience in software development, excelling in Azure, AWS, and Full Stack. Proven track record in delivering high-quality projects, optimizing processes, and leading cross-functional teams for enhanced efficiency and collaboration.",
+  aboutMe: "Results-driven Technology Lead with 11+ years' experience in software development, excelling in Azure, AWS, and Full Stack. Proven track record in delivering high-quality projects, optimizing processes, and leading cross-functional teams for enhanced efficiency and collaboration.",
   location: "Ernakulam,Kerala,India",
   email: "basilin@live.com",
   // Sign up at formspree.io, create a form, and paste the form ID here

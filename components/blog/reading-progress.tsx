@@ -9,31 +9,26 @@ export function ReadingProgress() {
   const scaleX = useSpring(scrollYProgress, {
     stiffness: 100,
     damping: 30,
-    restDelta: 0.001
+    restDelta: 0.001,
   })
 
   useEffect(() => {
-    // Show progress bar after scrolling down a bit
-    const handleScroll = () => {
-      const show = window.scrollY > 100
-      setIsVisible(show)
-    }
-
+    const handleScroll = () => setIsVisible(window.scrollY > 100)
     window.addEventListener("scroll", handleScroll)
-    handleScroll() // Check initial state
-
+    handleScroll()
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
   return (
     <motion.div
-      className="fixed top-14 left-0 right-0 h-0.5 bg-primary/10 z-[60] origin-left"
+      // Sits below the sticky header (ticker 30px + main 64px = ~94px on desktop, 64px on mobile)
+      className="fixed left-0 right-0 top-[64px] z-[60] h-1 origin-left bg-foreground/10 sm:top-[94px]"
       initial={{ opacity: 0 }}
       animate={{ opacity: isVisible ? 1 : 0 }}
       transition={{ duration: 0.2 }}
     >
       <motion.div
-        className="h-full bg-gradient-to-r from-primary to-blue-500 origin-left"
+        className="h-full origin-left bg-accent-hot"
         style={{ scaleX }}
       />
     </motion.div>

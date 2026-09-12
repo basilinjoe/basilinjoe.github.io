@@ -13,6 +13,7 @@ interface BlogPostLayoutProps {
   url: string
   tags?: string[]
   readingTime?: string
+  coverImage?: string
   breadcrumbs: Array<{
     name: string
     url: string
@@ -28,6 +29,7 @@ export function BlogPostLayout({
   url,
   tags,
   readingTime,
+  coverImage,
   breadcrumbs,
   children
 }: BlogPostLayoutProps) {
@@ -44,6 +46,7 @@ export function BlogPostLayout({
           url={url}
           tags={tags}
           readingTime={readingTime}
+          image={coverImage}
         />
         <BreadcrumbJsonLd
           items={breadcrumbs}

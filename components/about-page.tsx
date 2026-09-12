@@ -12,45 +12,79 @@ function formatDateShort(dateStr: string): string {
   return date.toLocaleDateString("en-US", { month: "short", year: "numeric" })
 }
 
-function getCompanyDateRange(exp: (typeof siteConfig.experience)[number]): string {
+function getCompanyDateRange(
+  exp: (typeof siteConfig.experience)[number]
+): string {
   const sorted = [...exp.roles].sort(
-    (a, b) => new Date(a.startDate.split("/").reverse().join("-")).getTime() - new Date(b.startDate.split("/").reverse().join("-")).getTime()
+    (a, b) =>
+      new Date(a.startDate.split("/").reverse().join("-")).getTime() -
+      new Date(b.startDate.split("/").reverse().join("-")).getTime()
   )
   const earliest = formatDateShort(sorted[0].startDate)
-  const latest = exp.current ? "Present" : formatDateShort(sorted[sorted.length - 1].endDate ?? "")
+  const latest = exp.current
+    ? "Present"
+    : formatDateShort(sorted[sorted.length - 1].endDate ?? "")
   return `${earliest} — ${latest}`
 }
 
 export default function AboutPage() {
+  const totalRoles = siteConfig.experience.reduce(
+    (sum, e) => sum + e.roles.length,
+    0
+  )
+  const years = new Date().getFullYear() - 2015
+
   return (
-    <div className="relative overflow-hidden">
-      {/* Background blobs */}
-      <div className="absolute top-20 left-10 w-64 h-64 bg-primary/5 rounded-full blur-3xl opacity-40 -z-10" />
-      <div className="absolute bottom-40 right-10 w-80 h-80 bg-blue-500/5 rounded-full blur-3xl opacity-40 -z-10" />
+    <div className="container max-w-screen-2xl">
+      {/* Page header — editorial hero */}
+      <section className="border-b-2 border-foreground py-16 md:py-24">
+        <div className="grid gap-8 md:grid-cols-12">
+          <div className="md:col-span-8">
+            <div className="flex items-baseline gap-4">
+              <span className="column-numeral">CV</span>
+              <span className="font-mono text-micro font-semibold uppercase tracking-widest text-accent-hot">
+                On record · Experience
+              </span>
+            </div>
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="mt-4 font-serif text-6xl leading-[0.95] tracking-tightest md:text-8xl lg:text-9xl"
+            >
+              A working
+              <br />
+              <span className="italic text-accent-hot">history</span>.
+            </motion.h1>
+            <p className="mt-6 max-w-xl text-lg text-muted-foreground md:text-xl">
+              {totalRoles} roles across {siteConfig.experience.length} companies
+              spanning {years}+ years of shipping cloud infrastructure and
+              full-stack systems.
+            </p>
+          </div>
 
-      <section className="container grid items-start gap-10 pb-16 pt-8 md:py-12 max-w-3xl mx-auto">
-        {/* Page header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl bg-gradient-to-r from-primary to-blue-500 bg-clip-text text-transparent mb-3">
-            Experience
-          </h1>
-          <div className="h-1 w-20 bg-primary/50 rounded-full mb-4" />
-          <p className="text-muted-foreground text-lg">
-            {siteConfig.experience.reduce((sum, e) => sum + e.roles.length, 0)} roles across{" "}
-            {siteConfig.experience.length} companies spanning{" "}
-            {new Date().getFullYear() - 2015}+ years.
-          </p>
-        </motion.div>
+          {/* Meta sidebar */}
+          <aside className="md:col-span-4">
+            <div className="border-2 border-foreground p-5 shadow-brutal">
+              <dl className="space-y-4 font-mono text-sm">
+                <StatRow
+                  label="Years shipping"
+                  value={`${years}+`}
+                />
+                <StatRow label="Companies" value={String(siteConfig.experience.length)} />
+                <StatRow label="Roles" value={String(totalRoles)} />
+                <StatRow label="Based in" value={siteConfig.location} />
+              </dl>
+            </div>
+          </aside>
+        </div>
+      </section>
 
-        {/* Timeline */}
-        <div className="space-y-12">
+      {/* Timeline */}
+      <section className="py-16 md:py-24">
+        <div className="space-y-16">
           {siteConfig.experience.map((exp, expIndex) => (
-            <div key={expIndex} className="space-y-5">
-              {/* Company header */}
+            <div key={expIndex} className="space-y-6">
               <CompanyCard
                 company={exp.company}
                 logo={exp.logo}
@@ -59,8 +93,7 @@ export default function AboutPage() {
                 dateRange={getCompanyDateRange(exp)}
               />
 
-              {/* Role timeline */}
-              <div className="ml-4 md:ml-6 space-y-0">
+              <div className="ml-4 space-y-0 md:ml-6">
                 {exp.roles.map((role, roleIndex) => (
                   <TimelineItem
                     key={roleIndex}
@@ -74,6 +107,19 @@ export default function AboutPage() {
           ))}
         </div>
       </section>
+    </div>
+  )
+}
+
+function StatRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-2 border-b border-foreground/20 pb-2 last:border-0 last:pb-0">
+      <dt className="text-micro uppercase tracking-widest text-muted-foreground">
+        {label}
+      </dt>
+      <dd className="font-serif text-3xl leading-none tracking-tight text-foreground">
+        {value}
+      </dd>
     </div>
   )
 }

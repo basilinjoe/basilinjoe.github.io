@@ -4,7 +4,10 @@ This repository contains the source code for [basilinjoe.github.io](https://basi
 
 ## Features
 
-- MDX powered blog posts stored under `content/blog`
+- MDX blog posts under `content/blog` (frontmatter via gray-matter, rendered with `next-mdx-remote/rsc`)
+- Custom React components can be imported and used directly inside `.mdx` posts
+- Syntax-highlighted code blocks via `rehype-highlight`
+- RSS feed at `/feed.xml` and per-tag archive pages at `/blog/tag/[tag]`
 - Tailwind CSS styling with shadcn/ui components
 - Deploys to GitHub Pages using the `predeploy` and `deploy` scripts
 - Type-safe configuration in `config/site.ts`
@@ -42,7 +45,7 @@ Set the `DEPLOY_TARGET=gh-pages` environment variable if you are building direct
 
 ## Adding Blog Posts
 
-Create new Markdown or MDX files inside `content/blog`. Each file should contain front matter with a `title`, `date`, and `excerpt`.
+Create new MDX files (`.mdx`) inside `content/blog`. Frontmatter fields: `title`, `date`, `excerpt`, optional `modified`, `tags`, `coverImage`, and `draft: true` to hide from the build. Drafts are shown locally when `INCLUDE_DRAFTS=true` is set. `.md` files are still loaded for backwards compatibility, but new posts should use `.mdx` so they can embed React components.
 
 ---
 

@@ -1,15 +1,7 @@
 "use client"
 
+import Link from "next/link"
 import { motion } from "framer-motion"
-import { Home } from "lucide-react"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
 import { fadeInUp } from "@/lib/animations"
 
 interface BlogBreadcrumbProps {
@@ -17,52 +9,50 @@ interface BlogBreadcrumbProps {
   tag?: string
 }
 
+/**
+ * Editorial breadcrumb: mono uppercase, thin slashes as separators,
+ * current page in accent color. No shadcn Breadcrumb chrome.
+ */
 export function BlogBreadcrumb({ postTitle, tag }: BlogBreadcrumbProps) {
+  const items: { label: string; href?: string }[] = [
+    { label: "Home", href: "/" },
+    { label: "Blog", href: postTitle || tag ? "/blog" : undefined },
+  ]
+  if (tag) items.push({ label: tag })
+  if (postTitle) items.push({ label: postTitle })
+
   return (
-    <motion.div
+    <motion.nav
       variants={fadeInUp}
-      className="mb-6"
+      aria-label="Breadcrumb"
+      className="mb-6 font-mono text-micro font-semibold uppercase tracking-widest"
     >
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink href="/" className="flex items-center gap-1">
-              <Home className="h-3.5 w-3.5" />
-              <span className="sr-only sm:not-sr-only">Home</span>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          
-          <BreadcrumbSeparator />
-          
-          <BreadcrumbItem>
-            {postTitle ? (
-              <BreadcrumbLink href="/blog">Blog</BreadcrumbLink>
+      <ol className="flex flex-wrap items-center gap-2">
+        {items.map((item, i) => (
+          <li key={i} className="flex items-center gap-2">
+            {item.href ? (
+              <Link
+                href={item.href}
+                className="text-muted-foreground transition-colors hover:text-accent-hot"
+              >
+                {item.label}
+              </Link>
             ) : (
-              <BreadcrumbPage>Blog</BreadcrumbPage>
+              <span
+                className="max-w-[220px] truncate text-accent-hot"
+                aria-current="page"
+              >
+                {item.label}
+              </span>
             )}
-          </BreadcrumbItem>
-          
-          {tag && (
-            <>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage className="capitalize">{tag}</BreadcrumbPage>
-              </BreadcrumbItem>
-            </>
-          )}
-          
-          {postTitle && (
-            <>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage className="max-w-[200px] truncate">
-                  {postTitle}
-                </BreadcrumbPage>
-              </BreadcrumbItem>
-            </>
-          )}
-        </BreadcrumbList>
-      </Breadcrumb>
-    </motion.div>
+            {i < items.length - 1 && (
+              <span aria-hidden className="text-muted-foreground/60">
+                /
+              </span>
+            )}
+          </li>
+        ))}
+      </ol>
+    </motion.nav>
   )
 }

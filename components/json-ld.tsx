@@ -1,7 +1,7 @@
 import { siteConfig } from "@/config/site"
 
 const SITE_URL = siteConfig.url
-const OG_IMAGE = `${SITE_URL}/images/og-default.png`
+const OG_IMAGE = `${SITE_URL}/avatar.webp`
 
 // Person structured data
 export function PersonJsonLd() {
@@ -50,10 +50,7 @@ export function WebsiteJsonLd() {
     },
     potentialAction: {
       "@type": "SearchAction",
-      target: {
-        "@type": "EntryPoint",
-        urlTemplate: `${SITE_URL}/blog?q={search_term_string}`
-      },
+      target: `${SITE_URL}/blog?q={search_term_string}`,
       "query-input": "required name=search_term_string"
     }
   }
@@ -143,6 +140,7 @@ export function ProfilePageJsonLd() {
         siteConfig.links.github,
         siteConfig.links.twitter,
         siteConfig.links.medium,
+        siteConfig.links.instagram,
       ],
       description: siteConfig.aboutMe,
     }

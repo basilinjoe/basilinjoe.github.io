@@ -6,72 +6,80 @@ import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
 import { siteConfig } from "@/config/site"
 import { cn } from "@/lib/utils"
-import { Icons } from "@/components/icons"
-import { slideIn } from "@/lib/animations"
 
+/**
+ * Editorial main nav.
+ *
+ * Logotype pattern: "BJ." wordmark in mono uppercase, followed by a role tag.
+ * Nav items are mono uppercase with an underline-slide hover and a heavy
+ * bar under the active item — proximity + alignment principle in one gesture.
+ */
 export function MainNav() {
   const pathname = usePathname()
 
   return (
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={slideIn}
-      className="mr-4 flex"
-    >
-      <Link href="/" className="mr-6 flex items-center space-x-2">
-        <motion.div
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <Icons.logo className="h-6 w-6" />
-        </motion.div>
+    <div className="flex items-center gap-8">
+      <Link
+        href="/"
+        aria-label={`${siteConfig.name} — Home`}
+        className="group flex items-center gap-2.5"
+      >
+        {/* Wordmark tile — brutalist square with initials */}
         <motion.span
-          className="hidden font-bold sm:inline-block"
-          variants={slideIn}
+          whileHover={{ rotate: -4, scale: 1.05 }}
+          transition={{ type: "spring", stiffness: 400, damping: 15 }}
+          className="flex h-9 w-9 items-center justify-center border-2 border-foreground bg-accent-lime font-serif text-lg italic text-accent-lime-foreground shadow-brutal-sm"
         >
-          {siteConfig.name}
+          BJ
         </motion.span>
+        <span className="hidden flex-col leading-none sm:flex">
+          <span className="font-mono text-[0.7rem] font-bold uppercase tracking-widest text-foreground">
+            {siteConfig.name}
+          </span>
+          <span className="mt-0.5 font-mono text-[0.6rem] uppercase tracking-widest text-muted-foreground">
+            Technology Lead
+          </span>
+        </span>
       </Link>
 
-      <nav className="hidden md:flex items-center gap-1 text-sm">
+      <nav className="hidden items-center gap-1 md:flex">
         {siteConfig.mainNav.map((item) => {
-          const isActive = pathname === item.href
+          const isActive =
+            item.href === "/" ? pathname === "/" : pathname.startsWith(item.href)
           return (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                "relative px-3 py-1.5 rounded-md transition-colors select-none",
+                "group relative px-3 py-1.5 font-mono text-micro font-semibold uppercase tracking-widest transition-colors",
                 isActive
-                  ? "text-foreground font-medium"
-                  : "text-foreground/60 hover:text-foreground/80"
+                  ? "text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
-              {/* Animated background pill for active item */}
+              <span className="relative">
+                {item.title}
+                {/* Underline slide, thick when active, thin on hover */}
+                <span
+                  className={cn(
+                    "absolute -bottom-1 left-0 h-[2px] bg-foreground transition-all duration-200",
+                    isActive
+                      ? "w-full"
+                      : "w-0 group-hover:w-full"
+                  )}
+                />
+              </span>
               {isActive && (
                 <motion.span
-                  layoutId="navActivePill"
-                  className="absolute inset-0 rounded-md bg-accent"
-                  style={{ zIndex: -1 }}
+                  layoutId="navActiveDot"
+                  className="absolute -bottom-2 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-accent-hot"
                   transition={{ type: "spring", stiffness: 380, damping: 30 }}
                 />
               )}
-              {/* Animated underline dot */}
-              <span className="relative flex flex-col items-center gap-0.5">
-                <span>{item.title}</span>
-                {isActive && (
-                  <motion.span
-                    layoutId="navActiveDot"
-                    className="absolute -bottom-2 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-primary"
-                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                  />
-                )}
-              </span>
             </Link>
           )
         })}
       </nav>
-    </motion.div>
+    </div>
   )
 }

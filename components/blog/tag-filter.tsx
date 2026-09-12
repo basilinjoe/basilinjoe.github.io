@@ -6,54 +6,53 @@ import { fadeInUp } from "@/lib/animations"
 import { cn } from "@/lib/utils"
 
 interface TagFilterProps {
-  allTags: string[];
-  selectedTag?: string;
+  allTags: string[]
+  selectedTag?: string
 }
 
 export default function TagFilter({ allTags, selectedTag }: TagFilterProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const router = useRouter()
+  const searchParams = useSearchParams()
 
   const handleTagClick = (tag: string | null) => {
-    const params = new URLSearchParams(searchParams.toString());
-
+    const params = new URLSearchParams(searchParams.toString())
     if (!tag || selectedTag === tag) {
-      params.delete('tag');
+      params.delete("tag")
     } else {
-      params.set('tag', tag);
+      params.set("tag", tag)
     }
+    params.delete("page")
+    router.push(`/blog?${params.toString()}`, { scroll: false })
+  }
 
-    params.delete('page');
-    router.push(`/blog?${params.toString()}`, { scroll: false });
-  };
-
-  if (allTags.length === 0) return null;
-
-  const chips = ['All', ...allTags];
+  if (allTags.length === 0) return null
+  const chips = ["All", ...allTags]
 
   return (
-    <motion.div variants={fadeInUp} className="px-4 sm:px-6 md:px-0 mb-2">
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+    <motion.div variants={fadeInUp}>
+      <p className="mb-3 font-mono text-micro font-bold uppercase tracking-widest text-muted-foreground">
+        Filter by tag
+      </p>
+      <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1">
         {chips.map((chip) => {
-          const isAll = chip === 'All';
-          const isActive = isAll ? !selectedTag : selectedTag === chip;
-
+          const isAll = chip === "All"
+          const isActive = isAll ? !selectedTag : selectedTag === chip
           return (
             <button
               key={chip}
               onClick={() => handleTagClick(isAll ? null : chip)}
               className={cn(
-                "flex-shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium transition-all duration-200 whitespace-nowrap",
+                "shrink-0 border-2 border-foreground px-3 py-1 font-mono text-micro font-bold uppercase tracking-widest transition-all",
                 isActive
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                  ? "bg-foreground text-background shadow-brutal-sm"
+                  : "bg-background text-foreground hover:-translate-x-[2px] hover:-translate-y-[2px] hover:bg-accent-lime hover:text-accent-lime-foreground hover:shadow-brutal-sm"
               )}
             >
               {chip}
             </button>
-          );
+          )
         })}
       </div>
     </motion.div>
-  );
+  )
 }

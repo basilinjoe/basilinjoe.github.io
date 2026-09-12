@@ -1,0 +1,453 @@
+---
+title: "Deploying Azure Kubernetes Service with Bicep IaC"
+date: "2024-06-15"
+modified: "2026-09-11"
+excerpt: "A production-grade AKS Bicep module with Azure CNI Overlay, Workload Identity, Azure RBAC, monitoring, and a CI/CD pipeline — updated for the 2025-09 API and Kubernetes 1.34."
+tags: ["Azure", "Kubernetes", "Bicep", "DevOps", "IaC"]
+coverImage: "/blog/ai-coding-assistants-cover.webp"
+---
+
+Provisioning an Azure Kubernetes Service cluster manually through the portal is fine for experiments. For production, where you need repeatable, reviewable, auditable infrastructure, you need infrastructure as code. Bicep is the native Azure IaC language, and when combined with AKS it gives you a cluster you can version-control, peer-review, and redeploy from scratch in minutes.
+
+This post walks through a production-grade AKS Bicep module: private networking, Workload Identity, Azure RBAC, monitoring, and the CI/CD pipeline to deploy it. All examples target the current APIs as of September 2026.
+
+> **Key Takeaways**
+> - **Kubernetes 1.29 is out of support** on AKS. Move new work to **1.34**, which is the current default and enables the OIDC issuer without an explicit toggle ([Supported Kubernetes versions in AKS](https://learn.microsoft.com/en-us/azure/aks/supported-kubernetes-versions)).
+> - Use `Microsoft.ContainerService/managedClusters@2025-09-01` and `Microsoft.Network/virtualNetworks@2025-05-01`. Anything older ships without recent features.
+> - **Azure CNI Overlay is now the default** when you omit `networkPlugin` at create time. Explicitly pinning it in Bicep still makes reviews easier ([Configure Azure CNI Overlay](https://learn.microsoft.com/en-us/azure/aks/azure-cni-overlay)).
+> - Pair `what-if` previews with **Deployment Stacks** (GA) if you want lifecycle tracking beyond a single deployment ([Deployment stacks](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/deployment-stacks)).
+> - Consider **AKS Automatic** if you want Microsoft to preconfigure workload identity, RBAC, and upgrade channels for you instead of hand-rolling this Bicep.
+
+## Why Bicep over ARM or Terraform?
+
+**ARM templates** are verbose JSON that nobody enjoys writing or reviewing. Bicep compiles to ARM but is a clean DSL with type safety, modules, and conditions.
+
+**Terraform** is excellent and cross-cloud, but adds the overhead of state management (remote state in Azure Storage, state locking) and a separate toolchain. Microsoft's own [Comparing Terraform and Bicep](https://learn.microsoft.com/en-us/azure/developer/terraform/comparing-terraform-and-bicep) guidance is refreshingly neutral: pick Bicep for Azure-only work (day-one resource coverage, ARM preflight, no state file); pick Terraform when you need one language across multiple clouds.
+
+**Bicep's key advantages for AKS:**
+- First-class Azure resource type support. New AKS API versions appear in Bicep types the day they ship.
+- No state file to manage or protect.
+- Native integration with Azure RBAC and Azure Policy.
+- Modules encourage reusable, opinionated infrastructure patterns.
+
+{/* [PERSONAL EXPERIENCE] The rest of this post is what we've standardized on at Experion for Azure-only enterprise clients. */}
+
+## Project Structure
+
+Organize your Bicep as reusable modules:
+
+```
+infra/
+├── main.bicep                 # Orchestrator, calls all modules
+├── main.bicepparam            # Environment-specific parameter values
+├── modules/
+│   ├── aks/
+│   │   ├── cluster.bicep      # AKS cluster resource
+│   │   ├── nodepool.bicep     # System and user node pools
+│   │   └── rbac.bicep         # Role assignments for the cluster
+│   ├── networking/
+│   │   ├── vnet.bicep         # Virtual network and subnets
+│   │   └── nsg.bicep          # Network security groups
+│   ├── monitoring/
+│   │   └── workspace.bicep    # Log Analytics workspace
+│   └── acr/
+│       └── registry.bicep     # Azure Container Registry
+```
+
+This structure lets you deploy the full stack from `main.bicep` or independently test individual modules.
+
+## Networking First
+
+AKS clusters should run in a dedicated subnet. Never use the default VNet, since it limits your options for private clusters, peering, and firewall integration.
+
+```bicep
+// modules/networking/vnet.bicep
+param location string
+param vnetName string
+param addressPrefix string = '10.10.0.0/16'
+
+resource vnet 'Microsoft.Network/virtualNetworks@2025-05-01' = {
+  name: vnetName
+  location: location
+  properties: {
+    addressSpace: {
+      addressPrefixes: [ addressPrefix ]
+    }
+    subnets: [
+      {
+        name: 'aks-nodes'
+        properties: {
+          addressPrefix: '10.10.0.0/22'  // 1022 usable IPs for nodes
+          // With CNI Overlay, pod IPs come from a separate range, so this only needs enough for nodes.
+        }
+      }
+      {
+        name: 'private-endpoints'
+        properties: {
+          addressPrefix: '10.10.8.0/27'
+          privateEndpointNetworkPolicies: 'Disabled'
+        }
+      }
+    ]
+  }
+}
+
+output vnetId string = vnet.id
+output aksSubnetId string = vnet.properties.subnets[0].id
+```
+
+Note the removed `aks-pods` subnet compared to a legacy Azure CNI setup. With CNI Overlay, pod IPs are allocated from a separate private CIDR that never enters the VNet routing table. Nodes alone need VNet IPs.
+
+## The AKS Cluster Module
+
+```bicep
+// modules/aks/cluster.bicep
+param location string
+param clusterName string
+param kubernetesVersion string = '1.34'
+param systemNodeSize string = 'Standard_D4s_v3'
+param userNodeSize string = 'Standard_D8s_v3'
+param minUserNodes int = 2
+param maxUserNodes int = 10
+param aksSubnetId string
+param logAnalyticsWorkspaceId string
+param acrId string
+
+// Managed identity for the cluster
+resource clusterIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
+  name: '${clusterName}-identity'
+  location: location
+}
+
+resource cluster 'Microsoft.ContainerService/managedClusters@2025-09-01' = {
+  name: clusterName
+  location: location
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${clusterIdentity.id}': {}
+    }
+  }
+  properties: {
+    kubernetesVersion: kubernetesVersion
+    dnsPrefix: clusterName
+
+    agentPoolProfiles: [
+      // System pool: runs kube-system workloads only
+      {
+        name: 'system'
+        count: 2
+        vmSize: systemNodeSize
+        osType: 'Linux'
+        mode: 'System'
+        vnetSubnetID: aksSubnetId
+        maxPods: 30
+        nodeTaints: [ 'CriticalAddonsOnly=true:NoSchedule' ]
+        upgradeSettings: {
+          maxSurge: '33%'
+        }
+      }
+      // User pool: runs your application workloads
+      {
+        name: 'user'
+        count: minUserNodes
+        vmSize: userNodeSize
+        osType: 'Linux'
+        mode: 'User'
+        vnetSubnetID: aksSubnetId
+        maxPods: 110
+        enableAutoScaling: true
+        minCount: minUserNodes
+        maxCount: maxUserNodes
+        upgradeSettings: {
+          maxSurge: '33%'
+        }
+      }
+    ]
+
+    networkProfile: {
+      networkPlugin: 'azure'
+      networkPluginMode: 'overlay'  // Azure CNI Overlay, now the AKS default
+      networkPolicy: 'azure'
+      serviceCidr: '172.16.0.0/16'
+      dnsServiceIP: '172.16.0.10'
+      loadBalancerSku: 'standard'
+    }
+
+    // Workload Identity: pods receive Entra tokens without stored credentials.
+    // On K8s 1.34+, OIDC issuer is enabled by default, but pinning it here
+    // documents intent and keeps the module portable across versions.
+    oidcIssuerProfile: {
+      enabled: true
+    }
+    securityProfile: {
+      workloadIdentity: {
+        enabled: true
+      }
+    }
+
+    // Azure RBAC for Kubernetes Authorization, no kubeconfig shared secrets
+    aadProfile: {
+      managed: true
+      enableAzureRBAC: true
+    }
+
+    // Disable local accounts, forcing Entra auth
+    disableLocalAccounts: true
+
+    addonProfiles: {
+      omsAgent: {
+        enabled: true
+        config: {
+          logAnalyticsWorkspaceResourceID: logAnalyticsWorkspaceId
+        }
+      }
+      azureKeyVaultSecretsProvider: {
+        enabled: true
+        config: {
+          enableSecretRotation: 'true'
+          rotationPollInterval: '2m'
+        }
+      }
+    }
+
+    // Auto-upgrade: 'stable' tracks the latest N-1 minor; pair with a
+    // node OS channel below so the underlying image gets patched too.
+    autoUpgradeProfile: {
+      upgradeChannel: 'stable'
+      nodeOSUpgradeChannel: 'NodeImage'
+    }
+  }
+}
+
+// Grant the cluster identity permission to pull from ACR
+resource acrPullRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(acrId, clusterIdentity.id, 'acrpull')
+  scope: resourceGroup()
+  properties: {
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      '7f951dda-4ed3-4680-a7ca-43fe172d538d'  // AcrPull, still current in 2026
+    )
+    principalId: cluster.properties.identityProfile.kubeletidentity.objectId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+output clusterId string = cluster.id
+output clusterName string = cluster.name
+output kubeletIdentityObjectId string = cluster.properties.identityProfile.kubeletidentity.objectId
+output oidcIssuerUrl string = cluster.properties.oidcIssuerProfile.issuerURL
+```
+
+Key references for the properties used above:
+- [Workload Identity overview](https://learn.microsoft.com/en-us/azure/aks/workload-identity-overview) and [OIDC issuer in AKS](https://learn.microsoft.com/en-us/azure/aks/use-oidc-issuer)
+- [Use Azure RBAC for Kubernetes Authorization](https://learn.microsoft.com/en-us/azure/aks/manage-azure-rbac)
+- [Manage local accounts with Entra integration](https://learn.microsoft.com/en-us/azure/aks/manage-local-accounts-managed-azure-ad)
+- [Auto-upgrade AKS cluster](https://learn.microsoft.com/en-us/azure/aks/auto-upgrade-cluster) and [Auto-upgrade node OS images](https://learn.microsoft.com/en-us/azure/aks/auto-upgrade-node-os-image)
+- [AcrPull and other built-in Container roles](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/containers)
+
+## Log Analytics Workspace
+
+Never skip monitoring. The OMS agent addon (enabled above) streams node and container logs to Log Analytics automatically.
+
+```bicep
+// modules/monitoring/workspace.bicep
+param location string
+param workspaceName string
+
+resource workspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
+  name: workspaceName
+  location: location
+  properties: {
+    sku: {
+      name: 'PerGB2018'
+    }
+    retentionInDays: 90
+    features: {
+      enableLogAccessUsingOnlyResourcePermissions: true
+    }
+  }
+}
+
+output workspaceId string = workspace.id
+output workspaceResourceId string = workspace.id
+```
+
+## Wiring It All Together in main.bicep
+
+```bicep
+// main.bicep
+targetScope = 'resourceGroup'
+
+param location string = resourceGroup().location
+param environment string  // 'dev', 'staging', 'prod'
+param clusterName string = 'aks-${environment}'
+
+module networking 'modules/networking/vnet.bicep' = {
+  name: 'networking'
+  params: {
+    location: location
+    vnetName: 'vnet-aks-${environment}'
+  }
+}
+
+module monitoring 'modules/monitoring/workspace.bicep' = {
+  name: 'monitoring'
+  params: {
+    location: location
+    workspaceName: 'law-aks-${environment}'
+  }
+}
+
+module acr 'modules/acr/registry.bicep' = {
+  name: 'acr'
+  params: {
+    location: location
+    registryName: 'acr${environment}${uniqueString(resourceGroup().id)}'
+  }
+}
+
+module aks 'modules/aks/cluster.bicep' = {
+  name: 'aks'
+  params: {
+    location: location
+    clusterName: clusterName
+    aksSubnetId: networking.outputs.aksSubnetId
+    logAnalyticsWorkspaceId: monitoring.outputs.workspaceId
+    acrId: acr.outputs.registryId
+  }
+}
+```
+
+## The main.bicepparam File
+
+Bicep parameter files (`.bicepparam`) are the recommended way to handle environment-specific values ([Bicep parameter files](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/parameter-files)):
+
+```bicep
+// main.prod.bicepparam
+using './main.bicep'
+
+param environment = 'prod'
+param location = 'southeastasia'
+param minUserNodes = 3
+param maxUserNodes = 20
+param userNodeSize = 'Standard_D16s_v3'
+```
+
+Two authoring ergonomics worth knowing about that shipped after the original AKS module went into service:
+- **`extends`** lets a param file inherit values from a base file, so you can keep one `main.base.bicepparam` with defaults and per-environment files that only override what differs. See [Extendable parameter files](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/bicep-extend).
+- **`using none`** decouples a param file from a specific template, useful when the same values feed multiple templates.
+
+Check parameter files into source control alongside the Bicep modules. Secrets (service principal credentials, connection strings) go into Azure Key Vault, never into parameter files.
+
+## Azure DevOps Pipeline
+
+```yaml
+# azure-pipelines.yml
+trigger:
+  branches:
+    include: [ main ]
+  paths:
+    include: [ infra/** ]
+
+variables:
+  - group: aks-deploy-secrets   # Contains AZURE_SUBSCRIPTION_ID, SERVICE_CONNECTION
+
+stages:
+  - stage: Validate
+    jobs:
+      - job: LintAndValidate
+        steps:
+          - task: AzureCLI@2
+            displayName: Bicep lint
+            inputs:
+              azureSubscription: $(SERVICE_CONNECTION)
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                az bicep lint --file infra/main.bicep
+          - task: AzureCLI@2
+            displayName: What-if preview
+            inputs:
+              azureSubscription: $(SERVICE_CONNECTION)
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                az deployment group what-if \
+                  --resource-group rg-aks-prod \
+                  --template-file infra/main.bicep \
+                  --parameters infra/main.prod.bicepparam
+
+  - stage: Deploy
+    dependsOn: Validate
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: DeployInfra
+        environment: production   # Requires manual approval in Azure DevOps
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: AzureCLI@2
+                  displayName: Deploy AKS infrastructure
+                  inputs:
+                    azureSubscription: $(SERVICE_CONNECTION)
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      az deployment group create \
+                        --resource-group rg-aks-prod \
+                        --template-file infra/main.bicep \
+                        --parameters infra/main.prod.bicepparam \
+                        --mode Incremental
+```
+
+The **what-if** stage is critical: it shows exactly what resources will be created, modified, or deleted before the deployment runs ([Bicep what-if](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/deploy-what-if)). Make it mandatory in your team's process for any infrastructure change. For CI, add `--no-pretty-print` to get JSON output that's easy to diff or gate on.
+
+### When to graduate from what-if to Deployment Stacks
+
+`what-if` shows the diff for a single deployment. **Deployment Stacks** (GA) go a step further: they track a set of resources as one managed unit, so removing a resource from the template also removes it from Azure (with an explicit `--action-on-unmanage`). If your infra grows past a handful of modules and you find yourself doing manual cleanup, look at [Deployment stacks](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/deployment-stacks) as an evolution of the pattern above.
+
+## When AKS Automatic Is the Right Call
+
+Everything above is worth understanding, but for greenfield clusters you may not need to hand-roll it at all. **AKS Automatic** is a Microsoft-managed SKU that preconfigures Workload Identity, Azure RBAC, the OIDC issuer, node OS auto-upgrades, and a `stable` upgrade channel out of the box. The tradeoff is less control over individual knobs.
+
+{/* [PERSONAL EXPERIENCE] Rules-of-thumb below are from Experion engagements. */}
+Rules of thumb:
+- **Greenfield app team, standard workloads** → AKS Automatic. Save the Bicep for the resources around the cluster.
+- **Compliance, custom node pools, private cluster with specific egress rules, or you already have a working IaC estate** → the module pattern in this post.
+- **Migrating from a hand-built cluster** → keep the Bicep, but adopt the AKS Automatic defaults as your baseline: `stable` upgrade channel, `NodeImage` node OS channel, Workload Identity on, local accounts off.
+
+## Common Pitfalls
+
+**Running an unsupported Kubernetes version** — 1.29 (and 1.32) are deprecated. Check [supported versions](https://learn.microsoft.com/en-us/azure/aks/supported-kubernetes-versions) before pinning a value. Bicep won't warn you if you set an out-of-support version; you'll find out at deploy time.
+
+**Insufficient subnet IP space (legacy CNI only)** — Classic Azure CNI allocates IPs per pod from the VNet. With CNI Overlay (the current default) this is no longer an issue; if you're on a cluster older than the overlay migration, plan the subnet with 30+ pods per node in mind.
+
+**Skipping system node pool taints** — Without `CriticalAddonsOnly=true:NoSchedule` on the system pool, application workloads can land on it and starve kube-system components. Always taint the system pool.
+
+**Local accounts not disabled** — `disableLocalAccounts: true` is easy to forget and easy to skip "just for debugging." When you enable it on an existing cluster, rotate the cluster certificates afterward (see [Manage local accounts with Entra integration](https://learn.microsoft.com/en-us/azure/aks/manage-local-accounts-managed-azure-ad)).
+
+**Node version drift** — Set `autoUpgradeChannel: 'stable'` and `nodeOSUpgradeChannel: 'NodeImage'`. Cluster patches and node OS patches are separate concerns; both need a channel.
+
+**Missing resource locks** — Add a resource lock to the AKS resource group in production to prevent accidental deletion:
+
+```bicep
+resource lock 'Microsoft.Authorization/locks@2020-05-01' = {
+  name: 'aks-delete-lock'
+  properties: {
+    level: 'CanNotDelete'
+    notes: 'Prevent accidental AKS cluster deletion'
+  }
+}
+```
+
+## Wrapping Up
+
+A well-structured Bicep AKS deployment gives you infrastructure you can trust: version-controlled, peer-reviewed, and reproducible. The patterns above (modular structure, Workload Identity, Azure RBAC, CNI Overlay, OMS monitoring, `stable` + `NodeImage` upgrade channels, automated CI/CD) are what we've standardized on across enterprise projects at Experion.
+{/* [PERSONAL EXPERIENCE] Standardized across multiple Azure engagements 2022-2026. */}
+
+The investment in getting the IaC right pays back quickly. When you need to spin up a staging environment, disaster-recover a production cluster, or onboard a new team, you run the pipeline rather than clicking through the portal hoping you remember every checkbox.
+
+Start with the networking and monitoring modules first, since those are the pieces most teams skip and most regret later. Get those right, then layer in the cluster configuration on top. If you're doing anything on top of AKS that touches AI workloads, my post on [autonomous agents](/blog/autonomous-agents) covers how we've been running LLM-based tooling against Azure infra reviews.

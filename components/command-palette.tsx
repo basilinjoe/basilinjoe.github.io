@@ -3,7 +3,6 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
-import { motion, AnimatePresence } from "framer-motion"
 import {
   Home,
   User,
@@ -19,7 +18,8 @@ import {
   Search,
   ArrowRight,
 } from "lucide-react"
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import * as DialogPrimitive from "@radix-ui/react-dialog"
+import { Dialog, DialogTitle } from "@/components/ui/dialog"
 import { siteConfig } from "@/config/site"
 import { cn } from "@/lib/utils"
 
@@ -269,104 +269,116 @@ function CommandPalette() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent
-        className={cn(
-          "p-0 gap-0 overflow-hidden",
-          "max-w-[560px] top-[30%] translate-y-[-30%]",
-          "border border-border/60 shadow-2xl"
-        )}
-        aria-label="Command palette"
-      >
-        {/* Visually hidden title for screen readers */}
-        <DialogTitle className="sr-only">Command palette</DialogTitle>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Overlay
+          className={cn(
+            "fixed inset-0 z-50 bg-foreground/60 backdrop-blur-[2px]",
+            "data-[state=open]:animate-in data-[state=closed]:animate-out",
+            "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+          )}
+        />
+        <DialogPrimitive.Content
+          className={cn(
+            "fixed left-[50%] top-[20%] z-50 w-[calc(100%-2rem)] max-w-[560px] translate-x-[-50%]",
+            "grid gap-0 overflow-hidden bg-background",
+            "border-2 border-foreground shadow-brutal-lg",
+            "duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out",
+            "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+            "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+          )}
+          aria-label="Command palette"
+        >
+          {/* Visually hidden title for screen readers */}
+          <DialogTitle className="sr-only">Command palette</DialogTitle>
 
-        {/* Search input */}
-        <div className="flex items-center border-b border-border/60 px-3">
-          <Search className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
-          <input
-            ref={inputRef}
-            value={query}
-            onChange={(e) => { setQuery(e.target.value); setActiveIndex(0) }}
-            onKeyDown={handleKeyDown}
-            placeholder="Search commands…"
-            className={cn(
-              "flex h-12 w-full bg-transparent text-sm outline-none",
-              "placeholder:text-muted-foreground"
-            )}
-            autoComplete="off"
-            spellCheck={false}
-          />
-          <kbd className="hidden sm:flex h-5 select-none items-center gap-0.5 rounded border border-border bg-muted px-1.5 text-[10px] font-mono text-muted-foreground">
-            ESC
-          </kbd>
-        </div>
+          {/* Header strip */}
+          <div className="flex items-center gap-2 border-b-2 border-foreground bg-foreground px-3 py-2 text-background">
+            <span className="font-mono text-micro font-bold uppercase tracking-widest text-accent-hot">
+              Cmd · K
+            </span>
+            <span className="font-mono text-micro font-bold uppercase tracking-widest">
+              Quick jump
+            </span>
+          </div>
 
-        {/* Results */}
-        <div className="max-h-[360px] overflow-y-auto overscroll-contain py-2">
-          <AnimatePresence mode="wait">
+          {/* Search input */}
+          <div className="flex items-center border-b-2 border-foreground bg-background px-3">
+            <Search className="mr-2 h-4 w-4 shrink-0 text-foreground" />
+            <input
+              ref={inputRef}
+              value={query}
+              onChange={(e) => { setQuery(e.target.value); setActiveIndex(0) }}
+              onKeyDown={handleKeyDown}
+              placeholder="Search commands…"
+              className={cn(
+                "flex h-12 w-full bg-transparent text-sm text-foreground outline-none",
+                "placeholder:text-muted-foreground"
+              )}
+              autoComplete="off"
+              spellCheck={false}
+            />
+            <kbd className="hidden select-none items-center border-2 border-foreground bg-background px-1.5 py-0.5 font-mono text-micro font-bold uppercase text-foreground shadow-brutal-sm sm:flex">
+              ESC
+            </kbd>
+          </div>
+
+          {/* Results */}
+          <div className="max-h-[360px] overflow-y-auto overscroll-contain bg-background py-2">
             {filteredGroups.length === 0 ? (
-              <motion.div
-                key="empty"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="py-12 text-center text-sm text-muted-foreground"
-              >
-                No results for &ldquo;{query}&rdquo;
-              </motion.div>
+              <div className="px-4 py-12 text-center">
+                <p className="font-mono text-micro font-bold uppercase tracking-widest text-accent-hot">
+                  No matches
+                </p>
+                <p className="mt-2 font-serif text-lg italic text-muted-foreground">
+                  Nothing filed under &ldquo;{query}&rdquo;.
+                </p>
+              </div>
             ) : (
-              <motion.div
-                key="results"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              >
-                {filteredGroups.map((group) => {
-                  const groupStartIndex = flatIndex
-                  const rendered = (
-                    <div key={group.id} className="px-2 pb-1">
-                      <p className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                        {group.label}
-                      </p>
-                      {group.commands.map((cmd, i) => {
-                        const idx = groupStartIndex + i
-                        const isActive = idx === activeIndex
-                        return (
-                          <CommandItem
-                            key={cmd.id}
-                            cmd={cmd}
-                            isActive={isActive}
-                            onHover={() => setActiveIndex(idx)}
-                            isExternal={group.id === "social"}
-                          />
-                        )
-                      })}
-                    </div>
-                  )
-                  flatIndex += group.commands.length
-                  return rendered
-                })}
-              </motion.div>
+              filteredGroups.map((group) => {
+                const groupStartIndex = flatIndex
+                const rendered = (
+                  <div key={group.id} className="pb-2">
+                    <p className="px-3 py-1.5 font-mono text-micro font-bold uppercase tracking-widest text-accent-hot">
+                      · {group.label}
+                    </p>
+                    {group.commands.map((cmd, i) => {
+                      const idx = groupStartIndex + i
+                      const isActive = idx === activeIndex
+                      return (
+                        <CommandItem
+                          key={cmd.id}
+                          cmd={cmd}
+                          isActive={isActive}
+                          onHover={() => setActiveIndex(idx)}
+                          isExternal={group.id === "social"}
+                        />
+                      )
+                    })}
+                  </div>
+                )
+                flatIndex += group.commands.length
+                return rendered
+              })
             )}
-          </AnimatePresence>
-        </div>
+          </div>
 
-        {/* Footer */}
-        <div className="flex items-center gap-3 border-t border-border/60 px-3 py-2 text-[11px] text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <kbd className="rounded border border-border bg-muted px-1 font-mono">↑↓</kbd>
-            navigate
-          </span>
-          <span className="flex items-center gap-1">
-            <kbd className="rounded border border-border bg-muted px-1 font-mono">↵</kbd>
-            select
-          </span>
-          <span className="flex items-center gap-1">
-            <kbd className="rounded border border-border bg-muted px-1 font-mono">⌘K</kbd>
-            toggle
-          </span>
-        </div>
-      </DialogContent>
+          {/* Footer */}
+          <div className="flex flex-wrap items-center gap-4 border-t-2 border-foreground bg-background px-3 py-2 font-mono text-micro font-bold uppercase tracking-widest text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <kbd className="border border-foreground bg-background px-1 text-foreground">↑↓</kbd>
+              navigate
+            </span>
+            <span className="flex items-center gap-1.5">
+              <kbd className="border border-foreground bg-background px-1 text-foreground">↵</kbd>
+              select
+            </span>
+            <span className="flex items-center gap-1.5">
+              <kbd className="border border-foreground bg-background px-1 text-foreground">⌘K</kbd>
+              toggle
+            </span>
+          </div>
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
     </Dialog>
   )
 }
@@ -397,35 +409,29 @@ function CommandItem({
       onClick={cmd.action}
       onMouseEnter={onHover}
       className={cn(
-        "relative flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm text-left transition-colors",
+        "flex w-full items-center gap-3 border-l-2 px-3 py-2 text-left text-sm transition-colors",
         isActive
-          ? "bg-accent text-accent-foreground"
-          : "text-foreground/80 hover:bg-accent/50"
+          ? "border-accent-hot bg-accent-lime/60 text-foreground"
+          : "border-transparent text-foreground/80 hover:bg-accent-lime/20"
       )}
     >
-      {isActive && (
-        <motion.div
-          layoutId="commandActive"
-          className="absolute inset-0 rounded-md bg-accent"
-          style={{ zIndex: -1 }}
-          transition={{ type: "spring", stiffness: 400, damping: 30 }}
-        />
-      )}
-      <span className={cn("shrink-0", isActive ? "text-foreground" : "text-muted-foreground")}>
+      <span className={cn("shrink-0", isActive ? "text-accent-hot" : "text-muted-foreground")}>
         {cmd.icon}
       </span>
       <span className="flex min-w-0 flex-1 flex-col">
-        <span className="truncate font-medium leading-none">{cmd.label}</span>
+        <span className="truncate font-mono text-micro font-bold uppercase tracking-widest leading-none">
+          {cmd.label}
+        </span>
         {cmd.description && (
-          <span className="mt-0.5 truncate text-[11px] text-muted-foreground">
+          <span className="mt-1 truncate text-[11px] text-muted-foreground">
             {cmd.description}
           </span>
         )}
       </span>
       {isExternal ? (
-        <ExternalLink className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
+        <ExternalLink className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
       ) : (
-        isActive && <ArrowRight className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />
+        isActive && <ArrowRight className="ml-auto h-3.5 w-3.5 shrink-0 text-accent-hot" />
       )}
     </button>
   )

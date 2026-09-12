@@ -3,60 +3,85 @@
 import { useEffect, useState } from "react"
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion"
 
+/**
+ * Cursor-parallax editorial blob background.
+ *
+ * Three big blurred shapes in the accent trio (electric blue, hot orange,
+ * acid lime) drift with the cursor. Kept quiet in opacity so it reads as
+ * mood, not decoration. Respects prefers-reduced-motion.
+ */
 export function HeroAnimation() {
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const mouseX = useMotionValue(0)
   const mouseY = useMotionValue(0)
 
-  const springConfig = { damping: 25, stiffness: 150 }
+  const springConfig = { damping: 25, stiffness: 120 }
   const x = useSpring(mouseX, springConfig)
   const y = useSpring(mouseY, springConfig)
 
+  const [reduced, setReduced] = useState(false)
+
   useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)")
+    setReduced(media.matches)
+    const listener = () => setReduced(media.matches)
+    media.addEventListener("change", listener)
+    return () => media.removeEventListener("change", listener)
+  }, [])
+
+  useEffect(() => {
+    if (reduced) return
     const handleMouseMove = (e: MouseEvent) => {
       const { clientX, clientY } = e
       const { innerWidth, innerHeight } = window
-      const x = (clientX / innerWidth - 0.5) * 20
-      const y = (clientY / innerHeight - 0.5) * 20
-      setMousePosition({ x, y })
-      mouseX.set(x)
-      mouseY.set(y)
+      mouseX.set((clientX / innerWidth - 0.5) * 30)
+      mouseY.set((clientY / innerHeight - 0.5) * 30)
     }
-
     window.addEventListener("mousemove", handleMouseMove)
     return () => window.removeEventListener("mousemove", handleMouseMove)
-  }, [mouseX, mouseY])
+  }, [mouseX, mouseY, reduced])
 
   return (
-    <div className="absolute inset-0 -z-10 overflow-hidden">
-      {/* Interactive gradient orbs that follow mouse */}
+    <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+      {/* Big electric blue */}
       <motion.div
-        className="absolute top-0 left-1/4 w-96 h-96"
+        className="absolute -top-10 left-[10%] h-[28rem] w-[28rem]"
         style={{ x, y }}
       >
-        <div className="w-full h-full bg-primary/5 rounded-full filter blur-3xl opacity-50" />
+        <div className="h-full w-full rounded-full bg-primary opacity-15 blur-3xl dark:opacity-20" />
       </motion.div>
 
+      {/* Hot orange, counter-parallax */}
       <motion.div
-        className="absolute top-1/3 right-1/4 w-72 h-72"
-        style={{ 
-          x: useTransform(x, (value) => value * -0.5),
-          y: useTransform(y, (value) => value * -0.5)
+        className="absolute right-[8%] top-[24%] h-72 w-72"
+        style={{
+          x: useTransform(x, (v) => v * -0.6),
+          y: useTransform(y, (v) => v * -0.6),
         }}
       >
-        <div className="w-full h-full bg-blue-500/5 rounded-full filter blur-3xl opacity-50" />
+        <div className="h-full w-full rounded-full bg-accent-hot opacity-25 blur-3xl dark:opacity-30" />
       </motion.div>
 
+      {/* Acid lime, low-frequency */}
       <motion.div
-        className="absolute bottom-1/4 left-1/3 w-80 h-80"
-        style={{ 
-          x: useTransform(x, (value) => value * 0.3),
-          y: useTransform(y, (value) => value * 0.3)
+        className="absolute bottom-[12%] left-[35%] h-80 w-80"
+        style={{
+          x: useTransform(x, (v) => v * 0.35),
+          y: useTransform(y, (v) => v * 0.35),
         }}
       >
-        <div className="w-full h-full bg-primary/5 rounded-full filter blur-3xl opacity-50" />
+        <div className="h-full w-full rounded-full bg-accent-lime opacity-30 blur-3xl dark:opacity-25" />
       </motion.div>
 
+      {/* Newsprint dot pattern overlay for texture */}
+      <div
+        aria-hidden
+        className="absolute inset-0 opacity-[0.04] dark:opacity-[0.06]"
+        style={{
+          backgroundImage:
+            "radial-gradient(currentColor 1px, transparent 1px)",
+          backgroundSize: "24px 24px",
+        }}
+      />
     </div>
   )
 }

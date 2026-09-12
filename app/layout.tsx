@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
-import { fontSans, fontMono } from "@/lib/fonts"
+import { fontSans, fontMono, fontSerif } from "@/lib/fonts"
 import { cn } from "@/lib/utils"
 import { siteConfig } from "@/config/site"
 
 import { ThemeProvider } from "@/components/theme-provider"
 import { SiteHeader } from '@/components/site-header'
+import { SiteFooter } from '@/components/site-footer'
 import { GoogleAnalytics } from '@/components/google-analytics'
 import { PersonJsonLd, WebsiteJsonLd } from '@/components/json-ld'
 import { SkipNav } from '@/components/skip-nav'
@@ -39,6 +40,9 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: siteConfig.url,
+    types: {
+      "application/rss+xml": `${siteConfig.url}/feed.xml`,
+    },
   },
 }
 
@@ -58,9 +62,13 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn(fontSans.variable, fontMono.variable)}
+      className={cn(fontSans.variable, fontMono.variable, fontSerif.variable)}
     >
-        <head />
+        <head>
+          <link rel="preconnect" href="https://www.googletagmanager.com" />
+          <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+          <link rel="preconnect" href="https://www.google-analytics.com" />
+        </head>
         <body className="min-h-screen bg-background font-sans antialiased">
           <ThemeProvider
             attribute="class"
@@ -74,6 +82,7 @@ export default function RootLayout({
                 <div className="relative flex min-h-screen flex-col bg-background">
                   <SiteHeader />
                   <main id="main-content" className="flex-1">{children}</main>
+                  <SiteFooter />
                 </div>
               </div>
               <ScrollToTop />

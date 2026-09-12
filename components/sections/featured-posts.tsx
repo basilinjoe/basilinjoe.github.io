@@ -1,92 +1,130 @@
+"use client"
+
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { BlogPost } from "@/lib/blog"
 import { fadeInUp } from "@/lib/animations"
-import { ArrowRight, CalendarIcon, BookOpen } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { BADGE_CATEGORIES } from "@/lib/design-system/badges"
+import { tagToSlug } from "@/lib/tags"
 
 interface FeaturedPostsProps {
-  posts: BlogPost[];
+  posts: BlogPost[]
 }
 
-// Function to assign a category badge style based on post title or content
-const getCategoryBadge = (post: BlogPost) => {
-  const title = post.title.toLowerCase();
-  
-  if (title.includes('ai') || title.includes('ml') || title.includes('machine learning')) {
-    return { name: "AI & ML", variant: "tech" as const };
-  } else if (title.includes('coding') || title.includes('development')) {
-    return { name: "Development", variant: "featured" as const };
-  } else if (title.includes('tutorial') || title.includes('how to') || title.includes('guide')) {
-    return { name: "Tutorial", variant: "secondary" as const };
-  } else {
-    return { name: "Article", variant: "skill" as const };
-  }
-};
-
+/**
+ * Editorial "selected writing" section.
+ *
+ * Big serif headline with an accent brace, then posts listed as
+ * numbered editorial rows (not cards). Reads like a magazine's
+ * table of contents rather than a Pinterest board.
+ */
 export function FeaturedPosts({ posts }: FeaturedPostsProps) {
-  if (posts.length === 0) return null;
-
-  // Generate random rotation angles for cards
-  const rotations = posts.map(() => Math.random() * 2 - 1); // Between -1 and 1 degrees
+  if (posts.length === 0) return null
 
   return (
-    <motion.div variants={fadeInUp} className="flex flex-col">
-      <div className="flex justify-between items-center mb-5">
-        <div className="flex items-center">
-          <h2 className="text-3xl font-extrabold tracking-tight relative inline-block">
-            Featured Posts
-            <span className="absolute -bottom-1 left-0 w-12 h-1 bg-primary rounded-full" />
-          </h2>
-          <div className="ml-3 bg-primary/10 dark:bg-primary/20 rounded-full px-3 py-1 text-xs font-medium text-primary flex items-center">
-            <BookOpen className="w-3 h-3 mr-1" />
-            Latest insights
-          </div>
-        </div>
-        <Link href="/blog" className="text-sm flex items-center hover:text-primary group">
-          View all posts <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-        </Link>
-      </div>
-      <div className="grid gap-6 md:grid-cols-3 perspective">
+    <motion.section
+      variants={fadeInUp}
+      aria-labelledby="featured-posts-heading"
+      className="py-16 md:py-24"
+    >
+      <SectionHeading
+        numeral="03"
+        eyebrow="Filed under"
+        title="Selected writing"
+        rightSlot={
+          <Link
+            href="/blog"
+            className="group inline-flex items-center gap-2 font-mono text-micro font-bold uppercase tracking-widest text-foreground hover:text-accent-hot"
+          >
+            All posts
+            <span aria-hidden className="transition-transform group-hover:translate-x-1">
+              →
+            </span>
+          </Link>
+        }
+      />
+
+      <ol className="mt-10 divide-y-2 divide-foreground/15 border-y-2 border-foreground">
         {posts.map((post, index) => {
-          const category = getCategoryBadge(post);
+          const primaryTag = post.tags?.[0]
           return (
-            <motion.div
+            <motion.li
               key={post.id}
               variants={fadeInUp}
-              transition={{ delay: index * 0.1 }}
-              style={{ transform: `rotate(${rotations[index]}deg)` }}
-              whileHover={{ rotate: 0, scale: 1.03, transition: { duration: 0.2 } }}
+              transition={{ delay: index * 0.08 }}
+              className="group"
             >
-              <Link href={`/blog/${post.id}`} className="group block h-full">
-                <div className="flex flex-col space-y-3 p-5 border border-border/50 rounded-lg transition-all hover:border-primary hover:shadow-md hover:bg-card h-full relative">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent rounded-lg opacity-30"></div>
-                  <div className="relative z-10">
-                    <div className="mb-2">
-                      <Badge variant={category.variant} size="sm">{category.name}</Badge>
-                    </div>
-                    <h3 className="font-semibold group-hover:text-primary transition-colors text-lg">
-                      {post.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-                      {post.excerpt}
-                    </p>
-                    <div className="flex items-center text-xs text-muted-foreground mt-auto pt-2 border-t border-border/30">
-                      <CalendarIcon className="mr-1 h-3 w-3 text-primary/70" />
-                      {new Date(post.date).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
-                    </div>
-                  </div>
+              <Link
+                href={`/blog/${post.id}`}
+                className="grid grid-cols-12 items-baseline gap-4 px-2 py-6 transition-colors hover:bg-accent-lime/20"
+              >
+                <span className="col-span-2 font-mono text-xs font-bold uppercase tracking-widest text-muted-foreground md:col-span-1">
+                  0{index + 1}
+                </span>
+
+                <div className="col-span-10 md:col-span-8">
+                  <h3 className="font-serif text-2xl leading-tight transition-colors group-hover:text-accent-hot sm:text-3xl md:text-4xl">
+                    {post.title}
+                  </h3>
+                  <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
+                    {post.excerpt}
+                  </p>
+                </div>
+
+                <div className="col-span-12 flex flex-wrap items-center gap-3 font-mono text-micro uppercase tracking-widest text-muted-foreground md:col-span-3 md:justify-end">
+                  <time dateTime={post.date}>
+                    {new Date(post.date).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                    })}
+                  </time>
+                  <span aria-hidden>·</span>
+                  <span>{post.readingTime}</span>
+                  {primaryTag && (
+                    <span
+                      onClick={(e) => e.preventDefault()}
+                      className="sticker-lime hidden md:inline-flex"
+                    >
+                      {primaryTag}
+                    </span>
+                  )}
                 </div>
               </Link>
-            </motion.div>
-          );
+            </motion.li>
+          )
         })}
-      </div>
-    </motion.div>
+      </ol>
+    </motion.section>
   )
 }
+
+function SectionHeading({
+  numeral,
+  eyebrow,
+  title,
+  rightSlot,
+}: {
+  numeral: string
+  eyebrow: string
+  title: string
+  rightSlot?: React.ReactNode
+}) {
+  return (
+    <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+      <div>
+        <div className="flex items-baseline gap-4">
+          <span className="column-numeral">{numeral}</span>
+          <span className="font-mono text-micro font-semibold uppercase tracking-widest text-accent-hot">
+            {eyebrow}
+          </span>
+        </div>
+        <h2 className="mt-3 font-serif text-4xl leading-none tracking-tightest md:text-6xl">
+          {title}
+        </h2>
+      </div>
+      {rightSlot && <div>{rightSlot}</div>}
+    </div>
+  )
+}
+
+// Re-exported so other sections can share the same heading style.
+export { SectionHeading }

@@ -1,0 +1,106 @@
+---
+title: "Generative AI Explained: A Beginner's Guide with Real Numbers"
+date: "2024-01-18"
+modified: "2026-09-11"
+excerpt: "What generative AI is, how it actually works, which tools matter in 2026, and how much money and compute have gone into the field — with sources for every claim."
+tags: ["AI", "Machine Learning", "Beginner", "Technology", "ChatGPT"]
+coverImage: "/blog/ai-coding-assistants-cover.webp"
+---
+
+Generative AI is any system that creates new content, whether that's text, images, code, audio, or video. If you've asked ChatGPT a question or seen an AI-generated image, you've already used it. This guide walks through what it is, how it works in plain terms, which tools matter in 2026, and, importantly, real numbers from published research so you can separate the hype from the substance.
+
+> **Key Takeaways**
+> - Generative AI is a **massive industry**: private AI investment reached **$252.3 billion in 2024** according to the [Stanford AI Index 2025](https://hai.stanford.edu/ai-index/2025-ai-index-report).
+> - The cost of running these models has collapsed. The [same report](https://hai.stanford.edu/ai-index/2025-ai-index-report) notes inference cost for a GPT-3.5-level model dropped **~280x** between late 2022 and late 2024.
+> - **The leading 2026 models**: [GPT-5 (OpenAI, August 2025)](https://openai.com/index/introducing-gpt-5/), [Claude Opus 4 (Anthropic, May 2025)](https://www.anthropic.com/news/claude-4), [Gemini 2.5 Pro (Google, June 2025)](https://developers.googleblog.com/en/gemini-2-5-thinking-model-updates/), [Llama 4 (Meta, April 2025)](https://ai.meta.com/blog/llama-4-multimodal-intelligence/).
+> - **Bard is Gemini now** — Google [rebranded on February 8, 2024](https://blog.google/products/gemini/bard-gemini-advanced-app/). If a tutorial says "Bard," it's out of date.
+> - Text LLMs use **transformers**, not GANs. Modern text-to-image tools use **diffusion models**, also not GANs. See the "How it works" section for why the distinction matters.
+
+## What is generative AI?
+
+Generative AI is a type of artificial intelligence that creates new content on its own. Instead of just analyzing data or following if-then rules, it produces new artifacts: written text, images, music, code, video, and more. You give it a prompt (a request) and it produces a result. Ask for a short story about a space-traveling cat and you'll get one. Request "an elephant painting a portrait" from an image model and it will generate an image that didn't exist before.
+
+The distinction from traditional AI is important: a spam filter classifies an email as spam or not spam. A generative model writes you a new email.
+
+## How does generative AI actually work?
+
+Under the hood, generative AI is machine learning applied to enormous datasets. A model is trained on billions of examples (text, images, audio) and learns statistical patterns about how those examples are structured. When you give it a prompt, it uses those patterns to produce something new that fits.
+
+Two model families dominate 2026, and mixing them up is one of the most common mistakes in beginner explanations:
+
+### Transformers (the text side)
+
+The models behind ChatGPT, Claude, Gemini, and Llama are all **transformers**, an architecture introduced by [Vaswani et al. in 2017 ("Attention Is All You Need," arXiv:1706.03762)](https://arxiv.org/abs/1706.03762). Transformers learn context by looking at all the words in a passage simultaneously rather than one at a time. When you ask for "a poem about the sea," the model predicts one word, then the next, then the next, each conditioned on everything before it.
+
+Every current large language model is a transformer variant. GPT-5, Claude Opus 4, Gemini 2.5, and Llama 4 are all built this way. The differences between them are training data, scale, fine-tuning, and how they're wired for tool use.
+
+### Diffusion models (the image side)
+
+Modern image generators (DALL-E 3, Midjourney, Stable Diffusion) are **diffusion models**. They learn to progressively remove noise from a random image until a coherent picture emerges, guided by your text prompt. This is a different mechanism from the older **GANs** (Generative Adversarial Networks, introduced by [Goodfellow et al. in 2014](https://arxiv.org/abs/1406.2661)) that dominated image AI in the mid-2010s. GANs still exist and still work, but they're no longer where the state of the art is.
+
+If a tutorial talks about "two AIs playing a game" (one generating, one critiquing) to explain modern image AI, it's describing GANs, which isn't what DALL-E 3 or Midjourney actually do today.
+
+## The popular tools in 2026
+
+The generative AI tool landscape has consolidated around a handful of major players. Here are the ones worth knowing:
+
+### Text and conversation
+
+- **[ChatGPT (OpenAI)](https://openai.com/chatgpt/)** — The original mainstream chatbot, now running on GPT-5 by default (released [August 7, 2025](https://openai.com/index/introducing-gpt-5/)). Free tier available, paid ChatGPT Plus unlocks the more capable models.
+- **[Claude (Anthropic)](https://claude.ai/)** — Claude Opus 4 released [May 22, 2025](https://www.anthropic.com/news/claude-4). Widely considered strongest for long-form writing, code, and following complex instructions.
+- **[Gemini (Google)](https://gemini.google.com/)** — Formerly Bard, [renamed February 8, 2024](https://blog.google/products/gemini/bard-gemini-advanced-app/). Gemini 2.5 Pro reached general availability [June 17, 2025](https://developers.googleblog.com/en/gemini-2-5-thinking-model-updates/). Native multimodal (text, image, audio, video in one model).
+- **[Llama 4 (Meta)](https://ai.meta.com/blog/llama-4-multimodal-intelligence/)** — Released April 5, 2025. Open weights, so anyone can run it on their own hardware. The Scout, Maverick, and Behemoth variants are the first Llama models with a mixture-of-experts architecture.
+
+### Image generation
+
+- **[DALL-E 3 (OpenAI)](https://openai.com/index/dall-e-3/)** — Released September 2023, integrated into ChatGPT. Type a description, get an image.
+- **[Midjourney](https://www.midjourney.com/)** — Known for aesthetically distinctive output; runs primarily through a Discord bot and a web interface.
+- **[Stable Diffusion](https://stability.ai/)** — Open source, runs on your own GPU. The community favorite for customization and offline use.
+
+### Code
+
+- **[GitHub Copilot](https://github.com/features/copilot)** — The default coding assistant for most developers. Covered in depth in my [AI coding assistants guide](/blog/efficient-use-of-ai-coding-assistants).
+- **[Claude Code](https://www.anthropic.com/news/claude-3-7-sonnet)** — Anthropic's terminal-native coding agent (GA February 2025). Ideal for multi-file refactoring.
+
+### One historical moment worth knowing
+
+In August 2022, artist Jason M. Allen submitted "Théâtre d'Opéra Spatial," an image generated with Midjourney, to the Colorado State Fair's Digital Arts category and [won first place](https://www.washingtonpost.com/technology/2022/09/02/midjourney-artificial-intelligence-state-fair-colorado/). He'd used at least 624 text prompts to arrive at the winning image and won a $300 prize. The result kicked off two years of ongoing debate about AI in art, authorship, and licensing. It's often cited as the moment generative AI crossed from "cool demo" to "unavoidable cultural conversation."
+
+## Where the money and progress are going
+
+The [Stanford AI Index Report 2025](https://hai.stanford.edu/ai-index/2025-ai-index-report) has the cleanest current numbers on where the field stands:
+
+- **Private investment**: $252.3 billion in 2024.
+- **Notable models by country**: 40 from the United States, 15 from China, 3 from Europe.
+- **Inference cost**: dropped roughly 280x for a GPT-3.5-equivalent model between November 2022 and October 2024. The floor keeps dropping.
+- **FDA-approved AI-enabled medical devices**: 223 in 2023, up from 6 in 2015.
+
+The takeaway isn't any single number, it's that generative AI is moving from expensive research artifact to cheap infrastructure roughly one order of magnitude per year. That has direct implications for what you can build without a hyperscaler budget.
+
+## Fun and unexpected applications
+
+Beyond the obvious "write me an email" use cases, people are doing genuinely creative things:
+
+- **Personalized storytelling**: Bedtime stories featuring your child as the protagonist, generated on demand.
+- **Music generation**: [Suno](https://suno.com/) and [Udio](https://www.udio.com/) generate original songs from a text description. You can't play an instrument, and you can now compose.
+- **Interior and fashion design**: Upload a photo of your living room, get AI-generated redesign suggestions. Sketch an outfit idea, get variations.
+- **Education**: Explaining hard concepts at your level, generating quizzes on any topic, role-playing as historical figures for Q&A.
+- **Research assistance**: Drafting article outlines, summarizing dense papers, brainstorming experiments. Not a replacement for the work, but a real accelerant.
+
+## The future of generative AI
+
+Four trends are worth watching:
+
+**Multimodal by default.** Gemini 2.5 and GPT-5 handle text, images, audio, and video in a single model instead of routing between specialized systems. Show a photo, ask a question about it, get an answer. Show a video, get a summary. This is starting to change what "AI assistant" means at the product level.
+
+**More realistic content, with matching consequences.** AI-generated text is often indistinguishable from human writing. AI-generated video (OpenAI's Sora, Google's Veo, Runway) is closing the same gap for short clips. This is a genuine creative tool, and also a genuine deepfake and misinformation risk. Both statements are true at once.
+
+**Personalized AI assistants.** Rather than one-size-fits-all models, expect assistants tuned on your preferences, communication style, and history. If you're building on this, my [autonomous agents](/blog/autonomous-agents) post walks through the reasoning-loop pattern that most personal assistants are built on top of.
+
+**Integration everywhere.** Word processors, email clients, design tools, IDEs, and note apps have all shipped generative features in the last two years. It's already background infrastructure in many workflows, not a separate app you visit.
+
+## Wrapping up
+
+Generative AI has moved from research curiosity to a $250 billion industry in about three years. It creates text, images, code, music, and video by learning patterns from enormous datasets, and then producing new artifacts that fit those patterns. Text models are transformers; modern image models are diffusion, not GANs. GPT-5, Claude Opus 4, Gemini 2.5, and Llama 4 are the current frontier as of late 2026, and the tools around them (ChatGPT, Claude, Gemini, Copilot) are how most people actually use them.
+
+Whether you play with a chatbot for the first time this week or you're building something on top of the API, the most useful mental model is: these are pattern-matching engines trained on the internet at scale. They're extraordinary at some things, mediocre at others, and confidently wrong about a nontrivial share of the rest. Try them, keep the [Stanford AI Index](https://hai.stanford.edu/ai-index/2025-ai-index-report) bookmarked for a sanity check on the hype cycle, and enjoy building.

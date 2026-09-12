@@ -1,0 +1,227 @@
+---
+title: "Autonomous AI Agents: How They Work and What They Cost in 2026"
+date: "2024-01-19"
+modified: "2026-09-11"
+excerpt: "How autonomous agents actually work: the ReAct loop, memory architectures, real production examples with sourced numbers, current API pricing, and the failure modes you'll hit before the demo becomes a product."
+tags: ["AI", "Automation", "LLMs", "Future Tech"]
+coverImage: "/blog/ai-coding-assistants-cover.webp"
+---
+
+Autonomous agents are AI systems that plan and execute multi-step tasks against real tools instead of answering one prompt at a time. In the two years since the [ReAct paper](https://arxiv.org/abs/2210.03629) formalized the reason-and-act pattern (Yao et al., Princeton and Google Research, October 2022), the space has moved from research demo to production line item, with Azure AI Foundry Agent Service reaching general availability in [May 2025](https://techcommunity.microsoft.com/blog/azure-ai-foundry-blog/announcing-general-availability-of-azure-ai-foundry-agent-service/4414352) and LangChain, Microsoft AutoGen, and CrewAI collecting tens of thousands of GitHub stars each.
+
+This post walks through what an agent actually is, how the loop works, one real production example with numbers, and the practical failure modes you'll hit once you leave the notebook.
+
+> **Key Takeaways**
+> - The dominant agent architecture is still **ReAct** ([Yao et al., 2022](https://arxiv.org/abs/2210.03629)): thought → action → observation, repeated until done. Everything modern layers on top of this loop.
+> - **Real deployment example**: Klarna's OpenAI-powered assistant handled 2.3 million customer service conversations in its first month, [equivalent to the work of 700 full-time agents](https://www.klarna.com/international/press/klarna-ai-assistant-handles-two-thirds-of-customer-service-chats-in-its-first-month/) (Klarna press release, February 2024). Klarna later moderated some of that messaging, which is a useful lesson in its own right.
+> - **API cost is real**: GPT-4o is [$2.50 per million input tokens and $10.00 per million output tokens](https://developers.openai.com/api/docs/pricing); GPT-5 is roughly a quarter of that on input. A ten-step agent easily hits several cents per run.
+> - **Azure AI Foundry Agent Service** is now GA (May 2025), giving you a managed runtime for state and tool execution instead of hand-rolling it.
+> - The engineering problems are reliability, cost, and safety, not "can it think?" All three have solvable patterns.
+
+## What are autonomous agents?
+
+Autonomous agents are AI systems that can perceive their environment, make decisions, and take actions to achieve a goal. Unlike a plain chatbot that answers one prompt at a time, an agent can:
+
+- Plan and break down complex tasks into smaller steps
+- Adapt to changing circumstances as new information arrives
+- Use external tools (web search, code execution, APIs, browsers)
+- Maintain memory across multiple steps
+- Work continuously without constant human intervention
+
+Think of them as digital assistants that don't just answer questions but actually get things done. Instead of a single prompt-response loop, they reason through a sequence of actions until a goal is reached or a step limit is hit.
+
+## How do autonomous agents work?
+
+At their core, autonomous agents combine several AI technologies into a **reasoning loop**:
+
+1. **Large Language Models (LLMs)** provide understanding, reasoning, and natural language generation.
+2. **Planning** breaks down complex goals into actionable steps (often referred to as "chain of thought").
+3. **Memory** stores context, both short-term (the current task) and long-term (past interactions, documents).
+4. **Tool use** lets the agent call external functions, APIs, browsers, or code interpreters.
+
+### The ReAct pattern
+
+The most widely adopted agent architecture is **ReAct** (Reasoning + Acting), introduced by [Yao et al. in October 2022](https://arxiv.org/abs/2210.03629). The agent iterates through a loop:
+
+```
+Thought: I need to find the current weather in Kochi.
+Action: web_search("weather Kochi today")
+Observation: Current temperature 31°C, humidity 78%
+Thought: I have the weather data. I can now answer.
+Final Answer: It's 31°C and humid in Kochi today.
+```
+
+Each iteration, the agent "thinks" about what to do, takes an action using a tool, observes the result, and decides whether to continue or finish. The loop repeats until the goal is achieved or a maximum step count is hit. On benchmark tasks, the original paper reported ReAct outperforming imitation and reinforcement learning methods by 34 percentage points on ALFWorld and 10 points on WebShop, which is why the pattern stuck.
+
+### Memory architecture
+
+Memory is what separates useful agents from toy demos. A production agent typically has:
+
+| Memory Type | How It Works | Use Case |
+|---|---|---|
+| **In-context** | Conversation history in the prompt | Short tasks, recent facts |
+| **Vector store** | Embeddings in a database (e.g., Azure AI Search) | Long documents, knowledge bases |
+| **Episodic** | Logs of past agent runs | Learning from prior mistakes |
+| **Semantic** | Structured facts about the world | Business rules, user profiles |
+
+For enterprise deployments on Azure, combining **Azure OpenAI** with **Azure AI Search** for vector retrieval remains the most common pattern.
+
+## Building a simple agent with Azure OpenAI
+
+Here's a minimal Python example using the OpenAI SDK with function calling, which is the foundation of most production agents:
+
+```python
+from openai import AzureOpenAI
+import json
+
+client = AzureOpenAI(
+    azure_endpoint="https://YOUR_RESOURCE.openai.azure.com/",
+    api_key="YOUR_API_KEY",
+    api_version="2024-10-21"
+)
+
+# Define the tools the agent can call
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "get_weather",
+            "description": "Get the current weather for a city",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "city": {"type": "string", "description": "City name"}
+                },
+                "required": ["city"]
+            }
+        }
+    }
+]
+
+def get_weather(city: str) -> str:
+    # In production, call a real weather API
+    return f"Weather in {city}: 28°C, partly cloudy"
+
+def run_agent(user_message: str):
+    messages = [{"role": "user", "content": user_message}]
+
+    while True:
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=messages,
+            tools=tools,
+            tool_choice="auto"
+        )
+
+        choice = response.choices[0]
+        messages.append(choice.message)
+
+        # If no tool call, we're done
+        if not choice.message.tool_calls:
+            return choice.message.content
+
+        # Execute each tool call and feed results back
+        for tool_call in choice.message.tool_calls:
+            args = json.loads(tool_call.function.arguments)
+            result = get_weather(**args)
+            messages.append({
+                "role": "tool",
+                "tool_call_id": tool_call.id,
+                "content": result
+            })
+
+print(run_agent("What's the weather like in Kochi?"))
+```
+
+The same pattern scales to dozens of tools (web search, database queries, code execution, email sending), each defined as a function the model can choose to call. If you're building on Azure, [Azure AI Foundry Agent Service](https://techcommunity.microsoft.com/blog/azure-ai-foundry-blog/announcing-general-availability-of-azure-ai-foundry-agent-service/4414352) now handles the loop, state, and tool execution for you as a managed runtime.
+
+## Popular examples and real-world applications
+
+Autonomous agents are already in production across many domains:
+
+- **Code generation agents**: Write, test, and debug code (GitHub Copilot Workspace, Cursor, Claude Code, Devin). See my [guide to AI coding assistants](/blog/efficient-use-of-ai-coding-assistants) for the developer-facing side of this.
+- **Research agents**: Gather, analyze, and summarize information from multiple web sources.
+- **Customer service agents**: Handle support tickets end-to-end, escalating only edge cases to humans.
+- **DevOps agents**: Monitor infrastructure, diagnose alerts, and execute remediation runbooks. If you're managing AKS clusters like the ones in my [Bicep IaC post](/blog/deploying-aks-with-bicep), agents that read Log Analytics and propose remediations are a natural fit.
+- **Data analysis agents**: Connect to databases, write SQL, generate charts, and summarize findings.
+
+**A named production deployment worth understanding**: Klarna announced in [February 2024](https://www.klarna.com/international/press/klarna-ai-assistant-handles-two-thirds-of-customer-service-chats-in-its-first-month/) that its OpenAI-powered assistant handled 2.3 million conversations in a single month, roughly two-thirds of customer service chats, "equivalent to the work of 700 full-time agents." Klarna's public messaging on the deployment became more measured through 2024 as quality edge cases surfaced, which is a healthier signal than the original announcement: agents can absorb enormous volume, but the tail of "handled poorly" cases needs its own product work. At Experion, we've been running smaller-scoped agents against Azure infrastructure review workflows (examine Bicep templates, cross-reference Azure documentation, produce a findings report). The same tension shows up at any scale: the top of the distribution is impressive, and the tail is where you spend your engineering time.
+{/* [PERSONAL EXPERIENCE] Direct observation from Experion internal tooling work. */}
+
+## Framework landscape (mid-2025)
+
+If you're picking a starting point, the open-source options have stratified:
+
+| Framework | Roughly what it's for | GitHub stars (mid-2025) |
+|---|---|---|
+| **LangChain / LangGraph** | General-purpose agents; LangGraph is the newer graph-based orchestrator | ~85k / ~15k |
+| **Microsoft AutoGen** | Multi-agent conversation and orchestration | ~42k |
+| **CrewAI** | Role-based multi-agent workflows | ~31k |
+| **Azure AI Foundry Agent Service** | Managed runtime, no framework decision needed | (Azure managed) |
+
+Star counts are a snapshot from mid-2025 and a popularity proxy, not a quality signal. The bigger question is whether you want a framework you control (LangGraph, AutoGen) or a managed service you rent (Foundry). For anything customer-facing on Azure, Foundry saves you the state-and-tool-execution plumbing.
+
+## Challenges you'll hit in production
+
+### 1. Reliability and hallucination
+LLMs can confidently call a tool with wrong arguments, or "remember" facts that aren't in context. Mitigations:
+
+- Validate inputs in every tool implementation. Don't trust the model's argument types.
+- Use structured outputs (`response_format: { type: "json_object" }`) where possible.
+- Build retry logic with exponential backoff.
+- Log every tool call and observation for debugging.
+
+### 2. Cost and latency
+Concrete numbers as of late 2026, from [OpenAI's pricing page](https://developers.openai.com/api/docs/pricing):
+
+- **GPT-4o**: $2.50 per 1M input tokens, $10.00 per 1M output tokens.
+- **GPT-5** (released [August 7, 2025](https://openai.com/index/introducing-gpt-5/)): roughly $0.625 input, $5.00 output per 1M tokens (verify at deploy time; the OpenAI page is authoritative).
+
+A ten-step agent with 3-4k tokens of context per step is a few cents on GPT-4o and closer to a cent on GPT-5. That's cheap for a single run and expensive at 100k runs a day. Practical controls:
+
+- Use smaller models (GPT-4o-mini, GPT-5-mini, Claude Haiku) for simpler reasoning steps.
+- Cache tool results where possible (weather data, documentation lookups).
+- Set a hard `max_iterations` limit to prevent runaway loops.
+- Monitor token consumption per agent run in Azure Monitor or your provider's dashboard.
+
+### 3. Safety and control
+An agent with write access to production systems is a significant risk:
+
+- Apply the **principle of least privilege** to tool definitions.
+- Require human confirmation for irreversible actions (deletes, sends, deploys).
+- Use Azure RBAC to scope what service principals the agent can act as.
+- Log all actions in an append-only audit trail.
+
+### 4. State management
+Multi-step agents need to persist state across steps, especially for long-running tasks:
+
+- Store intermediate state in Azure Table Storage or Cosmos DB.
+- Use a job queue (Azure Service Bus) to enable resumable workflows.
+- Design for idempotency. If a step is retried, it shouldn't duplicate side effects.
+
+## The future of autonomous agents
+
+The trajectory is clear: agents will get more capable, more specialized, and more deeply integrated with enterprise systems.
+
+**Multi-agent systems** are already common in production. Instead of one agent doing everything, you orchestrate a team: a planner agent, a researcher agent, a writer agent, a reviewer agent. AutoGen and CrewAI are the two most active open-source frameworks in that space.
+
+**Better long-term memory** will mean agents that remember your preferences, your codebase conventions, and your team's past decisions without you re-explaining every session.
+
+**Tighter tool integration** will close the gap between "agent suggesting an action" and "agent taking the action," with appropriate guardrails per domain.
+
+## Getting started
+
+If you want to experiment today:
+
+1. **Azure OpenAI + Python**: The code sample above is a real starting point. Add a web search tool using Bing Search API.
+2. **LangGraph or Semantic Kernel**: Both offer pre-built agent loops, memory backends, and a library of tools.
+3. **AutoGen**: Microsoft's framework for multi-agent conversations. Good for exploring collaborative agent patterns.
+4. **Azure AI Foundry Agent Service** (GA): The managed path. State, tool execution, and observability are handled for you.
+
+Start with a constrained scope: a single domain, read-only tools, and human review of every output. As confidence grows, expand the autonomy gradually.
+
+## Wrapping up
+
+Autonomous agents represent a real shift in how we build with AI. They're not just tools that respond to commands, they're systems that reason, plan, and act. The key challenges are practical (reliability, cost, safety), and the patterns to address them are maturing quickly. Klarna's numbers show the ceiling; their follow-up messaging shows the floor.
+
+Whether you're a developer exploring the technology or a tech lead evaluating enterprise adoption, the time to build hands-on experience is now. Start small, log everything, keep a human in the loop for anything consequential, and check the [OpenAI pricing page](https://developers.openai.com/api/docs/pricing) before you scale a design that assumed a different model tier. The agents of 2025 are the foundation of what 2027 will run on.

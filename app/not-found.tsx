@@ -2,98 +2,89 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { Home, ArrowLeft, Search, FileQuestion } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { fadeInUp, scaleUp } from "@/lib/animations"
+import { Home, ArrowLeft, Search } from "lucide-react"
 
 export default function NotFound() {
+  const links = [
+    { href: "/", label: "Home" },
+    { href: "/about", label: "Experience" },
+    { href: "/projects", label: "Projects" },
+    { href: "/blog", label: "Blog" },
+    { href: "/contact", label: "Contact" },
+  ]
+
   return (
-    <div className="relative overflow-hidden">
-      {/* Background elements */}
-      <div className="absolute top-20 left-10 w-64 h-64 bg-primary/5 rounded-full filter blur-3xl opacity-40 -z-10"></div>
-      <div className="absolute bottom-40 right-10 w-80 h-80 bg-blue-500/5 rounded-full filter blur-3xl opacity-40 -z-10"></div>
-      
-      <section className="container flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-10">
-        <motion.div 
-          initial="hidden"
-          animate="visible"
-          className="flex flex-col items-center text-center space-y-8 max-w-2xl"
-        >
-          {/* 404 Icon */}
-          <motion.div variants={scaleUp} className="relative">
-            <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl"></div>
-            <FileQuestion className="h-32 w-32 text-primary relative z-10" />
-          </motion.div>
-          
-          {/* Error Code */}
-          <motion.div variants={fadeInUp} className="space-y-4">
-            <h1 className="text-6xl font-bold tracking-tighter sm:text-8xl bg-gradient-to-r from-primary to-blue-500 bg-clip-text text-transparent">
-              404
-            </h1>
-            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-              Page Not Found
-            </h2>
-            <p className="text-muted-foreground max-w-lg mx-auto">
-              Sorry, we couldn&apos;t find the page you&apos;re looking for. It might have been moved, deleted, or never existed.
-            </p>
-          </motion.div>
-          
-          {/* Action Buttons */}
-          <motion.div 
-            variants={fadeInUp} 
-            className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto"
-          >
-            <Button asChild size="lg" className="gap-2">
-              <Link href="/">
-                <Home className="h-4 w-4" />
-                Go to Homepage
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="lg" className="gap-2">
-              <Link href="/blog">
-                <Search className="h-4 w-4" />
-                Browse Blog
-              </Link>
-            </Button>
-          </motion.div>
-          
-          {/* Quick Links */}
-          <motion.div variants={fadeInUp} className="pt-8 border-t w-full">
-            <p className="text-sm text-muted-foreground mb-4">Here are some helpful links:</p>
-            <nav className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              <Link 
-                href="/" 
-                className="text-sm hover:text-primary transition-colors flex items-center gap-1 justify-center"
-              >
-                <ArrowLeft className="h-3 w-3" />
-                Home
-              </Link>
-              <Link 
-                href="/about" 
-                className="text-sm hover:text-primary transition-colors"
-              >
-                About
-              </Link>
-              <Link 
-                href="/projects" 
-                className="text-sm hover:text-primary transition-colors"
-              >
-                Projects
-              </Link>
-              <Link 
-                href="/blog" 
-                className="text-sm hover:text-primary transition-colors"
-              >
-                Blog
-              </Link>
-            </nav>
-          </motion.div>
-          
-          {/* Decorative elements */}
-          <div className="absolute top-40 right-10 w-16 h-16 border border-primary/10 rounded-full animate-pulse-slow opacity-30 hidden md:block"></div>
-          <div className="absolute bottom-60 left-10 w-10 h-10 border border-primary/10 rounded-full animate-float opacity-30 hidden md:block"></div>
-        </motion.div>
-      </section>
-    </div>
+    <section className="container flex min-h-[calc(100vh-14rem)] max-w-screen-2xl flex-col items-start justify-center py-16 md:py-24">
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="grid gap-8 md:grid-cols-12"
+      >
+        {/* Big 404 numeral */}
+        <div className="md:col-span-7">
+          <div className="flex items-baseline gap-4">
+            <span className="column-numeral">·</span>
+            <span className="font-mono text-micro font-semibold uppercase tracking-widest text-accent-hot">
+              Filed missing · Error 404
+            </span>
+          </div>
+          <h1 className="mt-4 select-none font-serif text-8xl leading-none tracking-tightest text-accent-hot md:text-11xl">
+            404
+          </h1>
+          <p className="mt-6 max-w-lg font-serif text-2xl italic text-muted-foreground md:text-3xl">
+            Nothing filed under this URL.
+          </p>
+          <p className="mt-2 max-w-lg text-base text-muted-foreground md:text-lg">
+            The page might have been moved, renamed, or never existed. Try
+            one of these instead:
+          </p>
+
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 border-2 border-foreground bg-foreground px-5 py-3 font-mono text-sm font-bold uppercase tracking-widest text-background shadow-brutal-sm transition-all hover:-translate-x-[3px] hover:-translate-y-[3px] hover:shadow-brutal"
+            >
+              <Home className="h-4 w-4" />
+              Homepage
+            </Link>
+            <Link
+              href="/blog"
+              className="inline-flex items-center gap-2 border-2 border-foreground bg-accent-lime px-5 py-3 font-mono text-sm font-bold uppercase tracking-widest text-accent-lime-foreground shadow-brutal-sm transition-all hover:-translate-x-[3px] hover:-translate-y-[3px] hover:shadow-brutal"
+            >
+              <Search className="h-4 w-4" />
+              Browse writing
+            </Link>
+          </div>
+        </div>
+
+        {/* Quick-jump card */}
+        <aside className="md:col-span-5">
+          <div className="border-2 border-foreground bg-card shadow-brutal">
+            <div className="border-b-2 border-foreground bg-foreground px-4 py-2 text-background">
+              <p className="font-mono text-micro font-bold uppercase tracking-widest">
+                Nav · Quick jump
+              </p>
+            </div>
+            <ul className="divide-y-2 divide-foreground/10">
+              {links.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="group flex items-center justify-between px-4 py-3 font-mono text-sm font-bold uppercase tracking-widest transition-colors hover:bg-accent-lime hover:text-accent-lime-foreground"
+                  >
+                    <span className="flex items-center gap-2">
+                      <ArrowLeft className="h-3.5 w-3.5 -rotate-45 transition-transform group-hover:rotate-0" />
+                      {link.label}
+                    </span>
+                    <span aria-hidden>→</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </aside>
+      </motion.div>
+    </section>
   )
 }

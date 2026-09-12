@@ -1,6 +1,6 @@
 # Basilin Joe — Personal Website
 
-> Technology Lead & Cloud Solutions Architect with 7+ years specialising in Azure, AWS, DevOps, and Full Stack development.
+> Technology Lead & Cloud Solutions Architect with 11+ years specialising in Azure, AWS, DevOps, and Full Stack development.
 
 ## About
 
@@ -19,9 +19,14 @@ Basilin Joe is a Technology Lead at Experion Technologies based in Ernakulam, Ke
 - DevOps: CI/CD pipelines, Docker, Kubernetes, Terraform, SonarQube
 - Observability: Azure Monitor, Application Insights, CloudWatch
 
-## Blog
+## Blog posts
 
 Technical articles on cloud architecture, DevOps, and software engineering.
+
+- Generative AI: A Friendly Introduction for Everyone: https://basilinjoe.github.io/blog/generative-ai-introduction
+- Autonomous Agents: The Future of AI Automation: https://basilinjoe.github.io/blog/autonomous-agents
+- AI Coding Assistants: A Practical Developer's Guide: https://basilinjoe.github.io/blog/efficient-use-of-ai-coding-assistants
+- Deploying AKS with Bicep: Production-Ready IaC: https://basilinjoe.github.io/blog/deploying-aks-with-bicep
 
 - Blog index: https://basilinjoe.github.io/blog
 - Topics: Azure, Kubernetes, DevOps, AI/ML, software development
@@ -32,6 +37,7 @@ Technical articles on cloud architecture, DevOps, and software engineering.
 - Experience & About: https://basilinjoe.github.io/about
 - Projects: https://basilinjoe.github.io/projects
 - Blog: https://basilinjoe.github.io/blog
+- Contact: https://basilinjoe.github.io/contact
 
 ## AI crawler policy
 

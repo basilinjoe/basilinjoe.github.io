@@ -63,19 +63,20 @@ export function DynamicGreeting() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: -10 }}
+      initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="flex items-center gap-2 text-sm text-muted-foreground mb-4"
+      className="inline-flex items-center gap-2 border-2 border-foreground bg-background px-2.5 py-1 font-mono text-micro font-bold uppercase tracking-widest text-foreground shadow-brutal-sm"
     >
-      <motion.div
-        className={`bg-gradient-to-r ${greeting.gradient} p-1 rounded`}
+      <motion.span
+        className="text-accent-hot"
         animate={{ opacity: [0.7, 1, 0.7] }}
         transition={{ duration: 2, repeat: Infinity }}
+        aria-hidden
       >
         {greeting.icon}
-      </motion.div>
-      <span className="animate-fade-in">{greeting.text}, I&apos;m glad you&apos;re here!</span>
+      </motion.span>
+      <span>{greeting.text}</span>
     </motion.div>
   )
 }

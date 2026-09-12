@@ -5,16 +5,24 @@ import { fadeInUp } from "@/lib/animations"
 
 export default function BlogHeader() {
   return (
-    <motion.div 
+    <motion.div
       variants={fadeInUp}
-      className="flex max-w-[980px] flex-col items-start gap-2 px-4 sm:px-6 md:px-0"
+      className="flex flex-col gap-6 border-b-2 border-foreground pb-10"
     >
-      <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-blue-500 bg-clip-text text-transparent mb-3">
-        Blog
+      <div className="flex items-baseline gap-4">
+        <span className="column-numeral">01</span>
+        <span className="font-mono text-micro font-semibold uppercase tracking-widest text-accent-hot">
+          Dispatch · Writing
+        </span>
+      </div>
+
+      <h1 className="font-serif text-6xl leading-[0.95] tracking-tightest md:text-8xl lg:text-9xl">
+        Writing<span className="text-accent-hot">.</span>
       </h1>
-      <div className="h-1 w-20 bg-primary/50 rounded-full mb-4"></div>
-      <p className="text-lg text-muted-foreground">
-        Thoughts, ideas, and experiences about technology and development.
+
+      <p className="max-w-2xl text-lg text-muted-foreground md:text-xl">
+        Field notes on cloud architecture, DevOps, AI, and the messier parts
+        of building software at scale. Filed here first, cross-posted rarely.
       </p>
     </motion.div>
   )

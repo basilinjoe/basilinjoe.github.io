@@ -1,8 +1,6 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Badge } from "@/components/ui/badge"
-import { Calendar } from "lucide-react"
 
 interface TimelineItemProps {
   role: {
@@ -24,70 +22,65 @@ function formatDate(dateStr: string): string {
   return date.toLocaleDateString("en-US", { month: "short", year: "numeric" })
 }
 
-function getSkillVariant(skill: string): "default" | "secondary" | "skill" | "tech" | "featured" {
-  const s = skill.toLowerCase()
-  if (s.includes("react") || s.includes("typescript") || s.includes("javascript") || s.includes("angular") || s.includes("html") || s.includes("css") || s.includes("next"))
-    return "featured"
-  if (s.includes("node") || s.includes(".net") || s.includes("c#") || s.includes("java") || s.includes("python") || s.includes("api") || s.includes("mongo") || s.includes("sql") || s.includes("nest"))
-    return "secondary"
-  if (s.includes("azure") || s.includes("aws") || s.includes("devops") || s.includes("cloud") || s.includes("docker") || s.includes("kubernetes") || s.includes("k8s") || s.includes("aks"))
-    return "tech"
-  return "skill"
-}
-
+/**
+ * A single role on the CV timeline. Left rail hosts a numbered marker with
+ * a connector line running down. Right side is a brutalist card with role,
+ * dates, responsibilities, and skill stickers.
+ */
 export function TimelineItem({ role, index, isLast }: TimelineItemProps) {
   const start = formatDate(role.startDate)
   const end = role.endDate ? formatDate(role.endDate) : "Present"
 
   return (
     <div className="relative flex gap-4 md:gap-6">
-      {/* Connector line + dot */}
+      {/* Rail */}
       <div className="flex flex-col items-center">
-        <motion.div
+        <motion.span
           initial={{ scale: 0 }}
           whileInView={{ scale: 1 }}
           viewport={{ once: true, margin: "-40px" }}
-          transition={{ type: "spring", stiffness: 400, damping: 30, delay: index * 0.05 }}
-          className="relative z-10 flex-shrink-0 w-3.5 h-3.5 mt-1.5 rounded-full border-2 border-primary bg-background shadow-sm shadow-primary/20"
+          transition={{
+            type: "spring",
+            stiffness: 400,
+            damping: 30,
+            delay: index * 0.05,
+          }}
+          className="relative z-10 mt-1 flex h-8 w-8 shrink-0 items-center justify-center border-2 border-foreground bg-background font-mono text-xs font-bold text-foreground shadow-brutal-sm"
         >
+          {String(index + 1).padStart(2, "0")}
           {role.current && (
-            <span className="absolute inset-0 rounded-full bg-primary/30 animate-ping" />
+            <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border-2 border-background bg-success" />
           )}
-        </motion.div>
+        </motion.span>
         {!isLast && (
-          <div className="w-px flex-1 mt-1 bg-gradient-to-b from-primary/40 via-border to-transparent" />
+          <div className="mt-1 w-[2px] flex-1 bg-foreground/30" />
         )}
       </div>
 
       {/* Card */}
       <motion.div
-        initial={{ opacity: 0, x: 20 }}
+        initial={{ opacity: 0, x: 16 }}
         whileInView={{ opacity: 1, x: 0 }}
         viewport={{ once: true, margin: "-40px" }}
-        transition={{ type: "spring", stiffness: 280, damping: 28, delay: index * 0.08 }}
-        className="flex-1 pb-8 last:pb-0"
+        transition={{
+          type: "spring",
+          stiffness: 280,
+          damping: 28,
+          delay: index * 0.08,
+        }}
+        className="flex-1 pb-10 last:pb-0"
       >
-        <div className="rounded-xl border border-border/50 bg-gradient-to-br from-background to-muted/20 p-4 md:p-5 hover:border-primary/30 hover:shadow-md hover:shadow-primary/5 transition-all duration-300">
-          {/* Role header */}
-          <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-semibold text-foreground text-base md:text-lg">{role.name}</h3>
-                {role.current && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
-                    Current
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-1.5 mt-1 text-sm text-muted-foreground">
-                <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
-                <span>{start} — {end}</span>
-              </div>
-            </div>
+        <article className="card-brutal p-5 md:p-6">
+          <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+            <h3 className="font-serif text-2xl leading-tight md:text-3xl">
+              {role.name}
+            </h3>
+            <span className="font-mono text-micro font-bold uppercase tracking-widest text-muted-foreground">
+              {start} — {end}
+            </span>
           </div>
 
-          {/* Impact bullets */}
-          <ul className="space-y-1.5 mb-4">
+          <ul className="mb-4 space-y-2">
             {role.responsibilities.map((item, i) => (
               <motion.li
                 key={i}
@@ -95,29 +88,25 @@ export function TimelineItem({ role, index, isLast }: TimelineItemProps) {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.04 }}
-                className="flex items-start gap-2 text-sm text-muted-foreground"
+                className="flex items-start gap-3 text-sm text-muted-foreground md:text-base"
               >
-                <span className="mt-1.5 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-primary/50" />
+                <span
+                  aria-hidden
+                  className="mt-2.5 h-1 w-1 shrink-0 bg-accent-hot"
+                />
                 <span>{item}</span>
               </motion.li>
             ))}
           </ul>
 
-          {/* Tech badges */}
-          <div className="flex flex-wrap gap-1.5">
-            {role.skills.map((skill, i) => (
-              <motion.span
-                key={i}
-                initial={{ opacity: 0, scale: 0.8 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.04 }}
-              >
-                <Badge variant={getSkillVariant(skill)} size="sm">{skill}</Badge>
-              </motion.span>
+          <div className="flex flex-wrap gap-1.5 border-t-2 border-foreground/10 pt-3">
+            {role.skills.map((skill) => (
+              <span key={skill} className="sticker">
+                {skill}
+              </span>
             ))}
           </div>
-        </div>
+        </article>
       </motion.div>
     </div>
   )
