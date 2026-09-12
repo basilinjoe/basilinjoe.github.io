@@ -110,9 +110,9 @@ export const siteConfig = {
             "Built an evaluation framework for agents and prompts and applied it across the AI projects on the platform, establishing measurable quality baselines before release, and integrated Microsoft Fabric so agents query governed enterprise data at source rather than through duplicated copies.",
             "Configured content moderation, prompt-injection defence and output controls on Azure AI Foundry, and applied systematic prompt iteration across the platform's agents.",
             "Took over a clinical AI application delivered late by another team, worked it for bug fixing before concluding that unclear naming, uncaptured business scenarios and unfit scaling warranted rebuilding - then redesigned it as a Next.js application consuming Microsoft Fabric data, with Python agents on the Azure Agent Framework and Cosmos DB for application state.",
-            "Directed Claude Code and its design canvas to build a clinical note-taking feature for Chloe end to end - spec written with test cases first, agent generating the build plan, with the plan and edge cases corrected by hand - for a policy-grounded care-plan assistant for a second Australian aged-care client.",
+            "Directed Claude Code and its design canvas to build a clinical note-taking feature end to end for a policy-grounded care-plan assistant - spec written with test cases first, agent generating the build plan, with the plan and edge cases corrected by hand - for a second Australian aged-care client.",
             "Designed a three-agent pipeline (language detection, speech transcription, translation) letting multilingual aged-care staff record shift notes in their own language, with a summary and action list derived automatically for the next carer - live in production, and the multilingual note core was later adapted for a second Australian healthcare client.",
-            "Gave the agents a governed tool surface against a real system of record: a C# console MCP server on the .NET MCP SDK wrapping eCase, the aged-care system of record, reading across a handful of endpoints and writing back exactly one record type, progress notes, by deliberate design rather than broad access."
+            "Gave the agents a governed tool surface against a real system of record: a C# console MCP server on the .NET MCP SDK wrapping the aged-care system of record, reading across a handful of endpoints and writing back exactly one record type, progress notes, by deliberate design rather than broad access."
           ],
           skills: ["Azure AI Foundry", "Semantic Kernel", "Azure Agent Framework", "MCP", "RAG", "Azure AI Search", "Microsoft Fabric", "LangGraph", "Next.js", "Python", "C#", "Cosmos DB", "Bicep"],
           current: true
@@ -128,9 +128,9 @@ export const siteConfig = {
             "Ran a formal study comparing agent and human evaluation scores and found no measurable bias by gender or other candidate category; in production and well regarded across the organisation for two years.",
             "Co-designed the move from direct database-level coupling to Azure Service Bus publish/subscribe across an estate of 15+ integrated aged-care applications, cutting event-propagation latency from five minutes to under one second and eliminating public network exposure by relocating the estate into a private VNet on hub-and-spoke topology.",
             "Codified the Azure estate in Bicep and introduced centralised monitoring and structured logging where none existed, cutting infrastructure deployment time 30% and giving the team repeatable, audit-ready environment builds.",
-            "Authored the pre-sales proposal carrying the architecture and integration design for the Unitng enterprise integration platform, then carried it through delivery from Technology Lead into the Associate Technical Architect role.",
+            "Authored the pre-sales proposal carrying the architecture and integration design for an enterprise integration platform, then carried it through delivery from Technology Lead into the Associate Technical Architect role.",
             "Spent six months on-site with the client in Australia during the integration platform's delivery, working with them directly rather than from offshore.",
-            "Authored and sent the pre-sales solution-architecture proposal, architecture design and diagram included, that won the Steerwise engagement and was later delivered as its Single-SPA/React micro-frontend platform.",
+            "Authored and sent the pre-sales solution-architecture proposal, architecture design and diagram included, that won a new client engagement and was later delivered as its Single-SPA/React micro-frontend platform.",
             "Replaced a paginated timeline view with a custom virtual-scroll component in React, built when off-the-shelf options didn't fit the scroll performance the data-mesh product's timeline needed, as part of a Single-SPA/React/InversifyJS/MobX micro-frontend platform serving a ten-person engineering team."
           ],
           skills: ["Azure Service Bus", "Bicep", "Single-SPA", "React", "InversifyJS", "MobX", "Micro-frontends", "Enterprise Integration", "Pre-sales"],
@@ -186,9 +186,9 @@ export const siteConfig = {
       ]
     },
     {
-      company: "TheRecruiter.tech",
+      company: "Independent AI Career Platform",
       logo: "",
-      link: "https://therecruiter.tech",
+      link: "",
       current: true,
       roles: [
         {
@@ -216,7 +216,7 @@ export const siteConfig = {
           startDate: "01/02/2026",
           endDate: "01/04/2026",
           responsibilities: [
-            "Solo-designed, built and shipped a paid, production FastAPI integration syncing gym membership status to Dahua face-recognition access gates - async service with dual sync paths (scheduled polling and real-time webhooks) and an admin dashboard for device health and sync monitoring - from design through Docker deployment and live operation."
+            "Solo-designed, built and shipped a paid, production FastAPI integration syncing gym membership status to third-party face-recognition access gates - async service with dual sync paths (scheduled polling and real-time webhooks) and an admin dashboard for device health and sync monitoring - from design through Docker deployment and live operation."
           ],
           skills: ["FastAPI", "Python", "Docker", "Webhooks", "IoT Integration"],
           current: false
