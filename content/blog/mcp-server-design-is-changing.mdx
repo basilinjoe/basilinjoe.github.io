@@ -1,0 +1,836 @@
+---
+title: "MCP Server Design Is Changing: From API Endpoints to Agent Workflows"
+date: "2026-09-11"
+modified: "2026-09-11"
+excerpt: "One-to-one API-to-tool mapping is the easiest way to build an MCP server and one of the easiest ways to build a bad one. Here's the two-layer pattern replacing it."
+tags: ["MCP", "AI Agents", "API Design", "Anthropic", "Agent Architecture"]
+coverImage: "https://cdn.pixabay.com/photo/2019/08/21/02/57/network-4420048_1280.jpg"
+---
+
+The easiest way to build an MCP server is also one of the easiest ways to build a bad one.
+
+Take your existing API, find all the endpoints, turn each endpoint into an MCP tool, and expose them to the model.
+
+Done.
+
+If you have 100 API endpoints, you now have 100 tools.
+
+It feels like the right abstraction because your API already represents everything your system can do.
+
+But there is a problem:
+
+**An API is designed for applications. An MCP server is designed for agents.**
+
+Those are not necessarily the same interface.
+
+Since Anthropic open-sourced the Model Context Protocol on November 25, 2024 ([Anthropic, "Introducing the Model Context Protocol"](https://www.anthropic.com/news/model-context-protocol)), the standard has spread fast. OpenAI adopted it across its Agents SDK and ChatGPT desktop in March 2025, Google DeepMind committed Gemini support in April 2025 ([Demis Hassabis on X, April 9, 2025](https://x.com/demishassabis/status/1910107859041271977)), and Microsoft Copilot Studio shipped MCP support to general availability in May 2025 ([Microsoft Copilot Studio blog](https://www.microsoft.com/en-us/microsoft-copilot/blog/copilot-studio/model-context-protocol-mcp-is-now-generally-available-in-microsoft-copilot-studio/)). Public directories now list tens of thousands of MCP servers ([PulseMCP directory](https://www.pulsemcp.com/servers)).
+
+As agents get better at discovering tools, inspecting schemas, writing code, and composing operations, the role of the MCP server is changing. The question is no longer:
+
+> "How do I expose my API through MCP?"
+
+It's becoming:
+
+> **"What is the best interface for an agent to accomplish real work in my system?"**
+
+That shift has consequences.
+
+> **Key Takeaways**
+> - Anthropic-published research shows a naive tool-loading pattern used ~150,000 tokens for a Drive-to-Salesforce workflow; presenting the same MCP servers as code APIs cut that to ~2,000 tokens ([Anthropic Engineering, Nov 2025](https://www.anthropic.com/engineering/code-execution-with-mcp)).
+> - Real MCP clients enforce hard tool-count limits. Cursor recommends staying under ~40 active MCP tools ([Cursor forum](https://forum.cursor.com/t/tools-limited-to-40-total/67976)), which forces server designers to think about which tools to expose, not just whether they can.
+> - The official MCP guidance already recommends atomic, single-purpose tools plus **prompts** as workflow primitives, not a 1:1 endpoint dump ([modelcontextprotocol.io tools spec](https://modelcontextprotocol.io/specification/2026-07-28/server/tools); [MCP blog on prompts, July 2025](https://blog.modelcontextprotocol.io/posts/2025-07-29-prompts-for-automation/)).
+> - The two-layer pattern (primitives + workflow tools) with client-side progressive discovery is emerging as the shape MCP servers are converging on.
+
+{/* [UNIQUE INSIGHT]: The two-layer server model (primitives + workflow tools) is the natural convergence of Anthropic's code-execution guidance, real client tool caps, and how agents actually reason about capability selection. */}
+
+---
+
+## The first generation: API endpoint → MCP tool
+
+The most natural way to build an MCP server is to map your API directly to tools.
+
+Imagine a database platform with an API like this:
+
+```text
+POST /branches
+POST /branches/{id}/compute
+GET  /branches/{id}/connection-string
+DELETE /branches/{id}
+
+GET  /databases
+POST /databases
+DELETE /databases/{id}
+```
+
+A straightforward MCP implementation might expose:
+
+```text
+create_branch
+attach_compute
+get_connection_string
+delete_branch
+
+list_databases
+create_database
+delete_database
+```
+
+Architecturally, it looks like this:
+
+```text
+              REST / GraphQL API
+                      │
+                      ▼
+                MCP Server
+                      │
+        ┌─────────────┼─────────────┐
+        ▼             ▼             ▼
+    Tool A         Tool B         Tool C
+        │             │             │
+        └─────────────┼─────────────┘
+                      ▼
+                   Agent
+```
+
+There is nothing inherently wrong with this.
+
+In fact, it has several advantages:
+
+- It's easy to implement.
+- It provides broad API coverage.
+- Developers don't need to invent new abstractions.
+- Agents get access to the underlying capabilities.
+- New API endpoints can be exposed quickly.
+
+The problem appears when the number of tools grows.
+
+---
+
+## When API completeness becomes agent complexity
+
+Suppose your application has 200 API endpoints.
+
+You expose all 200 as MCP tools.
+
+Now imagine an agent receiving those tools.
+
+The agent isn't just being given capabilities. It's being given a **decision space**.
+
+For every task, it needs to determine:
+
+```text
+Which tool should I use?
+
+What arguments does it require?
+
+Which other tools are related?
+
+Do I need to call another tool first?
+
+What order should these operations happen in?
+
+Is there a higher-level operation that accomplishes the same thing?
+```
+
+The problem isn't simply that 200 tools consume tokens.
+
+The deeper problem is that **tool selection itself becomes part of the reasoning problem**.
+
+This isn't theoretical. Cursor, one of the most-used MCP clients, tells developers directly: "Cursor currently performs best when the number of active MCP tools is kept around 40" ([Cursor forum](https://forum.cursor.com/t/tools-limited-to-40-total/67976)). Tools past that cap are silently dropped from the model's view. If your server exposes 200 endpoints as 200 tools, most of them may not even reach the agent.
+
+Consider a user request:
+
+> "Create a staging database that I can connect to."
+
+A model might have to reason through:
+
+```text
+create_database
+       ↓
+create_branch
+       ↓
+attach_compute
+       ↓
+get_connection_string
+```
+
+But from the user's perspective, this is one operation.
+
+They don't care about the internal sequence.
+
+They want:
+
+```text
+create_staging_database()
+```
+
+This distinction is important.
+
+**The API models implementation capabilities. The agent needs task-oriented capabilities.**
+
+---
+
+## The context-bloat problem
+
+The traditional approach assumes the model should know about all available tools before deciding what to do.
+
+Conceptually:
+
+```text
+                    MCP Server
+                        │
+       ┌────────────────┼────────────────┐
+       │                │                │
+       ▼                ▼                ▼
+   50 tools          50 tools          50 tools
+       │                │                │
+       └────────────────┼────────────────┘
+                        ▼
+                      Agent
+                        │
+                 "Which one?"
+```
+
+As the number of tools increases, so does the amount of information the model has to reason over.
+
+This is what's often described as **context bloat**, and Anthropic's own engineering team has now quantified it. In their November 2025 post on code execution with MCP, they walked through a common cross-server workflow: pull a meeting transcript from Google Drive, then add it as a note in Salesforce. The naive pattern (load every tool definition into context, then shuttle intermediate results back through the model) consumed roughly **150,000 tokens**. Presenting the same MCP servers as code APIs in a sandboxed runtime, so the model could inspect only what it needed and pass data directly, cut that to about **2,000 tokens**, a ~98.7% reduction ([Anthropic Engineering, "Code execution with MCP", November 2025](https://www.anthropic.com/engineering/code-execution-with-mcp)).
+
+<figure>
+<svg role="img" aria-labelledby="chart1-title chart1-desc" viewBox="0 0 640 320" xmlns="http://www.w3.org/2000/svg" style={{ maxWidth: '100%', height: 'auto', background: '#0f172a' }}>
+  <title id="chart1-title">Token cost of a Drive-to-Salesforce workflow, naive tool loading vs. code execution</title>
+  <desc id="chart1-desc">Horizontal bar chart. Naive tool loading uses about 150,000 tokens. Code execution pattern uses about 2,000 tokens.</desc>
+  <style>{`
+    .lbl{font:14px system-ui,-apple-system,sans-serif;fill:#e5e7eb}
+    .val{font:600 14px system-ui,-apple-system,sans-serif;fill:#f9fafb}
+    .cap{font:12px system-ui,-apple-system,sans-serif;fill:#9ca3af}
+    .axis{font:11px system-ui,-apple-system,sans-serif;fill:#9ca3af}
+  `}</style>
+  <text x="20" y="30" className="lbl" style={{ fontSize: '16px', fontWeight: 600 }}>Tokens consumed per workflow</text>
+  <text x="20" y="50" className="cap">Google Drive → Salesforce example, Anthropic Engineering (Nov 2025)</text>
+
+  <text x="20" y="100" className="lbl">Naive tool loading</text>
+  <rect x="180" y="82" width="420" height="26" fill="#ef4444" rx="3" />
+  <text x="608" y="100" className="val" textAnchor="end">~150,000</text>
+
+  <text x="20" y="160" className="lbl">Code execution</text>
+  <rect x="180" y="142" width="6" height="26" fill="#22c55e" rx="3" />
+  <text x="196" y="160" className="val">~2,000</text>
+
+  <text x="180" y="210" className="axis">0</text>
+  <text x="600" y="210" className="axis" textAnchor="end">160,000 tokens</text>
+  <line x1="180" y1="200" x2="600" y2="200" stroke="#374151" strokeWidth="1" />
+
+  <text x="20" y="270" className="cap">~98.7% reduction. Source: anthropic.com/engineering/code-execution-with-mcp</text>
+</svg>
+<figcaption>Token cost of a cross-server MCP workflow, naive vs. code-execution pattern. Data: Anthropic Engineering, Nov 2025.</figcaption>
+</figure>
+
+That's the mechanical cost. There's also a feedback loop in the reasoning cost:
+
+```text
+More tools
+   ↓
+More schemas/descriptions
+   ↓
+More context
+   ↓
+More possible choices
+   ↓
+Harder tool selection
+   ↓
+More opportunities for incorrect calls
+```
+
+The obvious solution might be:
+
+> "Then let's just expose fewer tools."
+
+But that isn't necessarily the right answer either.
+
+You don't want to throw away useful capabilities just because the agent shouldn't see all of them at once.
+
+This is where MCP architecture starts moving toward a different model.
+
+![Layered software architecture illustration with virtual interfaces suggesting workflow composition over raw APIs.](https://cdn.pixabay.com/photo/2018/09/16/22/08/software-3682509_1280.jpg)
+
+*Photo by xresch on Pixabay.*
+
+---
+
+## Discovery moves toward the client
+
+Modern agent clients are getting better at discovering and composing tools themselves.
+
+Instead of loading everything into the agent's context up front, an agent can progressively discover what it needs.
+
+The flow becomes something like:
+
+```text
+User request
+     │
+     ▼
+   Agent
+     │
+     ▼
+ Search capabilities
+     │
+     ▼
+ Inspect relevant tool
+     │
+     ▼
+ Execute
+     │
+     ▼
+ Observe result
+     │
+     ▼
+ Continue if necessary
+```
+
+This is fundamentally different from:
+
+```text
+Load every tool
+      ↓
+Put everything in context
+      ↓
+Ask model to choose
+```
+
+With progressive discovery, the agent might initially know only enough to search.
+
+For example:
+
+```text
+search_tools("database staging")
+```
+
+The result might reveal:
+
+```text
+create_database
+create_branch
+create_with_compute
+```
+
+The agent can then inspect the relevant schemas before execution.
+
+This changes an important architectural responsibility.
+
+The MCP server doesn't have to solve the entire discovery and orchestration problem.
+
+**The server defines capabilities. The client increasingly determines how those capabilities are discovered and composed.**
+
+---
+
+## What about code mode?
+
+The shift becomes even more interesting when agents can use code to compose operations.
+
+Instead of forcing every possible sequence of operations into a separate MCP tool, an agent can:
+
+1. Discover available capabilities.
+2. Inspect their interfaces.
+3. Write a small program.
+4. Execute that program in a controlled environment.
+5. Combine the results.
+
+Conceptually:
+
+```text
+                  MCP Server
+                      │
+              Available capabilities
+                      │
+                      ▼
+                    Agent
+                      │
+                 writes code
+                      │
+                      ▼
+                  Sandbox
+                      │
+        ┌─────────────┼─────────────┐
+        ▼             ▼             ▼
+      Tool A        Tool B        Tool C
+        │             │             │
+        └─────────────┼─────────────┘
+                      ▼
+                    Result
+```
+
+This is exactly the pattern Anthropic recommends in its advanced tool use guidance: let the model call tools inside code rather than through a fresh schema list on every turn ([Anthropic Engineering, "Advanced tool use"](https://www.anthropic.com/engineering/advanced-tool-use)). The 150k-to-2k token result above is what happens when you push all the way in that direction.
+
+This makes the idea of exposing every possible workflow as a dedicated tool less compelling.
+
+If an agent can safely compose primitives itself, why create hundreds of composite tools?
+
+But there is an important counterargument.
+
+**Agents being capable of composition doesn't mean they should always have to compose everything themselves.**
+
+---
+
+## Workflow-level tools aren't dead
+
+Consider a workflow such as:
+
+```text
+create branch
+      ↓
+attach compute
+      ↓
+wait for compute
+      ↓
+retrieve connection string
+```
+
+An agent *could* perform all of these operations individually.
+
+But if this sequence represents a common, well-defined user intent, a workflow-level tool may be significantly better.
+
+For example:
+
+```typescript
+createWithCompute({
+  branch: "staging",
+  computeSize: "small"
+})
+```
+
+Internally:
+
+```typescript
+async function createWithCompute(input) {
+  const branch = await createBranch(input.branch);
+
+  await attachCompute({
+    branchId: branch.id,
+    size: input.computeSize
+  });
+
+  const connectionString =
+    await getConnectionString(branch.id);
+
+  return {
+    branchId: branch.id,
+    connectionString
+  };
+}
+```
+
+From the agent's perspective, the entire operation becomes one meaningful action.
+
+```text
+                 createWithCompute()
+                         │
+            ┌────────────┼────────────┐
+            ▼            ▼            ▼
+      create branch   attach compute   get URL
+```
+
+This is valuable because it reduces:
+
+- number of model decisions
+- number of tool calls
+- latency
+- intermediate state
+- opportunities for errors
+- unnecessary context
+
+The key idea isn't that workflow tools replace primitive tools.
+
+It's that **both can coexist**. The official MCP guidance from July 2025 introduced **prompts** as a separate primitive precisely for this, "a primitive for building workflow automation" that composes underlying tools ([MCP blog, "Prompts for automation"](https://blog.modelcontextprotocol.io/posts/2025-07-29-prompts-for-automation/)). The protocol itself is telling server authors that atomic tools and workflow-level primitives are different things and both belong.
+
+---
+
+## The two-layer MCP server
+
+{/* [UNIQUE INSIGHT] */}
+A useful mental model is to design an MCP server with two layers.
+
+```text
+                    MCP Server
+                        │
+          ┌─────────────┴─────────────┐
+          │                           │
+          ▼                           ▼
+ Primitive capabilities        Workflow capabilities
+          │                           │
+          │                           │
+ create_branch                create_environment
+ attach_compute               deploy_application
+ delete_branch                clone_environment
+ get_connection_string        rollback_deployment
+          │                           │
+          └─────────────┬─────────────┘
+                        ▼
+                    MCP Client
+                        │
+                        ▼
+                      Agent
+```
+
+<figure>
+<svg role="img" aria-labelledby="chart2-title chart2-desc" viewBox="0 0 640 320" xmlns="http://www.w3.org/2000/svg" style={{ maxWidth: '100%', height: 'auto', background: '#0f172a' }}>
+  <title id="chart2-title">MCP adoption timeline, Nov 2024 to Nov 2025</title>
+  <desc id="chart2-desc">Line chart showing MCP adoption milestones from Anthropic's launch in November 2024 through Anthropic's code-execution guidance in November 2025.</desc>
+  <style>{`
+    .lbl{font:12px system-ui,-apple-system,sans-serif;fill:#e5e7eb}
+    .cap{font:11px system-ui,-apple-system,sans-serif;fill:#9ca3af}
+    .title{font:600 15px system-ui,-apple-system,sans-serif;fill:#f9fafb}
+  `}</style>
+  <text x="20" y="26" className="title">MCP adoption milestones</text>
+  <text x="20" y="44" className="cap">Nov 2024 – Nov 2025. Sources: vendor blogs (see article).</text>
+
+  <line x1="40" y1="200" x2="600" y2="200" stroke="#374151" strokeWidth="2" />
+  <polyline points="40,180 160,150 280,120 420,90 540,60" fill="none" stroke="#3b82f6" strokeWidth="3" />
+
+  <circle cx="40" cy="180" r="6" fill="#3b82f6" />
+  <circle cx="160" cy="150" r="6" fill="#3b82f6" />
+  <circle cx="280" cy="120" r="6" fill="#3b82f6" />
+  <circle cx="420" cy="90" r="6" fill="#3b82f6" />
+  <circle cx="540" cy="60" r="6" fill="#3b82f6" />
+
+  <text x="40" y="230" className="lbl" textAnchor="middle">Nov '24</text>
+  <text x="160" y="230" className="lbl" textAnchor="middle">Mar '25</text>
+  <text x="280" y="230" className="lbl" textAnchor="middle">Apr '25</text>
+  <text x="420" y="230" className="lbl" textAnchor="middle">May '25</text>
+  <text x="540" y="230" className="lbl" textAnchor="middle">Nov '25</text>
+
+  <text x="40" y="255" className="cap" textAnchor="middle">Anthropic launches MCP</text>
+  <text x="160" y="255" className="cap" textAnchor="middle">OpenAI adopts</text>
+  <text x="280" y="255" className="cap" textAnchor="middle">Google DeepMind</text>
+  <text x="420" y="255" className="cap" textAnchor="middle">Microsoft GA</text>
+  <text x="540" y="255" className="cap" textAnchor="middle">Code-execution</text>
+  <text x="540" y="270" className="cap" textAnchor="middle">guidance</text>
+
+  <text x="40" y="295" className="cap" textAnchor="middle">initial partners</text>
+  <text x="160" y="295" className="cap" textAnchor="middle">Agents SDK</text>
+  <text x="280" y="295" className="cap" textAnchor="middle">Gemini SDK</text>
+  <text x="420" y="295" className="cap" textAnchor="middle">Copilot Studio</text>
+</svg>
+<figcaption>MCP moved from single-vendor release to cross-vendor standard in under a year.</figcaption>
+</figure>
+
+### Primitive capabilities
+
+These are close to the underlying system.
+
+For example:
+
+```typescript
+createBranch()
+deleteBranch()
+attachCompute()
+detachCompute()
+getConnectionString()
+```
+
+They provide:
+
+- flexibility
+- composability
+- API coverage
+- support for unusual workflows
+
+### Workflow capabilities
+
+These represent meaningful operations.
+
+For example:
+
+```typescript
+createPreviewEnvironment()
+cloneProductionEnvironment()
+deployApplication()
+rollbackDeployment()
+```
+
+They provide:
+
+- fewer tool calls
+- clearer intent
+- lower latency
+- simpler agent reasoning
+- more predictable execution
+
+The MCP server becomes more than an API wrapper.
+
+It becomes an **agent-facing interface to your system**.
+
+---
+
+## Don't confuse API completeness with agent usability
+
+This is probably the most important design principle.
+
+An API might have:
+
+```text
+POST /branches
+POST /branches/{id}/compute
+GET /branches/{id}/connection-string
+```
+
+because those are sensible resources and operations for a traditional software client.
+
+That doesn't mean an agent needs three separate tools.
+
+A better agent-facing interface might expose:
+
+```text
+create_database_environment
+```
+
+while still making lower-level operations available for advanced cases.
+
+The goal isn't to minimize the number of tools.
+
+The goal is to minimize the **complexity the agent has to manage to accomplish a task**.
+
+That distinction changes how we evaluate MCP server design.
+
+---
+
+## A practical framework for designing MCP tools
+
+{/* [UNIQUE INSIGHT]: Five-question framework for deciding whether an API operation should become an MCP tool. */}
+
+When deciding whether an API operation should become an MCP tool, I ask five questions.
+
+### 1. Is this capability useful to an agent?
+
+Don't automatically expose every endpoint.
+
+An endpoint that exists because of internal application architecture may not be meaningful as an agent capability.
+
+### 2. Can an agent discover it?
+
+Tool names and descriptions become part of the interface.
+
+Compare:
+
+```text
+executeOperationV2()
+```
+
+with:
+
+```text
+create_database_branch()
+```
+
+The second communicates intent.
+
+For agents, good naming isn't cosmetic. The official MCP tool specification puts this in writing: tools should be "focused and atomic, one tool doing one thing well," with descriptions verbose enough for the model to select correctly ([modelcontextprotocol.io tools spec](https://modelcontextprotocol.io/specification/2026-07-28/server/tools)).
+
+It's part of the API contract.
+
+### 3. Is this operation atomic?
+
+If a capability represents a useful standalone operation, exposing it as a primitive tool makes sense.
+
+For example:
+
+```text
+delete_branch
+```
+
+is naturally atomic.
+
+### 4. Is there a common workflow around it?
+
+If agents repeatedly need to perform:
+
+```text
+A → B → C → D
+```
+
+consider exposing:
+
+```text
+workflow_X()
+```
+
+instead.
+
+But don't create a workflow tool for every imaginable sequence.
+
+Only promote **meaningful, repeated workflows** into first-class capabilities.
+
+### 5. Can the client safely compose it?
+
+If an operation is naturally composable and agents can discover it easily, primitives may be enough.
+
+If composition introduces unnecessary latency, complexity, or failure modes, a workflow tool may be better.
+
+The decision can be summarized as:
+
+```text
+                  Is it useful alone?
+                         │
+                    ┌────┴────┐
+                   No        Yes
+                    │          │
+                    ▼          ▼
+              Don't expose   Is it part
+                              of a common
+                              workflow?
+                                  │
+                             ┌────┴────┐
+                            No        Yes
+                             │          │
+                             ▼          ▼
+                         Primitive   Consider
+                           tool      workflow
+```
+
+---
+
+## The MCP server as an agent interface
+
+This leads to a broader way of thinking about MCP.
+
+We often draw the architecture like this:
+
+```text
+Application
+     │
+     ▼
+    API
+     │
+     ▼
+MCP Server
+     │
+     ▼
+   Agent
+```
+
+But a better mental model is:
+
+```text
+                 Your System
+                     │
+             ┌───────┴───────┐
+             │               │
+        API capabilities   Workflows
+             │               │
+             └───────┬───────┘
+                     ▼
+                MCP Server
+                     │
+             Agent-facing API
+                     │
+                     ▼
+                MCP Client
+                     │
+                     ▼
+                   Agent
+```
+
+The MCP layer becomes an opportunity to **reshape your application's capabilities around how an agent actually works**.
+
+That's a subtle but important architectural shift.
+
+---
+
+## What I think the future looks like
+
+I don't think the future is:
+
+> "Every MCP server should expose five tools."
+
+Nor do I think it's:
+
+> "Expose every API endpoint and let the model figure it out."
+
+The more interesting architecture sits somewhere in between.
+
+MCP servers can expose a combination of:
+
+```text
+                    Agent Interface
+                          │
+             ┌────────────┴────────────┐
+             ▼                         ▼
+      Discoverable primitives     High-value workflows
+             │                         │
+             ▼                         ▼
+       Flexible composition       Fast execution
+             │                         │
+             └────────────┬────────────┘
+                          ▼
+                         Agent
+```
+
+Meanwhile, increasingly capable MCP clients take responsibility for:
+
+- progressive discovery
+- tool inspection
+- composition
+- execution strategies
+- code-based orchestration
+
+This means MCP server developers don't need to build increasingly complicated orchestration layers into the server itself.
+
+Instead, they should focus on something more fundamental:
+
+**Expose the right capabilities with the right semantics.**
+
+---
+
+## The real abstraction isn't the API endpoint
+
+This is where MCP server design becomes interesting.
+
+When APIs were primarily consumed by applications, we optimized interfaces around resources:
+
+```text
+/users
+/projects
+/deployments
+/databases
+```
+
+When APIs are consumed by agents, we can start thinking in terms of **intent and outcomes**:
+
+```text
+create_customer
+deploy_application
+create_preview_environment
+rollback_deployment
+generate_report
+```
+
+The latter aren't necessarily direct API endpoints.
+
+They're **capabilities expressed in the language of work**.
+
+And that's what makes an MCP server interesting.
+
+It gives us an opportunity to build an interface specifically for AI consumers rather than wrapping the interface we already had.
+
+---
+
+## Frequently Asked Questions
+
+### Do I have to redesign my whole API to build a good MCP server?
+
+No. The two-layer pattern in this post assumes you keep your existing API. The MCP server sits above it and exposes a curated set of primitives plus a smaller set of workflow-level tools that internally call those primitives. Your API stays as it is.
+
+### How many MCP tools is too many?
+
+There's no universal number, but real client caps are the first place to look. Cursor performs best with roughly 40 or fewer active MCP tools and silently drops the rest ([Cursor forum](https://forum.cursor.com/t/tools-limited-to-40-total/67976)). Other clients have their own limits. Design for the lower end of the range your users care about, not for the theoretical maximum.
+
+### What's the difference between an MCP tool and an MCP prompt?
+
+Tools are atomic capabilities the model calls with structured arguments. Prompts, introduced as a first-class MCP primitive in July 2025, are workflow templates the server exposes for repeatable multi-step operations ([MCP blog on prompts](https://blog.modelcontextprotocol.io/posts/2025-07-29-prompts-for-automation/)). Prompts are one of the ways the protocol formalizes the primitive-vs-workflow split.
+
+### What is "code mode" and when should I use it?
+
+Code mode is a pattern where the agent writes and executes code in a sandbox that calls MCP tools directly, rather than having the model select tools through a schema list on every turn. Anthropic's data on a Google Drive-to-Salesforce workflow showed a drop from ~150,000 tokens to ~2,000 tokens using this pattern ([Anthropic Engineering, Nov 2025](https://www.anthropic.com/engineering/code-execution-with-mcp)). Use it when workflows span many tool calls or shuttle large intermediate results between them.
+
+### Should I still expose primitive tools if I have workflow tools?
+
+Usually yes. Workflow tools optimize for common intents; primitives cover the long tail of unusual workflows the agent may still need to compose. The two-layer server exists precisely so you don't have to choose.

@@ -5,7 +5,7 @@ import { BreadcrumbJsonLd } from "@/components/json-ld"
 
 export const metadata: Metadata = {
   title: "Contact",
-  description: `Get in touch with ${siteConfig.name} — Technology Lead & Cloud Solutions Architect. Available for freelance projects, consulting, and full-time opportunities.`,
+  description: `Get in touch with ${siteConfig.name} — Associate Technical Architect specializing in AI, cloud, and integration. Available for freelance projects, consulting, and full-time opportunities.`,
   alternates: {
     canonical: `${siteConfig.url}/contact`,
   },

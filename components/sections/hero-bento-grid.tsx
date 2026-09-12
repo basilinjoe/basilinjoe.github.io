@@ -46,7 +46,7 @@ export function HeroBentoGrid() {
           <div className="flex items-start gap-4">
             <span className="column-numeral shrink-0">01</span>
             <p className="mt-2 font-mono text-micro font-semibold uppercase tracking-widest text-accent-hot">
-              File 01 · Technology Lead · Experion
+              File 01 · Associate Technical Architect · Experion
             </p>
           </div>
 

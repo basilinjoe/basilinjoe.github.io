@@ -38,9 +38,9 @@ const marqueeWord = "AVAILABLE FOR CONVERSATION"
 export function SiteFooter() {
   const marqueeItems = Array.from({ length: 12 }, () => marqueeWord)
   return (
-    <footer className="mt-24 border-t-2 border-foreground bg-foreground text-background dark:border-background dark:bg-background dark:text-foreground">
+    <footer className="mt-24 border-t-2 border-foreground bg-background text-foreground">
       {/* Big marquee — the "let's talk" pull */}
-      <div className="overflow-hidden border-b-2 border-background/20 py-8 dark:border-foreground/20">
+      <div className="overflow-hidden border-b-2 border-foreground/20 py-8">
         <div className="ticker-track animate-marquee-slow">
           {marqueeItems.map((word, i) => (
             <span
@@ -61,20 +61,20 @@ export function SiteFooter() {
         <div className="grid gap-12 md:grid-cols-12">
           {/* Identity */}
           <div className="md:col-span-5">
-            <p className="font-mono text-micro font-bold uppercase tracking-widest text-accent-lime">
+            <p className="font-mono text-micro font-bold uppercase tracking-widest text-accent-hot">
               Say hello
             </p>
             <h2 className="mt-4 font-serif text-4xl leading-tight md:text-5xl">
               Building cloud-native systems from{" "}
               <span className="italic text-accent-hot">{siteConfig.location.split(",")[0]}</span>.
             </h2>
-            <p className="mt-6 max-w-md text-lg text-background/80 dark:text-foreground/80">
+            <p className="mt-6 max-w-md text-lg text-muted-foreground">
               Open to conversations about cloud architecture, DevOps, and
               engineering leadership. Reach me directly or via the socials.
             </p>
             <a
               href={`mailto:${siteConfig.email}`}
-              className="mt-6 inline-flex items-center gap-2 border-2 border-background bg-accent-lime px-4 py-2 font-mono text-sm font-bold uppercase tracking-widest text-accent-lime-foreground transition-all hover:-translate-x-[3px] hover:-translate-y-[3px] hover:shadow-[6px_6px_0_0_hsl(var(--background))] dark:border-foreground dark:hover:shadow-[6px_6px_0_0_hsl(var(--foreground))]"
+              className="mt-6 inline-flex items-center gap-2 border-2 border-foreground bg-accent-lime px-4 py-2 font-mono text-sm font-bold uppercase tracking-widest text-accent-lime-foreground shadow-brutal-sm transition-all hover:-translate-x-[3px] hover:-translate-y-[3px] hover:shadow-brutal"
             >
               {siteConfig.email}
               <span aria-hidden>↗</span>
@@ -96,12 +96,12 @@ export function SiteFooter() {
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="group inline-flex items-baseline gap-2 text-base text-background transition-colors hover:text-accent-lime dark:text-foreground"
+                      className="group inline-flex items-baseline gap-2 text-base text-foreground transition-colors hover:text-accent-hot"
                     >
                       <span className="inline-block w-3 opacity-0 transition-opacity group-hover:opacity-100">
                         →
                       </span>
-                      <span className="border-b border-transparent transition-colors group-hover:border-accent-lime">
+                      <span className="border-b border-transparent transition-colors group-hover:border-accent-hot">
                         {link.title}
                       </span>
                     </Link>
@@ -113,7 +113,7 @@ export function SiteFooter() {
         </div>
 
         {/* Socials + legal */}
-        <div className="mt-12 flex flex-col gap-6 border-t border-background/20 pt-6 dark:border-foreground/20 md:flex-row md:items-center md:justify-between">
+        <div className="mt-12 flex flex-col gap-6 border-t border-foreground/20 pt-6 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-wrap items-center gap-2">
             {Object.entries(siteConfig.links).map(([key, url]) => {
               const IconComponent = socialIcons[key]
@@ -125,7 +125,7 @@ export function SiteFooter() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={key.charAt(0).toUpperCase() + key.slice(1)}
-                  className="flex h-10 w-10 items-center justify-center border-2 border-background bg-transparent transition-all hover:-translate-x-[2px] hover:-translate-y-[2px] hover:bg-background hover:text-foreground dark:border-foreground dark:hover:bg-foreground dark:hover:text-background"
+                  className="flex h-10 w-10 items-center justify-center border-2 border-foreground bg-background text-foreground transition-all hover:-translate-x-[2px] hover:-translate-y-[2px] hover:bg-foreground hover:text-background hover:shadow-brutal-sm"
                 >
                   <IconComponent className="h-4 w-4" />
                 </a>
@@ -133,7 +133,7 @@ export function SiteFooter() {
             })}
           </div>
 
-          <div className="font-mono text-micro uppercase tracking-widest text-background/70 dark:text-foreground/70">
+          <div className="font-mono text-micro uppercase tracking-widest text-muted-foreground">
             © {new Date().getFullYear()} {siteConfig.name} · Built with Next.js
             · Hosted on GitHub Pages
           </div>

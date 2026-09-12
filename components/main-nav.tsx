@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils"
 /**
  * Editorial main nav.
  *
- * Logotype pattern: "BJ." wordmark in mono uppercase, followed by a role tag.
+ * Logotype pattern: "JOE." wordmark in serif italic, followed by a role tag.
  * Nav items are mono uppercase with an underline-slide hover and a heavy
  * bar under the active item — proximity + alignment principle in one gesture.
  */
@@ -28,16 +28,16 @@ export function MainNav() {
         <motion.span
           whileHover={{ rotate: -4, scale: 1.05 }}
           transition={{ type: "spring", stiffness: 400, damping: 15 }}
-          className="flex h-9 w-9 items-center justify-center border-2 border-foreground bg-accent-lime font-serif text-lg italic text-accent-lime-foreground shadow-brutal-sm"
+          className="flex h-9 min-w-9 items-center justify-center border-2 border-foreground bg-accent-lime px-2 font-serif text-lg italic text-accent-lime-foreground shadow-brutal-sm"
         >
-          BJ
+          JOE
         </motion.span>
         <span className="hidden flex-col leading-none sm:flex">
           <span className="font-mono text-[0.7rem] font-bold uppercase tracking-widest text-foreground">
             {siteConfig.name}
           </span>
           <span className="mt-0.5 font-mono text-[0.6rem] uppercase tracking-widest text-muted-foreground">
-            Technology Lead
+            Associate Technical Architect
           </span>
         </span>
       </Link>

@@ -339,19 +339,19 @@
 }
 
 .markdown h2 {
-  @apply mt-12 mb-4 font-serif text-3xl md:text-4xl font-normal tracking-tight scroll-mt-16 border-b-2 border-foreground pb-2;
+  @apply mt-14 mb-5 font-serif text-3xl md:text-4xl font-normal tracking-tight scroll-mt-16 border-b border-foreground/25 pb-2;
 }
 
 .markdown h3 {
-  @apply mt-8 mb-3 font-sans text-xl md:text-2xl font-bold uppercase tracking-wide scroll-mt-16;
+  @apply mt-10 mb-3 font-sans text-xl md:text-2xl font-bold tracking-tight scroll-mt-16;
 }
 
 .markdown h4 {
-  @apply mt-6 mb-2 font-mono text-sm font-semibold uppercase tracking-widest scroll-mt-16;
+  @apply mt-6 mb-2 font-sans text-base md:text-lg font-semibold tracking-tight scroll-mt-16;
 }
 
 .markdown p {
-  @apply mb-5 leading-8 text-[1.05rem];
+  @apply mb-5 leading-relaxed text-[1.0625rem];
 }
 
 .markdown ul {
@@ -371,11 +371,11 @@
 }
 
 .markdown code {
-  @apply rounded-none border border-foreground/30 bg-muted px-1.5 py-0.5 font-mono text-[0.85em];
+  @apply rounded-sm bg-muted px-1.5 py-[0.1em] font-mono text-[0.88em] text-accent-hot;
 }
 
 .markdown pre code {
-  @apply border-0 bg-transparent p-0 text-sm leading-7;
+  @apply bg-transparent p-0 text-sm leading-7 text-inherit;
 }
 
 .markdown a {
@@ -383,7 +383,31 @@
 }
 
 .markdown blockquote {
-  @apply my-8 border-l-[6px] border-accent-hot bg-muted/40 px-6 py-4 font-serif text-xl italic;
+  @apply my-8 border-l-[6px] border-accent-hot bg-muted/40 px-6 py-4;
+}
+
+/* Short pull-quotes (a single paragraph) get the italic serif treatment.
+   Multi-part blockquotes like Key Takeaways (with a heading + list) stay
+   readable in the base sans stack. */
+.markdown blockquote > p:only-child {
+  @apply font-serif text-lg italic leading-snug md:text-xl;
+}
+
+.markdown blockquote > p {
+  @apply mb-3 last:mb-0 text-[1.0625rem] leading-relaxed;
+}
+
+.markdown blockquote strong {
+  @apply block mb-2 font-mono text-micro font-bold uppercase tracking-widest text-accent-hot not-italic;
+}
+
+.markdown blockquote ul,
+.markdown blockquote ol {
+  @apply my-0 ml-5 space-y-2 text-[1rem] leading-relaxed;
+}
+
+.markdown blockquote li {
+  @apply mb-0;
 }
 
 .markdown table {
@@ -402,14 +426,27 @@
   @apply my-8 rounded-none border-2 border-foreground shadow-brutal;
 }
 
+.markdown figure {
+  @apply my-10 border-2 border-foreground bg-background shadow-brutal-sm;
+}
+
+.markdown figure > svg,
+.markdown figure > img {
+  @apply my-0 block w-full border-0 shadow-none;
+}
+
+.markdown figcaption {
+  @apply border-t-2 border-foreground bg-muted px-4 py-2 font-mono text-micro font-bold uppercase tracking-widest text-muted-foreground;
+}
+
 .markdown hr {
   @apply my-12 h-[2px] border-0 bg-foreground;
 }
 
 .dark .markdown pre {
-  @apply bg-zinc-950;
+  @apply bg-zinc-900;
 }
 
 .dark .markdown code {
-  @apply bg-zinc-900;
+  @apply bg-zinc-900 text-accent-hot;
 }

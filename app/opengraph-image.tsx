@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og"
 
 export const dynamic = "force-static"
-export const alt = "Basilin Joe — Technology Lead & Cloud Solutions Architect"
+export const alt = "Basilin Joe — Associate Technical Architect · AI, Cloud & Integration"
 export const size = { width: 1200, height: 630 }
 export const contentType = "image/png"
 
@@ -28,11 +28,11 @@ export default function Image() {
         </div>
 
         <div style={{ fontSize: 28, fontWeight: 500, color: "#93c5fd", marginBottom: 40, display: "flex" }}>
-          Technology Lead &amp; Cloud Solutions Architect
+          Associate Technical Architect · AI, Cloud &amp; Integration
         </div>
 
         <div style={{ fontSize: 20, color: "#94a3b8", maxWidth: 700, lineHeight: 1.5, display: "flex" }}>
-          Azure · AWS · Kubernetes · DevOps · Full Stack
+          Azure AI Foundry · MCP · Kubernetes · Enterprise Integration · .NET · Python
         </div>
 
         <div

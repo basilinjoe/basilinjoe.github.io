@@ -1,0 +1,116 @@
+---
+title: "Why the Humanities Matter More in the Age of AI"
+date: "2026-09-12"
+modified: "2026-09-12"
+excerpt: "AI generates fluent answers. It does not, on its own, understand context, weigh values, or catch its own bias. That's why literature, philosophy, ethics, and rhetoric are becoming load-bearing skills for anyone working with these systems."
+tags: ["AI", "Ethics", "Humanities", "Prompt Engineering", "LLMs"]
+coverImage: "https://cdn.pixabay.com/photo/2016/11/29/09/32/concept-1868728_1280.jpg"
+---
+
+The louder the AI hype gets, the more common the assumption becomes: STEM is essential, humanities are optional. That framing has it backwards. AI systems now write, argue, and code well enough to look like they understand what they are doing. They don't. Filling that gap, deciding what a system's output means, whether it is true, and whether it should be acted on, is the work the humanities have always done.
+
+This post walks through four places where humanities skills are load-bearing in AI work, why the "neutral tool" framing keeps breaking, and what that means for how teams should staff and think.
+
+> **Key Takeaways**
+> - LLMs are next-token predictors. They optimize surface form over meaning. The seminal critique, "On the Dangers of Stochastic Parrots" ([Bender, Gebru, McMillan-Major, Shmitchell, FAccT 2021](https://dl.acm.org/doi/10.1145/3442188.3445922)), makes the syntactic-vs-semantic gap explicit and it has not been closed by scale.
+> - Models inherit the bias of their training data. NIST's AI Risk Management Framework treats bias as a first-class risk category, not an edge case ([NIST AI RMF 1.0, January 2023](https://www.nist.gov/itl/ai-risk-management-framework)).
+> - Interpretation cannot be automated away. Hallucination rates for the strongest commercial models are still measured in the low single digits on curated benchmarks like [Vectara's HHEM leaderboard](https://github.com/vectara/hallucination-leaderboard), which means a human has to close the loop.
+> - Prompt engineering is applied rhetoric. Anthropic's own prompting guide is a document about audience, framing, and structure ([Anthropic prompt engineering docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)), the exact vocabulary humanities departments teach.
+
+{/* [UNIQUE INSIGHT] The humanities-vs-STEM framing collapses once you notice that every failure mode of a production LLM (hallucination, bias, misuse, misinterpretation) maps onto a humanities discipline. */}
+
+---
+
+## Syntactic fluency is not semantic understanding
+
+Large language models are trained to predict the next token. That is not a paraphrase. It is the objective function. Everything else, including apparent reasoning, is emergent behavior on top of that base task.
+
+The clearest early statement of what this means was Bender, Gebru, McMillan-Major, and Shmitchell's 2021 paper "On the Dangers of Stochastic Parrots" ([FAccT 2021](https://dl.acm.org/doi/10.1145/3442188.3445922)). Their argument, briefly:
+
+- A language model has access to form (sequences of characters and tokens) but not to communicative intent, referent, or grounded experience.
+- Fluency in form is easy to mistake for understanding of content.
+- The mistake is not a UX glitch. It is a category error.
+
+Five years and several model generations later, the argument still holds. GPT-5 and Claude 4 write more convincingly than GPT-3 did, but the underlying substrate is the same: statistical patterns over text, not lived reference to a world.
+
+This is where humanities training earns its keep. Literary study, philosophy of language, and translation studies all revolve around the gap between what a text says and what it means. That gap does not disappear when the author is a model. It gets larger, because the model has no intent to recover.
+
+If the only people in the room are trained to ask "does this compile?" and "does it pass the eval?", the room is missing the person who asks "does this mean what we think it means?"
+
+---
+
+## The myth of the neutral model
+
+The second failure mode is the one AI companies have spent the most public words on: bias.
+
+Every production LLM inherits the statistical shape of its training corpus. That corpus is human writing, which is not evenly distributed across languages, cultures, professions, or points of view. NIST's AI Risk Management Framework, published in [January 2023](https://www.nist.gov/itl/ai-risk-management-framework), lists bias alongside safety, security, and privacy as core categories of AI risk, not as a footnote.
+
+Concrete evidence keeps arriving:
+
+- OpenAI's own GPT-4 System Card documents disparate performance and refusal patterns across demographic groups ([OpenAI, GPT-4 System Card, March 2023](https://cdn.openai.com/papers/gpt-4-system-card.pdf)).
+- The Stanford Center for Research on Foundation Models runs the HELM benchmark suite, which measures fairness and bias as first-class metrics alongside accuracy ([HELM, Stanford CRFM](https://crfm.stanford.edu/helm/)).
+- Anthropic's Constitutional AI work is explicitly an attempt to make normative choices about model behavior legible instead of hidden ([Anthropic, Constitutional AI, December 2022](https://www.anthropic.com/research/constitutional-ai-harmlessness-from-ai-feedback)).
+
+Naming a bias, tracing who it hurts, and deciding what a "fair" answer would even look like are not engineering problems in the narrow sense. They are questions of ethics, sociology, and political philosophy. Teams that treat "align the model" as a purely technical task keep discovering, expensively, that the hard part is the value definition, not the RLHF loop.
+
+---
+
+## Interpretation cannot be automated
+
+Every AI system that generates language pushes a decision back to the reader: is this true, is this useful, is this the right frame?
+
+Two data points on scale:
+
+- On Vectara's continuously updated [HHEM hallucination leaderboard](https://github.com/vectara/hallucination-leaderboard), the top-scoring commercial models still hallucinate on summarization tasks at rates measured in the low single digits. That number is small only until you multiply it by the volume of AI output your organization ships.
+- Stanford HAI's [2024 AI Index Report](https://aiindex.stanford.edu/report/) found that responsible-AI evaluation benchmarks are inconsistent across labs, meaning even the "how bad is this" question is under-standardized.
+
+The intellectual tradition that has spent the longest time on the problem of interpreting ambiguous, possibly misleading, possibly context-dependent text is **hermeneutics**, the branch of philosophy that studies interpretation itself. Its central move (assume the text does not carry its meaning on its face; reconstruct meaning through context, purpose, and audience) is the exact skill needed to work with LLM output without getting burned by confident-sounding nonsense.
+
+You do not need to have read Gadamer to do this well. You do need to have internalized the habit that a fluent paragraph is a hypothesis, not a fact.
+
+---
+
+## Prompt engineering is rhetoric with a new medium
+
+"Prompt engineering" sounds like a new discipline. Read Anthropic's official [prompt engineering guide](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview) or OpenAI's [prompting guide](https://platform.openai.com/docs/guides/prompt-engineering) and the actual advice is old:
+
+- Be clear about your audience.
+- State the task and its constraints explicitly.
+- Provide examples that anchor the desired form.
+- Structure your input so the reader (the model) can follow it.
+- Anticipate misreadings and pre-empt them.
+
+Every one of those bullets is standard advice in a first-year composition course, and every one is core to classical rhetoric. Aristotle's *Rhetoric* is a book about how to shape a message for a specific audience to produce a specific response. That is what a good system prompt does.
+
+The reason this matters practically: teams that have people trained in writing, editing, and discourse analysis produce measurably better prompts, evals, and product copy than teams that treat prompts as configuration files. The skill transfers directly. What does not transfer is the assumption that "just describe the problem to the model" is a technical rather than a rhetorical act.
+
+---
+
+## What this changes for how teams are built
+
+Two concrete implications for people making hiring, curriculum, or team-composition decisions:
+
+1. **Do not staff AI teams exclusively from STEM.** The humanities graduate on the team is not a diversity hire, they are the person who catches the bias, notices the interpretive slippage, and writes the prompt that actually works. Anthropic, OpenAI, and Google DeepMind all now hire policy, ethics, and communications staff at senior levels, and it is not for optics.
+2. **Do not treat writing as a soft skill.** For anyone building with LLMs, the ability to write clear, structured, unambiguous prose is now an execution skill on par with knowing the API surface. It shows up in prompts, in evals, in incident reports, and in every user-facing string the model helps you produce.
+
+The framing that the humanities are being made obsolete by AI has the direction of the arrow wrong. AI is a language technology. Everything a language technology touches (meaning, interpretation, persuasion, value, harm) sits in territory the humanities have been mapping for two thousand years. The tools got faster. The map did not.
+
+---
+
+## Frequently Asked Questions
+
+### Isn't this just a rebrand of "AI needs guardrails"?
+
+Guardrails are a subset. Guardrails ask "how do we stop the model from doing bad things?" The humanities frame is broader: how do we know what "bad" means here, who decides, whose language the model speaks, and what interpretive work the reader still owes. Guardrails are policy. This is the epistemology behind the policy.
+
+### Do I need a philosophy degree to work on AI?
+
+No. You need the habits: read carefully, interrogate framing, notice whose voice is missing, treat fluent text as a claim not a fact. A degree is one way to build those habits. Reading widely and working with people who have those habits is another.
+
+### Where does this leave prompt engineering as a career?
+
+Exactly where technical writing was in the 1990s: a real skill, undervalued for a while, then absorbed into the standard toolkit of anyone building software. The people doing it well now are already writers, editors, and communicators. That is not a coincidence.
+
+### What should an engineering leader actually do differently?
+
+Three small changes with outsized returns: put a writer or editor in the loop for any prompt or system message that ships to users; run adversarial reads of AI output with someone whose training is in interpretation, not just testing; and treat "what does this model actually mean by X" as a legitimate design question, not a pedantic one.
