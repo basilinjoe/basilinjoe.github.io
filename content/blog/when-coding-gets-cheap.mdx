@@ -1,0 +1,234 @@
+---
+title: "When Coding Gets Cheap, Judgment Gets Expensive"
+date: "2026-09-14"
+modified: "2026-09-14"
+excerpt: "AI is collapsing the cost of writing code. That doesn't shrink the job, it moves the scarce part: problem selection, architecture, and verification."
+tags: ["AI", "Software Architecture", "Career", "Engineering Leadership", "LLMs"]
+coverImage: "/blog/ai-coding-assistants-cover.webp"
+---
+
+For most of the history of software, the binding constraint was the cost of producing it. Writing code took time, testing took time, debugging took time. How much software a company could ship was largely a function of how many engineers it could hire.
+
+That assumption is breaking, and the evidence is no longer anecdotal. What follows is the case that this makes engineering judgment more valuable rather than less, and the sourced numbers behind it.
+
+> **Key Takeaways**
+> - METR measures the task length an AI completes at 50% reliability. That horizon's doubling time is **196.5 days across all periods, and 88.6 days measured from 2024 onward**, though the confidence intervals are wide ([METR Time Horizon 1.1, January 2026](https://metr.org/blog/2026-1-29-time-horizon-1-1/)).
+> - Adoption has outrun trust. In Stack Overflow's 2025 survey of 48,945 developers, **84% use or plan to use AI tools while only 32.7% trust the output, and 45.7% actively distrust it** ([Stack Overflow 2025](https://survey.stackoverflow.co/2025/ai)).
+> - Google's DORA program found AI adoption correlates with **higher throughput but lower delivery stability** ([DORA 2025](https://dora.dev/research/2025/dora-report/)).
+> - Descriptively, employment for **22 to 25 year olds in highly AI-exposed occupations sits about 19% below** its counterfactual, driven by reduced hiring rather than layoffs. The authors are explicit that these are patterns, not causal estimates ([Stanford Digital Economy Lab, August 2026](https://digitaleconomy.stanford.edu/news/canariesaug26/)).
+
+{/* [UNIQUE INSIGHT] The inversion framing: every category of work that surrounds implementation gains value in proportion to how much cheaper implementation gets. Cost collapse in one stage relocates the bottleneck rather than removing it. */}
+
+## The cost of code really is collapsing
+
+The strongest public measurement of this comes from METR, which tracks how long a task an AI model can complete at a given reliability threshold. Their metric is the 50% task-completion time horizon: the duration of human work a model finishes successfully half the time.
+
+In [March 2025](https://metr.org/blog/2025-03-19-measuring-ai-ability-to-complete-long-tasks/) they reported that horizon doubling roughly every seven months across six years of models. Their [January 2026 update](https://metr.org/blog/2026-1-29-time-horizon-1-1/) expanded the suite from 170 to 228 tasks and put the overall doubling time at 196.5 days, with a notably shorter 88.6 days when measured only from 2024 onward. Claude Opus 4.5 landed at a 320-minute horizon, GPT-5 at 214 minutes.
+
+<figure>
+<svg role="img" aria-labelledby="chart-horizon-title chart-horizon-desc" viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" style={{ maxWidth: '100%', height: 'auto', background: '#0f172a' }}>
+  <title id="chart-horizon-title">AI task-horizon doubling time by measurement period</title>
+  <desc id="chart-horizon-desc">Lollipop chart. Doubling time is 196.5 days measured across all periods, 130.8 days measured since 2023, and 88.6 days measured since 2024. Shorter bars mean faster capability growth.</desc>
+  <style>{`
+    .hl{font:13px system-ui,-apple-system,sans-serif;fill:#e5e7eb}
+    .hv{font:600 13px system-ui,-apple-system,sans-serif;fill:#f9fafb}
+    .hc{font:11px system-ui,-apple-system,sans-serif;fill:#9ca3af}
+    .ht{font:600 15px system-ui,-apple-system,sans-serif;fill:#f9fafb}
+  `}</style>
+  <text x="20" y="28" className="ht">Capability doubling time is shortening</text>
+  <text x="20" y="48" className="hc">Days to double the 50% task-completion horizon. Source: METR Time Horizon 1.1, Jan 2026.</text>
+
+  <line x1="200" y1="90" x2="593" y2="90" stroke="#334155" strokeWidth="3" />
+  <circle cx="593" cy="90" r="8" fill="#ef4444" />
+  <text x="20" y="95" className="hl">All periods</text>
+  <text x="575" y="72" className="hv" textAnchor="end">196.5</text>
+
+  <line x1="200" y1="150" x2="462" y2="150" stroke="#334155" strokeWidth="3" />
+  <circle cx="462" cy="150" r="8" fill="#f59e0b" />
+  <text x="20" y="155" className="hl">Since 2023</text>
+  <text x="444" y="132" className="hv" textAnchor="end">130.8</text>
+
+  <line x1="200" y1="210" x2="377" y2="210" stroke="#334155" strokeWidth="3" />
+  <circle cx="377" cy="210" r="8" fill="#22c55e" />
+  <text x="20" y="215" className="hl">Since 2024</text>
+  <text x="359" y="192" className="hv" textAnchor="end">88.6</text>
+
+  <line x1="200" y1="245" x2="600" y2="245" stroke="#374151" strokeWidth="1" />
+  <text x="200" y="265" className="hc">0</text>
+  <text x="600" y="265" className="hc" textAnchor="end">200 days</text>
+  <text x="20" y="290" className="hc">Wide confidence intervals. METR cautions the expanded suite may shift task difficulty.</text>
+</svg>
+<figcaption>Doubling time for AI task-completion horizon, by measurement window. Data: METR, January 2026.</figcaption>
+</figure>
+
+Worth reading that with the caveats METR themselves attach. The confidence intervals are wide, Opus 4.5's horizon spans 170 to 729 minutes, and the expanded task suite may draw from a different difficulty distribution than the original, which would inflate the apparent acceleration. You can argue with the precise doubling figure and still be left with a trend line pointing the same way.
+
+Coding is unusually exposed here because software is written in a formal language a machine can manipulate, and because the feedback signal is cheap: compile it, run the tests, read the error. That combination is rare. It is why code generation ran ahead of most other knowledge work.
+
+## Generating code and shipping software are different problems
+
+Here is where the popular framing goes wrong. Cheap generation is not the same as cheap software, and the industry's own telemetry shows the gap.
+
+Google's DORA program surveyed roughly 5,000 practitioners for its [2025 State of AI-assisted Software Development report](https://dora.dev/research/2025/dora-report/). Ninety percent reported using AI at work, up 14 points year over year, and more than 80% reported productivity gains. The finding that matters most sits underneath that: AI adoption correlated **positively with throughput and negatively with delivery stability**.
+
+Throughput and stability moving in opposite directions is what you would expect from a system producing change faster than it can absorb it, though correlation in survey data is not proof of the mechanism.
+
+[Stack Overflow's 2025 survey](https://survey.stackoverflow.co/2025/ai) of 48,945 developers points at the same seam from the practitioner's side. The top frustration, cited by 66%, was output that is "almost right, but not quite." Another 45.2% said debugging AI-generated code takes them *more* time, not less.
+
+<figure>
+<svg role="img" aria-labelledby="chart-trust-title chart-trust-desc" viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" style={{ maxWidth: '100%', height: 'auto', background: '#0f172a' }}>
+  <title id="chart-trust-title">Developer AI adoption versus trust in AI output</title>
+  <desc id="chart-trust-desc">Horizontal bar chart. 84 percent of developers use or plan to use AI tools, 32.7 percent trust the output, and 45.7 percent distrust it. Distrust exceeds trust.</desc>
+  <style>{`
+    .tl{font:13px system-ui,-apple-system,sans-serif;fill:#e5e7eb}
+    .tv{font:600 14px system-ui,-apple-system,sans-serif;fill:#f9fafb}
+    .tc{font:11px system-ui,-apple-system,sans-serif;fill:#9ca3af}
+    .tt{font:600 15px system-ui,-apple-system,sans-serif;fill:#f9fafb}
+  `}</style>
+  <text x="20" y="28" className="tt">Adoption has outrun trust</text>
+  <text x="20" y="48" className="tc">Stack Overflow Developer Survey 2025, n = 48,945.</text>
+
+  <text x="20" y="98" className="tl">Use or plan to use</text>
+  <rect x="210" y="80" width="336" height="26" fill="#3b82f6" rx="2" />
+  <text x="554" y="98" className="tv">84%</text>
+
+  <text x="20" y="158" className="tl">Trust the output</text>
+  <rect x="210" y="140" width="131" height="26" fill="#22c55e" rx="2" />
+  <text x="349" y="158" className="tv">32.7%</text>
+
+  <text x="20" y="218" className="tl">Distrust the output</text>
+  <rect x="210" y="200" width="183" height="26" fill="#ef4444" rx="2" />
+  <text x="401" y="218" className="tv">45.7%</text>
+
+  <line x1="210" y1="245" x2="610" y2="245" stroke="#374151" strokeWidth="1" />
+  <text x="210" y="265" className="tc">0%</text>
+  <text x="610" y="265" className="tc" textAnchor="end">100%</text>
+  <text x="20" y="290" className="tc">Only 3.1% report high trust. Among experienced developers, about 2.5%.</text>
+</svg>
+<figcaption>Developer adoption of AI tools versus stated trust in their output. Data: Stack Overflow, 2025.</figcaption>
+</figure>
+
+Almost right is the expensive failure mode. Code that is obviously broken costs you minutes, because the compiler or the test suite catches it immediately. Code that is subtly wrong costs you a production incident, and you pay for it at the worst possible moment. Most of the practical advice on working with these tools reduces to narrowing that gap, which I covered separately in a [practical guide to AI coding assistants](/blog/efficient-use-of-ai-coding-assistants).
+
+## The bottleneck moves, it does not disappear
+
+When one stage of a pipeline gets dramatically cheaper, the constraint relocates to whatever is now slowest. That is the whole argument, and it generalises.
+
+Picture two engineers with identical tooling. The first asks for a dashboard. The second says: our users spend fifteen minutes every morning assembling five metrics by hand, here are the data sources, here are the constraints, and here is how we will know it worked.
+
+Both will have most of the implementation written for them, and the generated code may even be comparable. The difference is that the second engineer has already done the work that the model cannot do: identifying which fifteen minutes of someone's day were worth eliminating, and deciding in advance what evidence would count as success.
+
+That is why the traditional seam between product and engineering is dissolving from both directions. Engineers who understand users, workflows, and business models gain leverage precisely because the step they used to be measured on got automated.
+
+## Verification becomes the expensive half
+
+If a model can produce a plausible implementation in seconds, the question stops being *can we build this* and becomes *how do we know it's right*.
+
+{/* [PERSONAL EXPERIENCE] Evaluation framework and parallel-run methodology from AI platform work at Experion, 2025-2026. */}
+This is the part I have spent the most time on professionally, and it is consistently underrated. On an agent platform I architected, the thing that made the agents trustworthy was not the prompt engineering. It was building an evaluation framework and running it before anything reached production.
+
+The clearest example was a candidate-evaluation agent. We did not ship it because the outputs looked good. We ran it in parallel with human evaluators across five full recruitment drives, adjudicated every disagreement to establish which side was actually wrong, then turned the labelled outliers into a standing regression suite that re-verifies the agent after every model or prompt change. We also compared agent scores against human scores across candidate categories specifically looking for bias. Running that check mattered more than whatever it returned, because without it we would have had no basis for calling the agent fair beyond the absence of complaints.
+
+None of that work was code generation, and all of it was the reason the system could eventually be trusted with a decision that affects someone's career.
+
+The same pattern shows up in architecture. Cheap implementation makes it trivial to create an abstraction that should not exist, stand up a service that did not need to be separate, or add a dependency nobody will own. The friction that used to discourage unnecessary code was the effort of writing it. That friction is gone.
+
+So the architectural questions get sharper, not softer:
+
+- What belongs inside which boundary, and what crosses it?
+- What contract does this expose, and who depends on it?
+- What must never happen, regardless of what the model proposes?
+- What invariants hold under concurrency and failure?
+- How would we detect that this is broken in production?
+- What is an agent permitted to change without a human in the loop?
+
+That last one matters more every quarter. If you are giving agents a tool surface against real systems, the design problem is deciding what they may touch. On one platform I deliberately built the MCP server to read across a handful of endpoints and write back exactly one record type, because a governed narrow surface beats broad access you have to trust. I went deeper on that design question in a separate piece on [why MCP server design is moving from API endpoints to agent workflows](/blog/mcp-server-design-is-changing).
+
+## Orchestration is the shape of the work now
+
+The old loop was straightforward: an engineer thinks through a solution and implements it. The emerging loop has more moving parts, and the engineer sits at a different point in it.
+
+Laurence Moroney's framing in the Stanford lecture that prompted this post breaks a capable agent into four stages: understand the intent behind the request, plan what needs to happen, execute against the real environment, then reflect on what actually worked. Understand, plan, execute, reflect.
+
+<figure>
+<div style={{ position: 'relative', width: '100%', paddingBottom: '56.25%', height: 0 }}>
+  <iframe
+    src="https://www.youtube.com/embed/AuZoDsNmG_s"
+    title="Stanford CS230: Career Advice in AI (Autumn 2025, Lecture 9) with Laurence Moroney and Andrew Ng"
+    loading="lazy"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+    referrerPolicy="strict-origin-when-cross-origin"
+    allowFullScreen
+    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
+  />
+</div>
+<figcaption>Stanford CS230, Autumn 2025, Lecture 9: Career Advice in AI. Laurence Moroney with Andrew Ng and Kian Katanforoosh.</figcaption>
+</figure>
+
+Reflection is the stage teams skip, and it is the one that separates a demo from a system. An agent that executes without evaluating its own output is a very fast way to be confidently wrong at scale, which is one of the [failure modes that shows up once agents leave the notebook](/blog/autonomous-agents).
+
+Note what this does to the definition of technical skill. Syntax stays useful. Architecture, system boundaries, data modelling, security, observability, deployment, failure modes, and performance trade-offs become considerably more load-bearing, because a model can generate working code while holding no view whatsoever on whether the resulting system is a good one.
+
+## What this does to the entry-level path
+
+This is the uncomfortable part, and it is worth stating precisely rather than dramatically.
+
+Stanford's Digital Economy Lab tracked ADP payroll data and found that employment for 22 to 25 year olds in highly AI-exposed occupations runs roughly 19% below where it would sit had it tracked same-age workers in less-exposed fields ([Brynjolfsson, Chandar and Chen, August 2026](https://digitaleconomy.stanford.edu/news/canariesaug26/)). The decline comes from reduced hiring rather than separations, it concentrates in *automating* rather than *augmenting* uses, and employment for experienced workers in the same occupations held flat or rose.
+
+The authors are explicit that these are descriptive patterns, not causal estimates, and that interest rates and post-pandemic correction cannot be ruled out. There is no economy-wide displacement in this data. There is a specific, measurable squeeze on the traditional on-ramp.
+
+Which means the learning path has to change, because the tasks juniors historically learned on are exactly the ones being absorbed. The habit worth building is to push each question up one level:
+
+- *How do I write this function* becomes: why does this function exist at all, and what would break without it?
+- *How do I implement this API* becomes: what contract should it expose, and who will depend on it?
+- *How do I fix this error* becomes: what class of failure is this, and where else does that class appear?
+
+AI can accelerate implementation indefinitely, but understanding still has to come from somewhere. Reading generated code critically turns out to be a genuinely different skill from writing it from scratch, and it is the one that now compounds. That is also the broader case I made for [why interpretive and ethical skills are getting more valuable, not less](/blog/why-humanities-matter-in-ai-era).
+
+## Don't build a career on one model API
+
+Models change, pricing changes, capabilities change, and the API you know deeply today is a depreciating asset. Architectural patterns are not.
+
+Distributed systems, databases, networking, security, evaluation methodology, system design: these transfer across every model generation. Knowing one vendor's SDK is a useful accessory to that foundation and a poor substitute for it.
+
+There is a related point about model selection worth flagging carefully. NVIDIA researchers have [argued](https://arxiv.org/abs/2506.02153) that small language models are better suited and more economical than frontier models for the repetitive, specialised calls that dominate agentic systems, and that heterogeneous multi-model architectures are the natural end state. That is a position paper from a chip vendor rather than a benchmark, so treat it as a well-argued hypothesis. The underlying engineering instinct, match the compute to the workload instead of routing everything to the largest available model, is the same one that has applied to infrastructure for twenty years.
+
+## The inversion, stated plainly
+
+Every category of work that surrounds implementation gains value in proportion to how much cheaper implementation gets. Laid out directly:
+
+| What got cheap | What got scarce |
+|---|---|
+| Writing code | Choosing which problem is worth solving |
+| Building prototypes | Product judgment about which one to keep |
+| Implementing a design | Architecture: boundaries, contracts, invariants |
+| Generating output | Verification that the output is correct |
+| Shipping anything at all | Distribution, and understanding actual users |
+
+Software engineering's centre of gravity is shifting from implementer toward architect, systems thinker, and orchestrator. Writing code remains part of the job. It is now the part most likely to be handled for you, which makes the surrounding work the part you are actually paid for.
+
+The competitive advantage sits with people who can answer four questions and then take responsibility for the answers: what should we build, why should we build it, how should the system work, and how do we know it actually works. A model will help you with all four, and will happily produce a confident answer to each, which is precisely why someone still has to own them.
+
+The opportunity was never to out-type a model. It is to be the person who knows what should exist in the first place.
+
+## Frequently Asked Questions
+
+### Does this mean junior developers shouldn't learn to code?
+
+No, and the inverse is closer to true. You cannot review generated code you do not understand, and review is now the core activity. What changes is emphasis: less time memorising syntax, more time reading code critically, tracing failures to their class, and asking why a design exists. The Stanford data shows a hiring squeeze at the entry level, not that the skill stopped mattering.
+
+### Is AI actually making code quality worse?
+
+The honest answer is that the strongest available evidence is indirect. DORA's 2025 research found AI adoption correlating with higher throughput and *lower* delivery stability, which is consistent with quality problems but does not isolate the cause. Stack Overflow found 66% of developers frustrated by output that is "almost right," and 45.2% reporting that debugging AI code takes longer. Several widely-cited code-quality statistics circulating on this topic come from vendor research that I could not independently verify, so I have left them out.
+
+### What does "verification becomes valuable" mean in practice?
+
+Concretely: golden test sets, evaluation harnesses that run before release, regression suites built from real disagreements rather than imagined cases, and running a new system in parallel with the process it replaces until you have evidence it is better. If you are shipping AI features without an evaluation loop, you are shipping on vibes.
+
+### How much of this applies outside software?
+
+The mechanism is general: when one stage of a value chain collapses in cost, the bottleneck relocates rather than vanishing. The specifics are software-shaped because code has properties that made it unusually easy to automate, a formal grammar and cheap verification signals. Fields without those properties are moving more slowly.
+
+### Should we use small models or frontier models?
+
+Match the model to the workload. Frontier models earn their cost on complex reasoning, difficult planning, and open-ended problems. Smaller models make sense where latency, cost, privacy, or local execution dominate, and where the task is narrow and repetitive. Be skeptical of specific cost-multiple claims circulating on this topic; most trace back to vendor-supplied tests without published methodology. Compare list prices on the provider's own pricing page on the day you decide.
