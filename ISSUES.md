@@ -50,7 +50,7 @@ decision rather than a defect, and do not resolve those unilaterally.
 Resolved below, and **Known non-issues** for the things that look like bugs but are
 deliberate.
 
-The next entry gets ID `P?-026`.
+The next entry gets ID `P?-028`.
 
 ---
 
@@ -91,6 +91,8 @@ The next entry gets ID `P?-026`.
 | P1-010 | 2026-09-15 | Added `.sticker-button` at 28px for the three clickable chips; `.sticker` stays a 24px label. DESIGN.md §8's stale 22px figure corrected. | `57040e1` |
 | P1-025 | 2026-09-15 | `dynamic-greeting`'s palette lived in a `gradient` field that was never rendered — deleted, along with the dead `Tagline` export. `blog-share` feedback moved to `--success`/`--destructive`. Brand colour documented as a §5 exception, gated on measured contrast. | `57040e1` |
 | P1-013 | 2026-09-15 | Hero blur layer kept. §2 rewritten to scope "zero blur" to the component language and document the three background layers explicitly. | `57040e1` |
+| P2-026 | 2026-09-15 | `CLAUDE.md` still told future sessions to prefer importing from `lib/design-system/`, deleted in `5389854`, and listed `projects-page.tsx`, deleted in `6a5d85f`. Corrected. | pending |
+| P2-027 | 2026-09-15 | Default Vercel favicon and unused `next.svg` / `vercel.svg` scaffolding replaced with a brand icon set. | pending |
 
 Entries predating this file have no ID; they are carried over from `DESIGN.md` §14.
 
@@ -122,3 +124,13 @@ Documented so they are not "discovered" again.
 - **`.sticker` is 24px and `.sticker-button` is 28px.** Not an inconsistency. Labels sit
   at the SC 2.5.8 minimum; anything interactive uses the taller variant so a future
   padding change cannot silently drop a control below the minimum.
+- **`app/icon.svg` uses literal hex, not tokens.** Required, not drift. A favicon renders
+  outside the page and cannot read CSS variables, so the accent-lime pair is inlined as
+  `#bbf00f` / `#111117`. Keep in sync with `app/globals.css` by hand if those tokens
+  ever change.
+- **The favicon "J" is a path, not a `<text>` element.** Deliberate. Favicons render
+  without page CSS, so Instrument Serif would never load and each browser would
+  substitute a different serif.
+- **`app/apple-icon.png` has no border frame** while `icon.svg` does. Deliberate: iOS
+  masks the icon with a rounded rectangle, which would clip a square frame at the
+  corners.

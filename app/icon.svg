@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Basilin Joe">
+  <title>Basilin Joe</title>
+  <!--
+    The nav wordmark (components/main-nav.tsx) reduced to one letter: acid-lime
+    tile, ink frame, serif italic "J". Three letters are illegible at 16px.
+
+    Colours are the resolved values of the accent-lime (#bbf00f) and
+    accent-lime-foreground (#111117) tokens in app/globals.css. They are literal
+    because a favicon renders outside the page and cannot read CSS variables, and
+    they are fixed across themes for the same reason the nav tile is: the lime
+    pair carries its own foreground and does not invert (DESIGN.md section 5).
+
+    The "J" is a path, not a text element. Favicons render without page CSS, so
+    Instrument Serif would never load and every browser would substitute its own
+    serif. The skew supplies the italic.
+
+    Note for editors: this is XML. Never put a double hyphen inside a comment —
+    it makes the document unparseable and the icon silently renders as broken.
+  -->
+  <rect width="64" height="64" fill="#bbf00f"/>
+  <rect x="2" y="2" width="60" height="60" fill="none" stroke="#111117" stroke-width="4"/>
+  <path
+    d="M25 19 H45 M34 19 V37 A7 7 0 0 1 20 37"
+    transform="translate(5.5 0) skewX(-12)"
+    fill="none"
+    stroke="#111117"
+    stroke-width="8"
+    stroke-linecap="butt"
+    stroke-linejoin="miter"
+  />
+</svg>

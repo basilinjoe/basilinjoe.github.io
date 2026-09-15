@@ -29,8 +29,7 @@ Key layers:
 - **`content/blog/*.mdx`** — blog posts as MDX with gray-matter frontmatter (`title`, `date`, optional `modified`, `excerpt`, `tags`, `coverImage`, `draft`). Filename (without `.mdx`) becomes the slug/`id`. `.md` files still load for backwards compat, but new posts should use `.mdx` so they can embed JSX / import React components. Adding a post = drop a file; `getAllPosts()` in `lib/blog.ts` reads the directory and `app/blog/[slug]/page.tsx`, `app/blog/tag/[tag]/page.tsx`, `app/feed.xml/route.ts`, and `app/sitemap.ts` all pick it up automatically.
 - **`lib/blog.ts`** — server-side (filesystem) post loading. Imports `fs`, so it CANNOT be imported at runtime from client components (types are erased and safe). For anything a client component needs (e.g. `tagToSlug`), use **`lib/tags.ts`**. Reading time is derived from word count at 200 wpm. Posts are sorted by `date` descending. Drafts (`draft: true`) are filtered unless `INCLUDE_DRAFTS=true` — errors bubble up and fail the build rather than silently producing empty content.
 - **`components/blog/blog-post-content.tsx`** — server component that renders MDX via `next-mdx-remote/rsc`. Configure `remarkPlugins`/`rehypePlugins` here (currently `remark-gfm` + `rehype-highlight`). The `mdxComponents` map overrides HTML tag rendering (e.g. auto-open external links in a new tab); post authors can also import and use React components directly inside their `.mdx` files. Because it uses the RSC MDX renderer, this file must stay a server component — do not add `"use client"`.
-- **`components/`** — mix of page-level composites (`home-page.tsx`, `about-page.tsx`, `projects-page.tsx`, `contact-page.tsx`, `blog-list.tsx`), section pieces under `components/sections/` and `components/blog/`, and shadcn/ui primitives under `components/ui/`.
-- **`lib/design-system/`** — shared tokens (colors, typography, animations, hover, badges). Prefer importing from here over redefining Tailwind classes ad-hoc.
+- **`components/`** — mix of page-level composites (`home-page.tsx`, `about-page.tsx`, `projects-page-new.tsx`, `contact-page.tsx`, `blog-list.tsx`), section pieces under `components/sections/` and `components/blog/`, and shadcn/ui primitives under `components/ui/`.
 - **`lib/utils.ts`** — the `cn()` helper (clsx + tailwind-merge). shadcn convention.
 
 **Styling & UI:** Tailwind CSS + shadcn/ui (config in `components.json`, base color zinc, aliases `@/components` and `@/lib/utils`). Dark mode is class-based via `next-themes`. Framer Motion is used throughout for animation. Icons: `lucide-react` and `@radix-ui/react-icons`.
@@ -63,8 +62,9 @@ Two repo-specific traps documented there that are easy to hit:
   `.markdown :not(pre) > code`.
 
 Token authority lives in `app/globals.css` (colours, component classes, prose styles)
-and `tailwind.config.ts` (type scale, shadows, keyframes). `lib/design-system/` is
-legacy and mostly unimported; do not treat it as authoritative.
+and `tailwind.config.ts` (type scale, shadows, keyframes). `lib/design-system/` was
+deleted on 2026-09-15 — nothing imported it and its values contradicted the live
+system. Do not recreate it.
 
 ## Issue log — record every issue you find
 
