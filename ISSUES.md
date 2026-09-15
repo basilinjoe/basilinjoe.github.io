@@ -88,9 +88,9 @@ The next entry gets ID `P?-026`.
 | P1-015 | 2026-09-15 | `themeColor` now uses the resolved `--background` hex, `#f9f8f5` / `#101014`. | `6a5d85f` |
 | P1-017 | 2026-09-15 | Dead click handler removed; the tag chip is a plain label, since a nested `<a>` inside the row link would be invalid HTML. | `6a5d85f` |
 | P2-024 | 2026-09-15 | Skip links now stack vertically below `sm` instead of running past a 390px viewport. | `6a5d85f` |
-| P1-010 | 2026-09-15 | Added `.sticker-button` at 28px for the three clickable chips; `.sticker` stays a 24px label. DESIGN.md §8's stale 22px figure corrected. | pending |
-| P1-025 | 2026-09-15 | `dynamic-greeting`'s palette lived in a `gradient` field that was never rendered — deleted, along with the dead `Tagline` export. `blog-share` feedback moved to `--success`/`--destructive`. Brand colour documented as a §5 exception, gated on measured contrast. | pending |
-| P1-013 | 2026-09-15 | Hero blur layer kept. §2 rewritten to scope "zero blur" to the component language and document the three background layers explicitly. | pending |
+| P1-010 | 2026-09-15 | Added `.sticker-button` at 28px for the three clickable chips; `.sticker` stays a 24px label. DESIGN.md §8's stale 22px figure corrected. | `57040e1` |
+| P1-025 | 2026-09-15 | `dynamic-greeting`'s palette lived in a `gradient` field that was never rendered — deleted, along with the dead `Tagline` export. `blog-share` feedback moved to `--success`/`--destructive`. Brand colour documented as a §5 exception, gated on measured contrast. | `57040e1` |
+| P1-013 | 2026-09-15 | Hero blur layer kept. §2 rewritten to scope "zero blur" to the component language and document the three background layers explicitly. | `57040e1` |
 
 Entries predating this file have no ID; they are carried over from `DESIGN.md` §14.
 
