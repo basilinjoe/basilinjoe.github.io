@@ -258,11 +258,11 @@ but the focused second link can push past the 390px viewport.
 | P0-002 | 2026-09-15 | Command palette active row measured 2.98:1 in dark mode. Now solid `accent-lime` with its own foreground, 13.90 light / 15.22 dark. | `65a2eaf` |
 | P0-001 | 2026-09-15 | Framer Motion ignored `prefers-reduced-motion` across 33 files. Added `MotionProvider` (`MotionConfig reducedMotion="user"`) in the root layout. | `65a2eaf` |
 | P0-003 | 2026-09-15 | Four `aria-labelledby` references pointed at no element. `SectionHeading` now takes an `id`. | `65a2eaf` |
-| P0-006 | 2026-09-15 | `aria-label` suppressed the toggle's state text and "system" was invisible. Rebuilt on three icons with the state in the accessible name. | pending |
-| P1-011 | 2026-09-15 | `scroll-mt-16` reserved 64px against a ~96px header. Now `scroll-mt-20 sm:scroll-mt-28`. | pending |
-| P1-008 | 2026-09-15 | Contact character counter measured 3.74:1 light. Alpha dropped; now 8.09:1. | pending |
-| P1-009 | 2026-09-15 | Breadcrumb separator and palette external-link icon measured 2.98:1 light. Both raised to `/80`, 4.78:1. | pending |
-| P1-007 | 2026-09-15 | `animate-bounce` and `animate-ping` added to the reduced-motion block; `animate-pulse` kept deliberately and DESIGN.md §10 amended to say why. | pending |
+| P0-006 | 2026-09-15 | `aria-label` suppressed the toggle's state text and "system" was invisible. Rebuilt on three icons with the state in the accessible name. | `bf49756` |
+| P1-011 | 2026-09-15 | `scroll-mt-16` reserved 64px against a ~96px header. Now `scroll-mt-20 sm:scroll-mt-28`. | `bf49756` |
+| P1-008 | 2026-09-15 | Contact character counter measured 3.74:1 light. Alpha dropped; now 8.09:1. | `bf49756` |
+| P1-009 | 2026-09-15 | Breadcrumb separator and palette external-link icon measured 2.98:1 light. Both raised to `/80`, 4.78:1. | `bf49756` |
+| P1-007 | 2026-09-15 | `animate-bounce` and `animate-ping` added to the reduced-motion block; `animate-pulse` kept deliberately and DESIGN.md §10 amended to say why. | `bf49756` |
 
 Entries predating this file have no ID; they are carried over from `DESIGN.md` §14.
 
