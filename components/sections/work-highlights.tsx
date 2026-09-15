@@ -20,6 +20,7 @@ export function WorkHighlights() {
       className="py-16 md:py-24"
     >
       <SectionHeading
+        id="work-highlights-heading"
         numeral="04"
         eyebrow="On record"
         title="Work highlights"

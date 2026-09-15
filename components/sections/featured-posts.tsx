@@ -27,6 +27,7 @@ export function FeaturedPosts({ posts }: FeaturedPostsProps) {
       className="py-16 md:py-24"
     >
       <SectionHeading
+        id="featured-posts-heading"
         numeral="03"
         eyebrow="Filed under"
         title="Selected writing"
@@ -98,11 +99,18 @@ export function FeaturedPosts({ posts }: FeaturedPostsProps) {
 }
 
 function SectionHeading({
+  id,
   numeral,
   eyebrow,
   title,
   rightSlot,
 }: {
+  /**
+   * Id for the <h2>. Every section that sets `aria-labelledby` must pass the
+   * matching id here, or the section ends up with no accessible name at all —
+   * four of them silently did.
+   */
+  id?: string
   numeral: string
   eyebrow: string
   title: string
@@ -117,7 +125,10 @@ function SectionHeading({
             {eyebrow}
           </span>
         </div>
-        <h2 className="mt-3 font-serif text-4xl leading-none tracking-tightest md:text-6xl">
+        <h2
+          id={id}
+          className="mt-3 font-serif text-4xl leading-none tracking-tightest md:text-6xl"
+        >
           {title}
         </h2>
       </div>

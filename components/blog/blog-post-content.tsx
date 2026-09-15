@@ -25,6 +25,14 @@ const mdxComponents = {
   img: (props: React.ImgHTMLAttributes<HTMLImageElement>) => (
     <img {...props} loading="lazy" />
   ),
+  // Tables get their own scroll container so a wide table never makes the page
+  // body scroll horizontally (DESIGN.md §7). remark-gfm emits a bare <table>,
+  // so the wrapper has to be added here rather than in CSS.
+  table: (props: React.TableHTMLAttributes<HTMLTableElement>) => (
+    <div className="markdown-table-scroll overflow-x-auto">
+      <table {...props} />
+    </div>
+  ),
 }
 
 export function BlogPostContent({ post }: BlogPostContentProps) {

@@ -30,6 +30,7 @@ export function SkillsAndTools() {
       className="py-16 md:py-24"
     >
       <SectionHeading
+        id="skills-heading"
         numeral="06"
         eyebrow="Working with"
         title="Skills & tools"

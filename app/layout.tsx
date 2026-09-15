@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils"
 import { siteConfig } from "@/config/site"
 
 import { ThemeProvider } from "@/components/theme-provider"
+import { MotionProvider } from "@/components/motion-provider"
 import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
 import { GoogleAnalytics } from '@/components/google-analytics'
@@ -76,18 +77,20 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <CommandPaletteProvider>
-              <SkipNav />
-              <div vaul-drawer-wrapper="">
-                <div className="relative flex min-h-screen flex-col bg-background">
-                  <SiteHeader />
-                  <main id="main-content" className="flex-1">{children}</main>
-                  <SiteFooter />
+            <MotionProvider>
+              <CommandPaletteProvider>
+                <SkipNav />
+                <div vaul-drawer-wrapper="">
+                  <div className="relative flex min-h-screen flex-col bg-background">
+                    <SiteHeader />
+                    <main id="main-content" className="flex-1">{children}</main>
+                    <SiteFooter />
+                  </div>
                 </div>
-              </div>
-              <ScrollToTop />
-              <Toaster />
-            </CommandPaletteProvider>
+                <ScrollToTop />
+                <Toaster />
+              </CommandPaletteProvider>
+            </MotionProvider>
           </ThemeProvider>
           {/* <ThemeSwitcher /> */}
           <GoogleAnalytics gaId={siteConfig.gaid}/>

@@ -411,11 +411,21 @@ function CommandItem({
       className={cn(
         "flex w-full items-center gap-3 border-l-2 px-3 py-2 text-left text-sm transition-colors",
         isActive
-          ? "border-accent-hot bg-accent-lime/60 text-foreground"
+          ? // Solid lime with ink on top: 13.90:1 light, 15.22:1 dark.
+            // `bg-accent-lime/60` with `text-foreground` measured 2.98:1 in dark —
+            // lime is a background-only token and must carry its own foreground.
+            "border-accent-hot bg-accent-lime text-accent-lime-foreground"
           : "border-transparent text-foreground/80 hover:bg-accent-lime/20"
       )}
     >
-      <span className={cn("shrink-0", isActive ? "text-accent-hot" : "text-muted-foreground")}>
+      <span
+        className={cn(
+          "shrink-0",
+          // accent-hot on solid lime is 3.65:1 light / 2.14:1 dark, so the active
+          // icon takes the lime foreground and the hot accent stays on the left rail.
+          isActive ? "text-accent-lime-foreground" : "text-muted-foreground"
+        )}
+      >
         {cmd.icon}
       </span>
       <span className="flex min-w-0 flex-1 flex-col">
@@ -423,15 +433,28 @@ function CommandItem({
           {cmd.label}
         </span>
         {cmd.description && (
-          <span className="mt-1 truncate text-[11px] text-muted-foreground">
+          <span
+            className={cn(
+              "mt-1 truncate text-[11px]",
+              // muted-foreground on solid lime is 1.75:1 in dark.
+              isActive ? "text-accent-lime-foreground/75" : "text-muted-foreground"
+            )}
+          >
             {cmd.description}
           </span>
         )}
       </span>
       {isExternal ? (
-        <ExternalLink className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
+        <ExternalLink
+          className={cn(
+            "ml-auto h-3.5 w-3.5 shrink-0",
+            isActive ? "text-accent-lime-foreground/75" : "text-muted-foreground/60"
+          )}
+        />
       ) : (
-        isActive && <ArrowRight className="ml-auto h-3.5 w-3.5 shrink-0 text-accent-hot" />
+        isActive && (
+          <ArrowRight className="ml-auto h-3.5 w-3.5 shrink-0 text-accent-lime-foreground" />
+        )
       )}
     </button>
   )

@@ -66,6 +66,39 @@ Token authority lives in `app/globals.css` (colours, component classes, prose st
 and `tailwind.config.ts` (type scale, shadows, keyframes). `lib/design-system/` is
 legacy and mostly unimported; do not treat it as authoritative.
 
+## Issue log — record every issue you find
+
+**`ISSUES.md` is the single record of known defects in this repo. Whenever you identify
+an issue, write it there — in the same turn you find it, before moving on.**
+
+This applies to anything you notice, not just what you were asked to look at: a bug, a
+broken or dead reference, an accessibility failure, a `DESIGN.md` rule the code
+contradicts, documentation that no longer matches the code, drift from the design
+system, or dead code. It applies whether or not you fix it in the same session, and
+whether or not the user asked for a review. Mentioning a problem only in chat does not
+count — chat is lost, the file is not.
+
+Follow the conventions in the file's own "How to use this file" section:
+
+- One entry per distinct defect, with a new sequential ID (`[P0-001]`, `[P1-007]`, …).
+  IDs are never reused, entries are never deleted.
+- Record the `file:line`, the rule or success criterion it violates, and the concrete
+  fix.
+- If a claim is measurable — contrast ratio, pixel size, character count — measure it
+  and record the number. Do not estimate, and do not trust an existing code comment or
+  a number already written in `DESIGN.md`; several have turned out to be wrong.
+- When you fix an issue, move its entry to **Resolved** with the date and commit rather
+  than deleting it.
+- If something you suspected turns out to be fine, move it to **Known non-issues** with
+  the reason, so nobody rediscovers it later.
+
+Before starting a review or a visual change, read `ISSUES.md` first: the problem may
+already be logged, and the Known non-issues list will stop you "fixing" something
+deliberate.
+
+`DESIGN.md` §14 tracks design-system items specifically; `ISSUES.md` is the broader log
+and is authoritative where the two overlap.
+
 ## Tailwind config
 
 Only `tailwind.config.ts` exists; the duplicate `.js` file was removed and

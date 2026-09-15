@@ -1,0 +1,349 @@
+# Issue log
+
+Running record of defects, drift, and inconsistencies found in this repo.
+
+**Entries are never deleted, only moved to Resolved with a date.** This file exists so
+that a problem spotted during unrelated work does not evaporate when the session ends.
+
+## How to use this file
+
+- **Every issue Claude (or anyone) identifies gets an entry here**, whether or not it is
+  fixed in the same session. Finding something and only mentioning it in chat does not
+  count.
+- One entry per distinct defect. Do not merge unrelated problems into a bullet.
+- Give each entry a stable ID: `[P<severity>-<nnn>]`, next number in sequence, never
+  reused.
+- Include: what is wrong, the `file:line` where it lives, why it violates something
+  (cite a `DESIGN.md` section, a WCAG success criterion, or `CLAUDE.md`), and the
+  concrete fix.
+- If a claim is measurable (contrast, pixel size, character count), record the
+  **measured number**, not an estimate.
+- When fixed: move the entry to **Resolved**, keep its ID, add the date and the commit.
+  Do not delete it.
+- If an issue turns out to be a non-issue, move it to **Known non-issues** with the
+  reason, so it is not "discovered" again later.
+
+## Severity
+
+| Level | Meaning |
+|---|---|
+| **P0** | User-visible failure, or a breach of the accessibility floor in `DESIGN.md` §9. Fix before shipping anything else. |
+| **P1** | System drift, a documented rule the code contradicts, or a latent failure. Fix soon. |
+| **P2** | Hygiene, dead code, documentation that no longer matches the code. |
+
+## Priority order
+
+Severity says how bad something is; this says what to do next. The ordering is
+correctness first, then the cheap documentation fixes that make `DESIGN.md`
+trustworthy again, then visible drift, then hygiene.
+
+| # | ID | Why here |
+|---|---|---|
+| 1 | P0-006 | Last remaining P0. Small, self-contained. |
+| 2 | P1-011 | WCAG AA (2.4.11), affects every deep link into a blog post. One line. |
+| 3 | P1-008 | WCAG AA (1.4.3), live on the contact form. One token. |
+| 4 | P1-009 | WCAG AA (1.4.11), live in the command palette. One token. |
+| 5 | P1-007 | Completes the reduced-motion work started in P0-001. One line. |
+| 6 | P2-021 | **Do early.** `DESIGN.md`'s contrast table is wrong, so every later review starts from bad data. |
+| 7 | P2-022, P2-023 | Same reason: the design doc cannot be the source of truth while it contradicts the code. |
+| 8 | P1-010 | **Needs a decision.** Clickable stickers scrape 24px exactly; either raise the padding or bless the case in §8. |
+| 9 | P1-012 | Most visible remaining drift. Real work, not a one-liner. |
+| 10 | P1-016 | Profile data duplicated outside `config/site.ts`; needs a new `shortPosition` field. |
+| 11 | P1-015, P1-017, P2-024 | Small correctness and polish fixes. |
+| 12 | P1-014 | Type-scale cleanup. Wide but mechanical. |
+| 13 | P2-018, P2-019, P2-020 | Dead code and dead tokens. Deletion, mostly. |
+| 14 | P1-013 | **Needs a decision.** The hero blur blobs are either a deliberate exception or they go. Not a defect either way. |
+
+Items 8 and 14 should not be "fixed" unilaterally — they are design calls, not bugs.
+
+---
+
+## Open
+
+### P0 — accessibility floor and user-visible breakage
+
+#### [P0-006] Theme toggle never announces its state
+
+`components/mode-toggle.tsx:29` sets `aria-label="Toggle theme"`. In the accessible name
+computation `aria-label` **overrides element content**, so the `sr-only` span
+("Current theme: {theme}. Click to cycle.") at line 38 is never announced.
+
+Visually the button cycles light -> dark -> system but only swaps a Sun/Moon icon keyed
+to the *resolved* theme, so "system" is indistinguishable from whichever theme it
+resolves to.
+
+- Violates: `DESIGN.md` §3, which names "visibility of system status (theme state)" as a
+  binding NN/g heuristic for this site.
+- Fix: drop the `aria-label` and let the `sr-only` text be the accessible name, or move
+  the state into `aria-label` itself. Add a visible indicator for the system state.
+
+### P1 — drift, contradictions, latent failures
+
+#### [P1-007] Looping animations missing from the reduced-motion block
+
+`app/globals.css:320-338` says "Any NEW named animation must be added to this list", but
+these are absent:
+
+- `animate-bounce` — `components/sections/hero-bento-grid.tsx:151` (hero scroll cue). An
+  uncapped transform loop, precisely what `reduce` is meant to stop.
+- `animate-ping` — `components/sections/profile-section.tsx:79` (currently dead code,
+  see P2-018).
+- `animate-pulse` — 6 uses. Opacity-only, so arguably fine to keep per MDN, but
+  `DESIGN.md` §10 asserts it is killed, which is not true.
+
+- Fix: add `animate-bounce` and `animate-ping` to the block. Either add `animate-pulse`
+  or amend §10 to say opacity-only loops are deliberately kept.
+
+#### [P1-008] `text-muted-foreground/70` fails AA in light mode
+
+`components/contact-page.tsx:279` — the message character counter, at 11px `micro`.
+
+Measured: **3.74:1 on background, 3.86:1 on card** (light). Dark passes at 4.85.
+
+- Violates: WCAG 2.2 SC 1.4.3 (AA).
+- Fix: `/80` measures 4.78:1 light, or drop the alpha entirely.
+
+#### [P1-009] `text-muted-foreground/60` fails in light mode (two places)
+
+- `components/blog/blog-breadcrumb.tsx:49` — breadcrumb separator.
+- `components/command-palette.tsx:432` — the external-link icon on social rows.
+
+Measured: **2.98:1 light**, 3.86:1 dark. The icon case also misses SC 1.4.11's 3:1
+non-text minimum.
+
+- Fix: the separator is already `aria-hidden` and reads as decorative, so only the
+  palette icon is a hard miss. Raise it to `/80` (4.78:1 light).
+- Partially addressed 2026-09-15: the *active-row* instance of this icon was fixed
+  under P0-002 (it would otherwise have sat on solid lime at 1.75:1). The inactive
+  branch at `components/command-palette.tsx:445` still measures 2.98:1 and is open.
+
+#### [P1-010] `.sticker` is used as a button in three places, which §8 forbids
+
+- `components/blog/blog-post-card.tsx:104`
+- `components/blog/blog-post-card.tsx:164`
+- `components/projects-page-new.tsx:175`
+
+`DESIGN.md` §8 says: "If you ever make a sticker clickable, raise its padding to clear
+24px." All three are `<button>` elements.
+
+The doc's own measurement is also wrong. Computed from the real values — `micro`
+line-height `1rem` (16px) + `py-0.5` (2px x2) + `border-2` (2px x2) — the box is
+**exactly 24px**, not the 22px §8 claims. So it scrapes SC 2.5.8 (AA) with zero margin.
+
+- Fix: decide one way. Either bump to `py-1` (28px) and update §8, or correct §8's number
+  and explicitly bless the clickable case.
+
+#### [P1-011] `scroll-mt-16` under-clears the sticky header
+
+`.markdown h1`-`h4` reserve 64px (`app/globals.css:377-395`). The actual sticky header is
+the ticker (`py-1.5` + 16px line + 2px border = 30px) plus the main row (`h-16` + 2px
+border = 66px) = **~96px**. `components/blog/reading-progress.tsx:26` already hardcodes
+`sm:top-[94px]`, which confirms the real height.
+
+Anchor navigation therefore lands headings underneath the header on desktop.
+
+- Violates: WCAG 2.2 SC 2.4.11 Focus Not Obscured (AA), which `DESIGN.md` §9 claims
+  `scroll-mt-16` handles.
+- Fix: `scroll-mt-20 sm:scroll-mt-28`.
+
+#### [P1-012] Pre-brutalist surfaces still render on `/blog`
+
+Never migrated to the editorial-tech system; still using the old soft language (blur
+orbs, large radii, raw palette):
+
+- `components/blog-list-wrapper.tsx` — the Suspense fallback. `blur-3xl` orbs,
+  `rounded-xl`, `rounded-full`, raw `bg-blue-500/5`, `border-border/60`.
+- `components/blog-list.tsx:148-149` — two floating blurred circles with
+  `animate-pulse-slow` and `animate-float`.
+- `components/ui/skeleton.tsx` — `rounded-md`, `rounded-lg`, `border-border/60`.
+
+- Violates: `DESIGN.md` §2 (hard borders, zero blur), §5 (no raw palette colour), §13.
+- Fix: restyle the fallback and skeleton on `.card-brutal`; delete the decorative
+  circles.
+
+#### [P1-013] Home page background contradicts the "zero blur" direction
+
+`components/hero-animation.tsx` renders three 28rem `blur-3xl` accent blobs beneath the
+hero. `DESIGN.md` §2 states the identity as "hard 2px borders, offset shadows with zero
+blur".
+
+It does gate the cursor parallax on `prefers-reduced-motion` (correctly, per §10's
+vestibular list), so this is a direction question rather than a bug.
+
+- Fix: either document it in `DESIGN.md` as a deliberate mood layer exempt from the
+  zero-blur rule, or replace it with the dot-grid texture it already layers on top.
+
+#### [P1-014] Four ad-hoc type tiers below the `micro` floor
+
+`DESIGN.md` §6 defines `micro` (0.6875rem / 11px) as the smallest tier, and §11 warns it
+is already the most fragile type in dark mode. These bypass the scale:
+
+| Size | Where |
+|---|---|
+| `text-[0.6rem]` (9.6px) | `components/main-nav.tsx:39`, `components/ui/badge.tsx:27` |
+| `text-[0.65rem]` (10.4px) | `components/sections/skills-and-tools.tsx:69`, `components/mobile-nav.tsx:64` |
+| `text-[10px]` | `components/site-header.tsx:63` |
+| `text-[11px]` | `components/command-palette.tsx:426` (same size as `micro`, just off-token) |
+
+- Fix: use `text-micro` everywhere; if a smaller tier is genuinely needed, add it to
+  `tailwind.config.ts` and document it in §6.
+
+#### [P1-015] `themeColor` is pure white and pure black
+
+`app/layout.tsx:51-53` sets `white` and `black`. The real page grounds are `45 25% 97%`
+(warm paper) and `240 12% 7%` (near-black blue).
+
+- Violates: `DESIGN.md` §11, whose stated strategy is "never use pure black or pure
+  white". Browser chrome visibly mismatches the page on mobile.
+- Fix: use the resolved hex of `--background` for each mode.
+
+#### [P1-016] Role and employer strings hardcoded instead of read from `siteConfig`
+
+`CLAUDE.md` names `config/site.ts` the single source of truth for profile data.
+
+- `components/main-nav.tsx:40` — "Associate Technical Architect"
+- `components/sections/hero-bento-grid.tsx:49` — "File 01 · Associate Technical
+  Architect · Experion" (the only component naming an employer inline)
+- `app/contact/page.tsx:8` — the same title in the metadata description
+
+`siteConfig.position` is `"Associate Technical Architect at Experion Technologies"`,
+too long for the nav, so a short `siteConfig.shortPosition` is probably needed.
+
+- Fix: add the field and read from it in all three places.
+
+#### [P1-017] Dead click zone inside a link
+
+`components/sections/featured-posts.tsx:82` puts `onClick={(e) => e.preventDefault()}` on
+a plain `<span>` inside the post `<Link>`. The span is not focusable, has no role, and
+the handler only cancels the parent link — so the tag chip is a hole in the row's click
+target with no behaviour of its own.
+
+- Fix: remove the handler, or make the chip a real `<Link>` to the tag page.
+
+### P2 — hygiene and documentation
+
+#### [P2-018] Eleven unreferenced files, ten of them undocumented
+
+`DESIGN.md` §14 lists only `components/loading-states.tsx` as dead. Also unreachable from
+any route:
+
+`components/projects-page.tsx`, `components/terminal-animation.tsx`,
+`components/sections/profile-section.tsx`, `components/sections/social-links.tsx`,
+`components/ui/avatar.tsx`, `components/ui/breadcrumb.tsx`,
+`components/ui/dropdown-menu.tsx`, `components/ui/input.tsx`,
+`components/ui/separator.tsx`, and transitively `components/ui/badge.tsx` and
+`components/ui/card.tsx`.
+
+Most carry the pre-brutalist language (`rounded-full`, `bg-blue-500`, `green-100` and
+`purple-100`, hardcoded `#0a66c2`, `#02b875`), so they are a standing re-drift risk — the
+same argument §4 used to justify deleting `lib/design-system/`.
+
+- Fix: delete, or move under a clearly marked `legacy/` path and note it in §14.
+
+#### [P2-019] Stock shadcn primitives bypass the token system
+
+`components/ui/badge.tsx`, `ui/dialog.tsx`, `ui/input.tsx`, and `ui/dropdown-menu.tsx`
+still carry generated shadcn defaults: `border-zinc-200`, `bg-white`, `dark:bg-zinc-950`,
+`rounded-full`, and `blue-500` / `green-100` / `purple-100` variants.
+
+`ui/dialog.tsx` is live (imported by `command-palette.tsx`, though the palette bypasses
+`DialogContent` and portals `DialogPrimitive.Content` itself). The rest are dead, see
+P2-018.
+
+- Violates: `DESIGN.md` §13 ("No hardcoded hex or raw Tailwind palette colour; semantic
+  tokens only").
+- Fix: retoken `ui/dialog.tsx`; delete the rest.
+
+#### [P2-020] `shadow-glow` references a token that does not exist
+
+`tailwind.config.ts:85` — `'glow': '0 0 15px 2px rgba(var(--primary-rgb)/0.15)'`.
+`--primary-rgb` is defined nowhere in the repo, so the shadow resolves to nothing. It is
+also a blurred shadow in a system whose §8 shadows are all zero-blur.
+
+- Fix: delete the entry.
+
+#### [P2-021] `DESIGN.md` contrast table is incomplete and one token value is wrong
+
+Recomputed from the live token values in `app/globals.css`. Pairs §5 does not list:
+
+| Pair | Measured | Verdict |
+|---|---|---|
+| `--warning` on background (light) | **2.02** | Fails everything. Background-only token, same category as lime, but undocumented. |
+| `--info` on background (light) | **4.07** | Fails AA for normal text. |
+| `--accent-pink` on background (light) | **3.66** | Fails AA for normal text. §5 calls it "reserved, currently unused". |
+| `--destructive-foreground` on `--destructive` (dark) | **3.39** | Fails AA. Latent: `variant="destructive"` on `components/ui/button.tsx:29` is never used. |
+
+Also: §5's token table gives dark `--paper` as `240 12% 7%`; the real value at
+`app/globals.css:90` is `240 12% 8%` (`--background` is the 7%).
+
+- Fix: extend the §5 table and correct the `--paper` row.
+
+#### [P2-022] `DESIGN.md` §6 justifies the `h1` measure exemption with a rule that does not exist
+
+§6 says `h1` and `h2` are excluded from the 68ch cap because "their bottom rule reads as
+a section divider". Only `.markdown h2` has a `border-b` (`app/globals.css:381`);
+`.markdown h1` (`:377`) has none, so it runs to the full ~105ch container with no stated
+reason.
+
+- Fix: either add the cap to `h1` or correct the rationale in §6.
+
+#### [P2-023] The `zinc` exception in blog prose is undocumented
+
+`.markdown pre` uses `bg-zinc-900`, `.markdown pre code.hljs` uses `text-zinc-100`, and
+`.dark .markdown :not(pre) > code` uses `bg-zinc-800/60` (`app/globals.css:410-430`).
+These are correct — they pair with the highlight.js github-dark theme, which §12 explains
+owns fenced-block colour — but §13 states flatly "no raw Tailwind palette colour", with
+no exception carved out.
+
+- Fix: document the exception in §12 alongside the specificity note.
+
+#### [P2-024] Skip link can overflow at 390px
+
+`components/skip-nav.tsx:26` positions the second link at `left-52` (208px). At 11px mono
+uppercase with `tracking-widest`, "Skip to navigation" plus `px-4` and borders runs to
+roughly 390-400px total.
+
+Only one link is visible at a time (`sr-only focus:not-sr-only`), so they never overlap,
+but the focused second link can push past the 390px viewport.
+
+- Fix: stack the links vertically below 640px, or narrow the offset.
+
+---
+
+## Resolved
+
+| ID | Date | Issue | Fixed in |
+|---|---|---|---|
+| — | 2026-09-15 | `--accent-hot` 3.53:1 AA failure across 108 usages. Now 4.63:1. | `5389854` |
+| — | 2026-09-15 | `--success` 2.62:1 and `--destructive` 3.96:1 AA failures. Now 4.57 and 4.59. | `5389854` |
+| — | 2026-09-15 | Prose measure ~105ch. Now capped at 68ch, figures and code break out. | `5389854` |
+| — | 2026-09-15 | Marquees had no pause control (WCAG 2.2.2, Level A). Now use `<Marquee>`. | `5389854` |
+| — | 2026-09-15 | `lib/design-system/` dead and contradictory. Deleted. | `5389854` |
+| — | 2026-09-15 | Duplicate `og:image` across 5 posts. Metadata override removed. | `5389854` |
+| — | 2026-09-15 | Light/dark inconsistencies in code blocks and SVG charts. | `f694a80` |
+| — | 2026-09-14 | Footer inverted with the theme. | `c6d084d` |
+| P0-005 | 2026-09-15 | MDX dropped the YouTube embed's `style`, so the 16:9 wrapper collapsed. Replaced with an `.embed-16x9` class. | pending |
+| P0-004 | 2026-09-15 | Blog tables had no scroll container and could widen the page body at 390px. Added a `table` override in `mdxComponents` plus `min-width: 100%`. | pending |
+| P0-002 | 2026-09-15 | Command palette active row measured 2.98:1 in dark mode. Now solid `accent-lime` with its own foreground, 13.90 light / 15.22 dark. | pending |
+| P0-001 | 2026-09-15 | Framer Motion ignored `prefers-reduced-motion` across 33 files. Added `MotionProvider` (`MotionConfig reducedMotion="user"`) in the root layout. | pending |
+| P0-003 | 2026-09-15 | Four `aria-labelledby` references pointed at no element. `SectionHeading` now takes an `id`. | pending |
+
+Entries predating this file have no ID; they are carried over from `DESIGN.md` §14.
+
+## Known non-issues
+
+Documented so they are not "discovered" again.
+
+- **`--accent-lime` measures 1.27:1 as a text colour on paper.** Correct. It is a
+  background-only token, always paired with ink via `--accent-lime-foreground`
+  (13.90:1). Verified: no `text-accent-lime` usage exists anywhere in the repo.
+- **`--warning` measures 2.02:1 on paper.** Same category as lime — background-only,
+  paired with `--warning-foreground` at 8.78:1. Tracked in P2-021 only because §5 does
+  not say so.
+- **Decorative dividers at `foreground/10` to `/20` measure 1.2-1.8:1.** WCAG 1.4.11
+  exempts purely decorative boundaries. These separate rows inside an already-bordered
+  region, so the Common Region grouping (§2) is carried by the 2px outer border.
+- **Charts are fixed dark cards in both themes.** Deliberate, see `DESIGN.md` §12.
+  Verified contrast on their own ground: 17.08 / 14.42 / 7.03, all AAA.
+- **`components/loading-states.tsx` is unreferenced.** True but harmless; folded into
+  P2-018 along with the other ten dead files.

@@ -445,7 +445,19 @@ Before shipping any visual change:
 
 ## 14. Open items
 
-None outstanding.
+**Open issues now live in [`ISSUES.md`](./ISSUES.md), which is authoritative.** A
+full-app audit against this document on 2026-09-15 found 24 open items, including six
+that breach the §9 accessibility floor. Five were fixed the same day (P0-001 to P0-005);
+**19 remain open**, and `ISSUES.md` carries a recommended priority order. Do not treat
+the list below as current — it is the historical record of what was closed on the day
+this document was written.
+
+Known contradictions between *this document* and the code are logged as P2-021 through
+P2-023: the §5 contrast table is incomplete and its dark `--paper` value is wrong, §6's
+justification for exempting `h1` from the measure cites a rule that does not exist, §8
+mismeasures `.sticker` as 22px when it computes to 24px, and §13's "no raw palette
+colour" rule does not acknowledge the deliberate `zinc` pairing in blog prose. Fix the
+document alongside the code.
 
 **Resolved**
 

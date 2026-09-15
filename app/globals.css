@@ -459,8 +459,18 @@
   @apply mb-0;
 }
 
+/* The margin lives on the scroll wrapper, not the table, so it sits outside the
+   scrolling box. See the `table` override in blog-post-content.tsx. */
+.markdown .markdown-table-scroll {
+  @apply my-8;
+}
+
 .markdown table {
-  @apply my-8 w-full text-sm border-2 border-foreground;
+  @apply text-sm border-2 border-foreground;
+  /* `min-width: 100%` rather than `w-full`: a table that can wrap still fills the
+     column, but one with unbreakable content (a long URL, a wide code cell) grows
+     past it and scrolls inside the wrapper instead of widening the page body. */
+  min-width: 100%;
 }
 
 .markdown th {
@@ -482,6 +492,19 @@
 .markdown figure > svg,
 .markdown figure > img {
   @apply my-0 block w-full border-0 shadow-none;
+}
+
+/* Responsive 16:9 embed (YouTube and friends).
+   MDX silently drops `style` props and `<style>` children (DESIGN.md §12), so the
+   aspect ratio MUST come from a class. An inline style here renders a zero-height
+   box with an absolutely positioned iframe, i.e. an invisible video. */
+.markdown .embed-16x9 {
+  @apply relative w-full;
+  aspect-ratio: 16 / 9;
+}
+
+.markdown .embed-16x9 > iframe {
+  @apply absolute inset-0 h-full w-full border-0;
 }
 
 .markdown figcaption {

@@ -102,6 +102,7 @@ export function GithubProjects({ repos }: ProjectsListProps) {
       className="py-16 md:py-24"
     >
       <SectionHeading
+        id="github-projects-heading"
         numeral="05"
         eyebrow="From the workshop"
         title="Open source"
