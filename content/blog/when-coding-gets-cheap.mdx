@@ -26,37 +26,32 @@ The strongest public measurement of this comes from METR, which tracks how long 
 In [March 2025](https://metr.org/blog/2025-03-19-measuring-ai-ability-to-complete-long-tasks/) they reported that horizon doubling roughly every seven months across six years of models. Their [January 2026 update](https://metr.org/blog/2026-1-29-time-horizon-1-1/) expanded the suite from 170 to 228 tasks and put the overall doubling time at 196.5 days, with a notably shorter 88.6 days when measured only from 2024 onward. Claude Opus 4.5 landed at a 320-minute horizon, GPT-5 at 214 minutes.
 
 <figure>
-<svg role="img" aria-labelledby="chart-horizon-title chart-horizon-desc" viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" style={{ maxWidth: '100%', height: 'auto', background: '#0f172a' }}>
+<svg role="img" aria-labelledby="chart-horizon-title chart-horizon-desc" viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg">
   <title id="chart-horizon-title">AI task-horizon doubling time by measurement period</title>
   <desc id="chart-horizon-desc">Lollipop chart. Doubling time is 196.5 days measured across all periods, 130.8 days measured since 2023, and 88.6 days measured since 2024. Shorter bars mean faster capability growth.</desc>
-  <style>{`
-    .hl{font:13px system-ui,-apple-system,sans-serif;fill:#e5e7eb}
-    .hv{font:600 13px system-ui,-apple-system,sans-serif;fill:#f9fafb}
-    .hc{font:11px system-ui,-apple-system,sans-serif;fill:#9ca3af}
-    .ht{font:600 15px system-ui,-apple-system,sans-serif;fill:#f9fafb}
-  `}</style>
-  <text x="20" y="28" className="ht">Capability doubling time is shortening</text>
-  <text x="20" y="48" className="hc">Days to double the 50% task-completion horizon. Source: METR Time Horizon 1.1, Jan 2026.</text>
+  <rect x="0" y="0" width="640" height="300" fill="#0f172a" />
+  <text x="20" y="28" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="15" fontWeight="600">Capability doubling time is shortening</text>
+  <text x="20" y="48" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="11">Days to double the 50% task-completion horizon. Source: METR Time Horizon 1.1, Jan 2026.</text>
 
   <line x1="200" y1="90" x2="593" y2="90" stroke="#334155" strokeWidth="3" />
   <circle cx="593" cy="90" r="8" fill="#ef4444" />
-  <text x="20" y="95" className="hl">All periods</text>
-  <text x="575" y="72" className="hv" textAnchor="end">196.5</text>
+  <text x="20" y="95" fill="#e5e7eb" fontFamily="system-ui, sans-serif" fontSize="13">All periods</text>
+  <text x="575" y="72" textAnchor="end" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="13" fontWeight="600">196.5</text>
 
   <line x1="200" y1="150" x2="462" y2="150" stroke="#334155" strokeWidth="3" />
   <circle cx="462" cy="150" r="8" fill="#f59e0b" />
-  <text x="20" y="155" className="hl">Since 2023</text>
-  <text x="444" y="132" className="hv" textAnchor="end">130.8</text>
+  <text x="20" y="155" fill="#e5e7eb" fontFamily="system-ui, sans-serif" fontSize="13">Since 2023</text>
+  <text x="444" y="132" textAnchor="end" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="13" fontWeight="600">130.8</text>
 
   <line x1="200" y1="210" x2="377" y2="210" stroke="#334155" strokeWidth="3" />
   <circle cx="377" cy="210" r="8" fill="#22c55e" />
-  <text x="20" y="215" className="hl">Since 2024</text>
-  <text x="359" y="192" className="hv" textAnchor="end">88.6</text>
+  <text x="20" y="215" fill="#e5e7eb" fontFamily="system-ui, sans-serif" fontSize="13">Since 2024</text>
+  <text x="359" y="192" textAnchor="end" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="13" fontWeight="600">88.6</text>
 
   <line x1="200" y1="245" x2="600" y2="245" stroke="#374151" strokeWidth="1" />
-  <text x="200" y="265" className="hc">0</text>
-  <text x="600" y="265" className="hc" textAnchor="end">200 days</text>
-  <text x="20" y="290" className="hc">Wide confidence intervals. METR cautions the expanded suite may shift task difficulty.</text>
+  <text x="200" y="265" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="11">0</text>
+  <text x="600" y="265" textAnchor="end" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="11">200 days</text>
+  <text x="20" y="290" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="11">Wide confidence intervals. METR cautions the expanded suite may shift task difficulty.</text>
 </svg>
 <figcaption>Doubling time for AI task-completion horizon, by measurement window. Data: METR, January 2026.</figcaption>
 </figure>
@@ -76,34 +71,29 @@ Throughput and stability moving in opposite directions is what you would expect 
 [Stack Overflow's 2025 survey](https://survey.stackoverflow.co/2025/ai) of 48,945 developers points at the same seam from the practitioner's side. The top frustration, cited by 66%, was output that is "almost right, but not quite." Another 45.2% said debugging AI-generated code takes them *more* time, not less.
 
 <figure>
-<svg role="img" aria-labelledby="chart-trust-title chart-trust-desc" viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" style={{ maxWidth: '100%', height: 'auto', background: '#0f172a' }}>
+<svg role="img" aria-labelledby="chart-trust-title chart-trust-desc" viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg">
   <title id="chart-trust-title">Developer AI adoption versus trust in AI output</title>
   <desc id="chart-trust-desc">Horizontal bar chart. 84 percent of developers use or plan to use AI tools, 32.7 percent trust the output, and 45.7 percent distrust it. Distrust exceeds trust.</desc>
-  <style>{`
-    .tl{font:13px system-ui,-apple-system,sans-serif;fill:#e5e7eb}
-    .tv{font:600 14px system-ui,-apple-system,sans-serif;fill:#f9fafb}
-    .tc{font:11px system-ui,-apple-system,sans-serif;fill:#9ca3af}
-    .tt{font:600 15px system-ui,-apple-system,sans-serif;fill:#f9fafb}
-  `}</style>
-  <text x="20" y="28" className="tt">Adoption has outrun trust</text>
-  <text x="20" y="48" className="tc">Stack Overflow Developer Survey 2025, n = 48,945.</text>
+  <rect x="0" y="0" width="640" height="300" fill="#0f172a" />
+  <text x="20" y="28" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="15" fontWeight="600">Adoption has outrun trust</text>
+  <text x="20" y="48" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="11">Stack Overflow Developer Survey 2025, n = 48,945.</text>
 
-  <text x="20" y="98" className="tl">Use or plan to use</text>
+  <text x="20" y="98" fill="#e5e7eb" fontFamily="system-ui, sans-serif" fontSize="13">Use or plan to use</text>
   <rect x="210" y="80" width="336" height="26" fill="#3b82f6" rx="2" />
-  <text x="554" y="98" className="tv">84%</text>
+  <text x="554" y="98" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="14" fontWeight="600">84%</text>
 
-  <text x="20" y="158" className="tl">Trust the output</text>
+  <text x="20" y="158" fill="#e5e7eb" fontFamily="system-ui, sans-serif" fontSize="13">Trust the output</text>
   <rect x="210" y="140" width="131" height="26" fill="#22c55e" rx="2" />
-  <text x="349" y="158" className="tv">32.7%</text>
+  <text x="349" y="158" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="14" fontWeight="600">32.7%</text>
 
-  <text x="20" y="218" className="tl">Distrust the output</text>
+  <text x="20" y="218" fill="#e5e7eb" fontFamily="system-ui, sans-serif" fontSize="13">Distrust the output</text>
   <rect x="210" y="200" width="183" height="26" fill="#ef4444" rx="2" />
-  <text x="401" y="218" className="tv">45.7%</text>
+  <text x="401" y="218" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="14" fontWeight="600">45.7%</text>
 
   <line x1="210" y1="245" x2="610" y2="245" stroke="#374151" strokeWidth="1" />
-  <text x="210" y="265" className="tc">0%</text>
-  <text x="610" y="265" className="tc" textAnchor="end">100%</text>
-  <text x="20" y="290" className="tc">Only 3.1% report high trust. Among experienced developers, about 2.5%.</text>
+  <text x="210" y="265" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="11">0%</text>
+  <text x="610" y="265" textAnchor="end" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="11">100%</text>
+  <text x="20" y="290" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="11">Only 3.1% report high trust. Among experienced developers, about 2.5%.</text>
 </svg>
 <figcaption>Developer adoption of AI tools versus stated trust in their output. Data: Stack Overflow, 2025.</figcaption>
 </figure>

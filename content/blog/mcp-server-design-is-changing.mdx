@@ -196,31 +196,26 @@ As the number of tools increases, so does the amount of information the model ha
 This is what's often described as **context bloat**, and Anthropic's own engineering team has now quantified it. In their November 2025 post on code execution with MCP, they walked through a common cross-server workflow: pull a meeting transcript from Google Drive, then add it as a note in Salesforce. The naive pattern (load every tool definition into context, then shuttle intermediate results back through the model) consumed roughly **150,000 tokens**. Presenting the same MCP servers as code APIs in a sandboxed runtime, so the model could inspect only what it needed and pass data directly, cut that to about **2,000 tokens**, a ~98.7% reduction ([Anthropic Engineering, "Code execution with MCP", November 2025](https://www.anthropic.com/engineering/code-execution-with-mcp)).
 
 <figure>
-<svg role="img" aria-labelledby="chart1-title chart1-desc" viewBox="0 0 640 320" xmlns="http://www.w3.org/2000/svg" style={{ maxWidth: '100%', height: 'auto', background: '#0f172a' }}>
+<svg role="img" aria-labelledby="chart1-title chart1-desc" viewBox="0 0 640 320" xmlns="http://www.w3.org/2000/svg">
   <title id="chart1-title">Token cost of a Drive-to-Salesforce workflow, naive tool loading vs. code execution</title>
   <desc id="chart1-desc">Horizontal bar chart. Naive tool loading uses about 150,000 tokens. Code execution pattern uses about 2,000 tokens.</desc>
-  <style>{`
-    .lbl{font:14px system-ui,-apple-system,sans-serif;fill:#e5e7eb}
-    .val{font:600 14px system-ui,-apple-system,sans-serif;fill:#f9fafb}
-    .cap{font:12px system-ui,-apple-system,sans-serif;fill:#9ca3af}
-    .axis{font:11px system-ui,-apple-system,sans-serif;fill:#9ca3af}
-  `}</style>
-  <text x="20" y="30" className="lbl" style={{ fontSize: '16px', fontWeight: 600 }}>Tokens consumed per workflow</text>
-  <text x="20" y="50" className="cap">Google Drive → Salesforce example, Anthropic Engineering (Nov 2025)</text>
+  <rect x="0" y="0" width="640" height="320" fill="#0f172a" />
+  <text x="20" y="30" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="16" fontWeight="600">Tokens consumed per workflow</text>
+  <text x="20" y="50" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="12">Google Drive to Salesforce example, Anthropic Engineering (Nov 2025)</text>
 
-  <text x="20" y="100" className="lbl">Naive tool loading</text>
+  <text x="20" y="100" fill="#e5e7eb" fontFamily="system-ui, sans-serif" fontSize="14">Naive tool loading</text>
   <rect x="180" y="82" width="420" height="26" fill="#ef4444" rx="3" />
-  <text x="608" y="100" className="val" textAnchor="end">~150,000</text>
+  <text x="608" y="100" textAnchor="end" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="14" fontWeight="600">~150,000</text>
 
-  <text x="20" y="160" className="lbl">Code execution</text>
+  <text x="20" y="160" fill="#e5e7eb" fontFamily="system-ui, sans-serif" fontSize="14">Code execution</text>
   <rect x="180" y="142" width="6" height="26" fill="#22c55e" rx="3" />
-  <text x="196" y="160" className="val">~2,000</text>
+  <text x="196" y="160" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="14" fontWeight="600">~2,000</text>
 
-  <text x="180" y="210" className="axis">0</text>
-  <text x="600" y="210" className="axis" textAnchor="end">160,000 tokens</text>
+  <text x="180" y="210" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="11">0</text>
+  <text x="600" y="210" textAnchor="end" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="11">160,000 tokens</text>
   <line x1="180" y1="200" x2="600" y2="200" stroke="#374151" strokeWidth="1" />
 
-  <text x="20" y="270" className="cap">~98.7% reduction. Source: anthropic.com/engineering/code-execution-with-mcp</text>
+  <text x="20" y="270" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="12">~98.7% reduction. Source: anthropic.com/engineering/code-execution-with-mcp</text>
 </svg>
 <figcaption>Token cost of a cross-server MCP workflow, naive vs. code-execution pattern. Data: Anthropic Engineering, Nov 2025.</figcaption>
 </figure>
@@ -472,16 +467,12 @@ A useful mental model is to design an MCP server with two layers.
 ```
 
 <figure>
-<svg role="img" aria-labelledby="chart2-title chart2-desc" viewBox="0 0 640 320" xmlns="http://www.w3.org/2000/svg" style={{ maxWidth: '100%', height: 'auto', background: '#0f172a' }}>
+<svg role="img" aria-labelledby="chart2-title chart2-desc" viewBox="0 0 640 320" xmlns="http://www.w3.org/2000/svg">
   <title id="chart2-title">MCP adoption timeline, Nov 2024 to Nov 2025</title>
   <desc id="chart2-desc">Line chart showing MCP adoption milestones from Anthropic's launch in November 2024 through Anthropic's code-execution guidance in November 2025.</desc>
-  <style>{`
-    .lbl{font:12px system-ui,-apple-system,sans-serif;fill:#e5e7eb}
-    .cap{font:11px system-ui,-apple-system,sans-serif;fill:#9ca3af}
-    .title{font:600 15px system-ui,-apple-system,sans-serif;fill:#f9fafb}
-  `}</style>
-  <text x="20" y="26" className="title">MCP adoption milestones</text>
-  <text x="20" y="44" className="cap">Nov 2024 – Nov 2025. Sources: vendor blogs (see article).</text>
+  <rect x="0" y="0" width="640" height="320" fill="#0f172a" />
+  <text x="20" y="26" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="15" fontWeight="600">MCP adoption milestones</text>
+  <text x="20" y="44" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="11">Nov 2024 to Nov 2025. Sources: vendor blogs (see article).</text>
 
   <line x1="40" y1="200" x2="600" y2="200" stroke="#374151" strokeWidth="2" />
   <polyline points="40,180 160,150 280,120 420,90 540,60" fill="none" stroke="#3b82f6" strokeWidth="3" />
@@ -492,23 +483,23 @@ A useful mental model is to design an MCP server with two layers.
   <circle cx="420" cy="90" r="6" fill="#3b82f6" />
   <circle cx="540" cy="60" r="6" fill="#3b82f6" />
 
-  <text x="40" y="230" className="lbl" textAnchor="middle">Nov '24</text>
-  <text x="160" y="230" className="lbl" textAnchor="middle">Mar '25</text>
-  <text x="280" y="230" className="lbl" textAnchor="middle">Apr '25</text>
-  <text x="420" y="230" className="lbl" textAnchor="middle">May '25</text>
-  <text x="540" y="230" className="lbl" textAnchor="middle">Nov '25</text>
+  <text x="40" y="230" textAnchor="middle" fill="#e5e7eb" fontFamily="system-ui, sans-serif" fontSize="12">Nov '24</text>
+  <text x="160" y="230" textAnchor="middle" fill="#e5e7eb" fontFamily="system-ui, sans-serif" fontSize="12">Mar '25</text>
+  <text x="280" y="230" textAnchor="middle" fill="#e5e7eb" fontFamily="system-ui, sans-serif" fontSize="12">Apr '25</text>
+  <text x="420" y="230" textAnchor="middle" fill="#e5e7eb" fontFamily="system-ui, sans-serif" fontSize="12">May '25</text>
+  <text x="540" y="230" textAnchor="middle" fill="#e5e7eb" fontFamily="system-ui, sans-serif" fontSize="12">Nov '25</text>
 
-  <text x="40" y="255" className="cap" textAnchor="middle">Anthropic launches MCP</text>
-  <text x="160" y="255" className="cap" textAnchor="middle">OpenAI adopts</text>
-  <text x="280" y="255" className="cap" textAnchor="middle">Google DeepMind</text>
-  <text x="420" y="255" className="cap" textAnchor="middle">Microsoft GA</text>
-  <text x="540" y="255" className="cap" textAnchor="middle">Code-execution</text>
-  <text x="540" y="270" className="cap" textAnchor="middle">guidance</text>
+  <text x="40" y="255" textAnchor="middle" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="11">Anthropic launches MCP</text>
+  <text x="160" y="255" textAnchor="middle" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="11">OpenAI adopts</text>
+  <text x="280" y="255" textAnchor="middle" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="11">Google DeepMind</text>
+  <text x="420" y="255" textAnchor="middle" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="11">Microsoft GA</text>
+  <text x="540" y="255" textAnchor="middle" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="11">Code-execution</text>
+  <text x="540" y="270" textAnchor="middle" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="11">guidance</text>
 
-  <text x="40" y="295" className="cap" textAnchor="middle">initial partners</text>
-  <text x="160" y="295" className="cap" textAnchor="middle">Agents SDK</text>
-  <text x="280" y="295" className="cap" textAnchor="middle">Gemini SDK</text>
-  <text x="420" y="295" className="cap" textAnchor="middle">Copilot Studio</text>
+  <text x="40" y="295" textAnchor="middle" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="11">initial partners</text>
+  <text x="160" y="295" textAnchor="middle" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="11">Agents SDK</text>
+  <text x="280" y="295" textAnchor="middle" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="11">Gemini SDK</text>
+  <text x="420" y="295" textAnchor="middle" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="11">Copilot Studio</text>
 </svg>
 <figcaption>MCP moved from single-vendor release to cross-vendor standard in under a year.</figcaption>
 </figure>

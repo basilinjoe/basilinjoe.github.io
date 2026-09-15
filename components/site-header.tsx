@@ -11,9 +11,9 @@ import { siteConfig } from "@/config/site"
 import { cn } from "@/lib/utils"
 
 const tickerLines = [
-  "TECHNOLOGY LEAD",
+  "ASSOCIATE TECHNICAL ARCHITECT",
   siteConfig.location.toUpperCase(),
-  "AZURE / .NET / KUBERNETES",
+  "AZURE / AI / .NET / KUBERNETES",
   "AVAILABLE FOR CONVERSATION",
   "SHIPPING SINCE 2015",
 ]

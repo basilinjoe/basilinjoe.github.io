@@ -367,15 +367,24 @@
 }
 
 .markdown pre {
-  @apply my-6 rounded-none border-2 border-foreground bg-zinc-950 p-4 overflow-x-auto shadow-brutal-sm;
+  @apply my-6 rounded-none border-2 border-foreground bg-zinc-900 p-4 overflow-x-auto shadow-brutal-sm;
 }
 
-.markdown code {
+/* Inline code only. Scoped with :not(pre) so the accent colour never reaches
+   fenced blocks, whose colours come from the highlight.js theme. */
+.markdown :not(pre) > code {
   @apply rounded-sm bg-muted px-1.5 py-[0.1em] font-mono text-[0.88em] text-accent-hot;
 }
 
+/* Deliberately sets no colour: highlight.js (github-dark) owns token colours
+   inside fenced blocks. Setting one here would out-specify .hljs and render
+   unhighlighted text in the page foreground, which is invisible in light mode. */
 .markdown pre code {
-  @apply bg-transparent p-0 text-sm leading-7 text-inherit;
+  @apply bg-transparent p-0 text-sm leading-7;
+}
+
+.markdown pre code.hljs {
+  @apply text-zinc-100;
 }
 
 .markdown a {
@@ -443,10 +452,8 @@
   @apply my-12 h-[2px] border-0 bg-foreground;
 }
 
-.dark .markdown pre {
-  @apply bg-zinc-900;
-}
-
-.dark .markdown code {
-  @apply bg-zinc-900 text-accent-hot;
+/* Inline code sits on a slightly lifted surface in dark mode. Scoped with
+   :not(pre) for the same reason as the light-mode rule above. */
+.dark .markdown :not(pre) > code {
+  @apply bg-zinc-800/60;
 }
