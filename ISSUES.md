@@ -132,13 +132,13 @@ vestibular list), so this is a direction question rather than a bug.
 | P2-023 | 2026-09-15 | The deliberate `zinc` pairing in blog code blocks is now documented in §12 as the one sanctioned exception to §13. | `bf54a63` |
 | P1-012 | 2026-09-15 | Pre-brutalist surfaces on `/blog`. Suspense fallback and skeletons rebuilt on the brutalist system; four decorative blur/outline elements removed. | `bf54a63` |
 | P1-016 | 2026-09-15 | Profile strings hardcoded in seven places across four files. Added `siteConfig.role` and `siteConfig.employer`; all now read from config. | `bf54a63` |
-| P2-018 | 2026-09-15 | Dead code. Deleted 13 files, not the 11 logged: `interactive-hero.tsx` and `sections/social-links.tsx` fell out once their only importers went. | pending |
-| P2-019 | 2026-09-15 | Stock shadcn palette. Scope was wider than logged — `ui/sheet.tsx` and `ui/sonner.tsx` had it too. `components/ui/` is now free of raw palette colour. | pending |
-| P2-020 | 2026-09-15 | `shadow-glow` referenced the undefined `--primary-rgb`. Removed from `tailwind.config.ts`. | pending |
-| P1-014 | 2026-09-15 | Six off-scale type sizes moved onto `micro`; the palette description went to `text-xs` since `micro`'s tracking is for caps. Two more sites died with `ui/badge.tsx`. | pending |
-| P1-015 | 2026-09-15 | `themeColor` now uses the resolved `--background` hex, `#f9f8f5` / `#101014`. | pending |
-| P1-017 | 2026-09-15 | Dead click handler removed; the tag chip is a plain label, since a nested `<a>` inside the row link would be invalid HTML. | pending |
-| P2-024 | 2026-09-15 | Skip links now stack vertically below `sm` instead of running past a 390px viewport. | pending |
+| P2-018 | 2026-09-15 | Dead code. Deleted 13 files, not the 11 logged: `interactive-hero.tsx` and `sections/social-links.tsx` fell out once their only importers went. | `6a5d85f` |
+| P2-019 | 2026-09-15 | Stock shadcn palette. Scope was wider than logged — `ui/sheet.tsx` and `ui/sonner.tsx` had it too. `components/ui/` is now free of raw palette colour. | `6a5d85f` |
+| P2-020 | 2026-09-15 | `shadow-glow` referenced the undefined `--primary-rgb`. Removed from `tailwind.config.ts`. | `6a5d85f` |
+| P1-014 | 2026-09-15 | Six off-scale type sizes moved onto `micro`; the palette description went to `text-xs` since `micro`'s tracking is for caps. Two more sites died with `ui/badge.tsx`. | `6a5d85f` |
+| P1-015 | 2026-09-15 | `themeColor` now uses the resolved `--background` hex, `#f9f8f5` / `#101014`. | `6a5d85f` |
+| P1-017 | 2026-09-15 | Dead click handler removed; the tag chip is a plain label, since a nested `<a>` inside the row link would be invalid HTML. | `6a5d85f` |
+| P2-024 | 2026-09-15 | Skip links now stack vertically below `sm` instead of running past a 390px viewport. | `6a5d85f` |
 
 Entries predating this file have no ID; they are carried over from `DESIGN.md` §14.
 
