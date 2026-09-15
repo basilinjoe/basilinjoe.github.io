@@ -102,7 +102,8 @@ modifiers (`bg-accent-hot/40`).
 
 | Role | Light | Dark | Use |
 |---|---|---|---|
-| `--paper` / `--background` | `45 25% 97%` | `240 12% 7%` | Page ground |
+| `--background` | `45 25% 97%` | `240 12% 7%` | Page ground |
+| `--paper` | `45 25% 97%` | `240 12% 8%` | Alias. **Not identical to `--background` in dark**, 8% vs 7%. |
 | `--ink` / `--foreground` | `240 15% 8%` | `45 25% 97%` | Body text, borders |
 | `--primary` | `224 100% 52%` | `224 95% 62%` | Links, focus ring token |
 | `--accent-hot` | `18 92% 48%` | `18 100% 62%` | Eyebrows, numerals, focus ring, emphasis |
@@ -129,12 +130,29 @@ Computed from the actual token values (WCAG 2.x relative luminance), not estimat
 | destructive on background | 4.59 | AA | AAA |
 | success on background | 4.57 | AA | AAA |
 | lime as *text* on background | 1.27 | FAIL | FAIL |
+| `--info` on background | 4.07 | FAIL | AA |
+| `--accent-pink` on background | 3.66 | FAIL | AA |
+| `--warning` as *text* on background | 2.02 | FAIL | FAIL |
 
-The single remaining failure is lime used as a text colour, which is **expected and
-correct**: lime is a background-only token. See the rules below.
+**The three sub-4.5 values are all background-only tokens**, the same category as lime.
+Paired with their own foregrounds they are fine: ink on warning is 8.78, paper on info
+is 4.07 (AA at large sizes only). None is currently used as a text colour anywhere —
+verified by grep. **If you ever set `text-warning`, `text-info`, or `text-accent-pink`,
+you are introducing a contrast failure.** `--accent-pink` is reserved and unused.
 
-**Dark mode** — every pair lands AA or AAA. Body 17.87, muted 8.85, primary 4.58,
-accent-hot 7.19, lime 15.38, destructive 5.28, success 9.79. No action needed.
+**Dark mode** — one pair fails, the rest land AA or AAA. Body 17.96, muted 8.84,
+primary 4.60, accent-hot 7.22, lime 15.43, destructive 5.30, success 9.83, warning 9.57,
+info 5.56, accent-pink 6.58.
+
+| Pair | Ratio | Normal text | Large text |
+|---|---|---|---|
+| `--destructive-foreground` on `--destructive` | **3.39** | **FAIL** | AA |
+| `--primary` on `--card` | 4.33 | FAIL | AA |
+
+Both are latent rather than live. The first is the `destructive` button variant in
+`components/ui/button.tsx`, which nothing currently renders — **fix the token before
+using that variant**. The second only bites if a link at normal size sits directly on a
+`bg-card` surface in dark mode; `--primary` on `--background` is 4.60 and passes.
 
 ### How the light-mode accents were set (2026-09-15)
 
@@ -161,8 +179,13 @@ token values rather than trusting a comment. That is how these three were caught
 
 ### Rules
 
-- **Never use `--accent-lime` as a text colour.** 1.27:1 on paper. It is a background
-  only, always with `--accent-lime-foreground` (ink) on top.
+- **Four tokens are background-only. Never use them as a text colour**: `--accent-lime`
+  (1.27:1 on paper), `--warning` (2.02), `--accent-pink` (3.66), `--info` (4.07). Each
+  pairs with its own `-foreground` token. Lime in particular is effectively invisible
+  as text.
+- **Alpha modifiers on text need re-measuring.** `text-muted-foreground/60` measures
+  2.98:1 in light mode and `/70` measures 3.74 — both fail AA. `/80` (4.78) is the
+  lowest safe step. This has shipped twice.
 - Accent colour must carry meaning. Hot orange = "this is the entry point / the
   number / the emphasis." Lime = "this is available / positive / a CTA."
 - Do not introduce a new colour. Use the trio or a neutral.
@@ -217,9 +240,20 @@ Implementation lives in the `.markdown` block in `globals.css`. Two deliberate c
 
 - The cap is on the **child elements**, not the container, so figures and code keep the
   full width. Narrowing the container instead would squeeze the 640px-wide charts.
-- `h1` and `h2` are **excluded**. Their bottom rule reads as a section divider; stopping
-  it short of the column edge would look broken rather than intentional.
 - The unit is `ch` rather than a pixel width so the measure tracks the font.
+- `h1` and `h2` are **excluded**, for two different reasons:
+  - `h2` carries a `border-b` that reads as a section divider. Stopping that rule short
+    of the column edge would look broken rather than intentional. This is the real
+    constraint.
+  - `h1` has no rule. It is excluded because the cap would be **inert** anyway: `ch`
+    scales with the element's own font size, so 68ch at `text-5xl` is roughly 1600px,
+    far wider than the 896px container. Adding the rule would be dead CSS.
+
+**A consequence of the `ch` unit worth knowing:** the cap only actually binds on small
+type. At the 17px prose size, 68ch lands near 636px and does its job. At `h3` (20px) it
+is close to the container width and barely binds; above that it does nothing. That is
+the intended behaviour — running prose is what needs a measure — but do not assume the
+rule is constraining a heading just because the selector lists it.
 
 ### Line height
 
@@ -431,6 +465,22 @@ Both mistakes have shipped here before.
 Rule: style inline code with `.markdown :not(pre) > code`. Leave fenced-block colour
 to highlight.js, apart from the single base `.markdown pre code.hljs` colour.
 
+### Blog code blocks are the one sanctioned `zinc` exception
+
+§13 says "no hardcoded hex or raw Tailwind palette colour". Three rules in the
+`.markdown` block break that **deliberately**:
+
+| Rule | Value | Why |
+|---|---|---|
+| `.markdown pre` | `bg-zinc-900` | The ground the github-dark theme was designed against. |
+| `.markdown pre code.hljs` | `text-zinc-100` | Base token colour the theme expects. |
+| `.dark .markdown :not(pre) > code` | `bg-zinc-800/60` | Lifts inline code off the dark page ground. |
+
+These pair with an imported third-party stylesheet, so they cannot be expressed as
+semantic tokens without forking the theme. Like the charts (below), code blocks read as
+fixed dark cards in both themes. **This is the only place raw palette colour is allowed.
+Anywhere else, it is drift.**
+
 ### Static export
 
 `output: "export"`. No `next/image` optimization (`images.unoptimized: true`), no
@@ -462,10 +512,11 @@ Before shipping any visual change:
 
 **Open issues now live in [`ISSUES.md`](./ISSUES.md), which is authoritative.** A
 full-app audit against this document on 2026-09-15 found 24 open items, including six
-that breach the §9 accessibility floor. Ten were fixed the same day — **all six P0s are
-closed**, along with P1-007 to P1-009 and P1-011. **14 remain open**, and `ISSUES.md`
-carries a recommended priority order. Do not treat the list below as current — it is the
-historical record of what was closed on the day this document was written.
+that breach the §9 accessibility floor. Fifteen were fixed the same day — **all six P0s
+are closed**, along with the accuracy problems in this document itself. **9 remain
+open**, two of which are design decisions rather than defects. `ISSUES.md` carries the
+priority order. Do not treat the list below as current — it is the historical record of
+what was closed on the day this document was written.
 
 Known contradictions between *this document* and the code are logged as P2-021 through
 P2-023: the §5 contrast table is incomplete and its dark `--paper` value is wrong, §6's

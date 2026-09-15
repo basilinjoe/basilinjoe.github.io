@@ -21,8 +21,8 @@ export function PersonJsonLd() {
     ],
     worksFor: {
       "@type": "Organization",
-      name: "Experion Technologies",
-      url: "https://experionglobal.com/"
+      name: siteConfig.employer.name,
+      url: siteConfig.employer.url
     },
     description: siteConfig.aboutMe,
     knowsAbout: siteConfig.skills.map(s => s.name).join(", ")

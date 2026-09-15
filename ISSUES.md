@@ -39,17 +39,14 @@ trustworthy again, then visible drift, then hygiene.
 
 | # | ID | Why here |
 |---|---|---|
-| 1 | P2-021 | **Do first.** `DESIGN.md`'s contrast table is wrong, so every later review starts from bad data. |
-| 2 | P2-022, P2-023 | Same reason: the design doc cannot be the source of truth while it contradicts the code. |
-| 3 | P1-010 | **Needs a decision.** Clickable stickers scrape 24px exactly; either raise the padding or bless the case in §8. |
-| 4 | P1-012 | Most visible remaining drift. Real work, not a one-liner. |
-| 5 | P1-016 | Profile data duplicated outside `config/site.ts`; needs a new `shortPosition` field. |
-| 6 | P1-015, P1-017, P2-024 | Small correctness and polish fixes. |
-| 7 | P1-014 | Type-scale cleanup. Wide but mechanical. |
-| 8 | P2-018, P2-019, P2-020 | Dead code and dead tokens. Deletion, mostly. |
-| 9 | P1-013 | **Needs a decision.** The hero blur blobs are either a deliberate exception or they go. Not a defect either way. |
+| 1 | P1-010 | **Needs a decision.** Clickable stickers scrape 24px exactly; either raise the padding or bless the case in §8. |
+| 2 | P1-015, P1-017, P2-024 | Small correctness and polish fixes. |
+| 3 | P1-014 | Type-scale cleanup. Wide but mechanical. |
+| 4 | P2-018, P2-019, P2-020 | Dead code and dead tokens. Deletion, mostly. |
+| 5 | P1-013 | **Needs a decision.** The hero blur blobs are either a deliberate exception or they go. Not a defect either way. |
 
-Items 3 and 9 should not be "fixed" unilaterally — they are design calls, not bugs.
+Items 1 and 5 should not be "fixed" unilaterally — they are design calls, not bugs.
+Everything between them is mechanical.
 
 ---
 
@@ -76,21 +73,6 @@ line-height `1rem` (16px) + `py-0.5` (2px x2) + `border-2` (2px x2) — the box 
 
 - Fix: decide one way. Either bump to `py-1` (28px) and update §8, or correct §8's number
   and explicitly bless the clickable case.
-
-#### [P1-012] Pre-brutalist surfaces still render on `/blog`
-
-Never migrated to the editorial-tech system; still using the old soft language (blur
-orbs, large radii, raw palette):
-
-- `components/blog-list-wrapper.tsx` — the Suspense fallback. `blur-3xl` orbs,
-  `rounded-xl`, `rounded-full`, raw `bg-blue-500/5`, `border-border/60`.
-- `components/blog-list.tsx:148-149` — two floating blurred circles with
-  `animate-pulse-slow` and `animate-float`.
-- `components/ui/skeleton.tsx` — `rounded-md`, `rounded-lg`, `border-border/60`.
-
-- Violates: `DESIGN.md` §2 (hard borders, zero blur), §5 (no raw palette colour), §13.
-- Fix: restyle the fallback and skeleton on `.card-brutal`; delete the decorative
-  circles.
 
 #### [P1-013] Home page background contradicts the "zero blur" direction
 
@@ -127,20 +109,6 @@ is already the most fragile type in dark mode. These bypass the scale:
 - Violates: `DESIGN.md` §11, whose stated strategy is "never use pure black or pure
   white". Browser chrome visibly mismatches the page on mobile.
 - Fix: use the resolved hex of `--background` for each mode.
-
-#### [P1-016] Role and employer strings hardcoded instead of read from `siteConfig`
-
-`CLAUDE.md` names `config/site.ts` the single source of truth for profile data.
-
-- `components/main-nav.tsx:40` — "Associate Technical Architect"
-- `components/sections/hero-bento-grid.tsx:49` — "File 01 · Associate Technical
-  Architect · Experion" (the only component naming an employer inline)
-- `app/contact/page.tsx:8` — the same title in the metadata description
-
-`siteConfig.position` is `"Associate Technical Architect at Experion Technologies"`,
-too long for the nav, so a short `siteConfig.shortPosition` is probably needed.
-
-- Fix: add the field and read from it in all three places.
 
 #### [P1-017] Dead click zone inside a link
 
@@ -193,41 +161,6 @@ also a blurred shadow in a system whose §8 shadows are all zero-blur.
 
 - Fix: delete the entry.
 
-#### [P2-021] `DESIGN.md` contrast table is incomplete and one token value is wrong
-
-Recomputed from the live token values in `app/globals.css`. Pairs §5 does not list:
-
-| Pair | Measured | Verdict |
-|---|---|---|
-| `--warning` on background (light) | **2.02** | Fails everything. Background-only token, same category as lime, but undocumented. |
-| `--info` on background (light) | **4.07** | Fails AA for normal text. |
-| `--accent-pink` on background (light) | **3.66** | Fails AA for normal text. §5 calls it "reserved, currently unused". |
-| `--destructive-foreground` on `--destructive` (dark) | **3.39** | Fails AA. Latent: `variant="destructive"` on `components/ui/button.tsx:29` is never used. |
-
-Also: §5's token table gives dark `--paper` as `240 12% 7%`; the real value at
-`app/globals.css:90` is `240 12% 8%` (`--background` is the 7%).
-
-- Fix: extend the §5 table and correct the `--paper` row.
-
-#### [P2-022] `DESIGN.md` §6 justifies the `h1` measure exemption with a rule that does not exist
-
-§6 says `h1` and `h2` are excluded from the 68ch cap because "their bottom rule reads as
-a section divider". Only `.markdown h2` has a `border-b` (`app/globals.css:381`);
-`.markdown h1` (`:377`) has none, so it runs to the full ~105ch container with no stated
-reason.
-
-- Fix: either add the cap to `h1` or correct the rationale in §6.
-
-#### [P2-023] The `zinc` exception in blog prose is undocumented
-
-`.markdown pre` uses `bg-zinc-900`, `.markdown pre code.hljs` uses `text-zinc-100`, and
-`.dark .markdown :not(pre) > code` uses `bg-zinc-800/60` (`app/globals.css:410-430`).
-These are correct — they pair with the highlight.js github-dark theme, which §12 explains
-owns fenced-block colour — but §13 states flatly "no raw Tailwind palette colour", with
-no exception carved out.
-
-- Fix: document the exception in §12 alongside the specificity note.
-
 #### [P2-024] Skip link can overflow at 390px
 
 `components/skip-nav.tsx:26` positions the second link at `left-52` (208px). At 11px mono
@@ -263,6 +196,11 @@ but the focused second link can push past the 390px viewport.
 | P1-008 | 2026-09-15 | Contact character counter measured 3.74:1 light. Alpha dropped; now 8.09:1. | `bf49756` |
 | P1-009 | 2026-09-15 | Breadcrumb separator and palette external-link icon measured 2.98:1 light. Both raised to `/80`, 4.78:1. | `bf49756` |
 | P1-007 | 2026-09-15 | `animate-bounce` and `animate-ping` added to the reduced-motion block; `animate-pulse` kept deliberately and DESIGN.md §10 amended to say why. | `bf49756` |
+| P2-021 | 2026-09-15 | §5 contrast table corrected and extended: `--paper` dark value fixed, four missing pairs added, background-only tokens and the alpha-modifier trap written into the rules. | pending |
+| P2-022 | 2026-09-15 | §6's `h1` exemption cited a rule that does not exist. Rewritten with the real reason (a `ch` cap is inert at display sizes). | pending |
+| P2-023 | 2026-09-15 | The deliberate `zinc` pairing in blog code blocks is now documented in §12 as the one sanctioned exception to §13. | pending |
+| P1-012 | 2026-09-15 | Pre-brutalist surfaces on `/blog`. Suspense fallback and skeletons rebuilt on the brutalist system; four decorative blur/outline elements removed. | pending |
+| P1-016 | 2026-09-15 | Profile strings hardcoded in seven places across four files. Added `siteConfig.role` and `siteConfig.employer`; all now read from config. | pending |
 
 Entries predating this file have no ID; they are carried over from `DESIGN.md` §14.
 

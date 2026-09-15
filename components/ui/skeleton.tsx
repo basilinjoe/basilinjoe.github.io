@@ -2,30 +2,39 @@ import { cn } from "@/lib/utils"
 
 interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {}
 
+/**
+ * Loading placeholders in the editorial-tech system: sharp corners, flat muted
+ * fill, no gradients or large radii.
+ *
+ * `animate-pulse` is deliberately left running under `prefers-reduced-motion`
+ * (see the note in the reduced-motion block in globals.css): it is opacity-only,
+ * and it is the only signal that content is loading.
+ */
 export function Skeleton({ className, ...props }: SkeletonProps) {
   return (
     <div
-      className={cn("animate-pulse rounded-md bg-muted", className)}
+      className={cn("animate-pulse rounded-none bg-muted", className)}
       {...props}
     />
   )
 }
 
+/**
+ * Card-shaped placeholder. Matches `.card-brutal`'s footprint — 2px border and a
+ * hard offset shadow — so the layout does not shift when the real card arrives.
+ */
 export function SkeletonCard() {
   return (
-    <div className="group relative rounded-lg border border-border/60 p-5 sm:p-6 
-      bg-gradient-to-br from-primary/5 to-background
-      animate-pulse flex flex-col gap-3 h-64"
-    >
+    <div className="flex h-64 flex-col gap-3 border-2 border-foreground bg-card p-5 shadow-brutal-sm sm:p-6">
       <Skeleton className="h-7 w-3/4" />
       <div className="flex gap-2">
         <Skeleton className="h-4 w-20" />
-        <Skeleton className="h-4 w-4 rounded-full" />
+        <Skeleton className="h-4 w-4" />
         <Skeleton className="h-4 w-20" />
       </div>
-      <div className="flex gap-1">
-        <Skeleton className="h-5 w-12 rounded-full" />
-        <Skeleton className="h-5 w-14 rounded-full" />
+      <div className="flex gap-1.5">
+        <Skeleton className="h-5 w-12" />
+        <Skeleton className="h-5 w-14" />
       </div>
       <Skeleton className="h-12 w-full" />
       <div className="mt-auto">

@@ -37,7 +37,7 @@ export function MainNav() {
             {siteConfig.name}
           </span>
           <span className="mt-0.5 font-mono text-[0.6rem] uppercase tracking-widest text-muted-foreground">
-            Associate Technical Architect
+            {siteConfig.role}
           </span>
         </span>
       </Link>

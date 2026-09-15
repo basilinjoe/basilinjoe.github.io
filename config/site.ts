@@ -31,6 +31,16 @@ export const siteConfig = {
   gaid:"G-631LG05FS6",
   name: "Basilin Joe",
   position: "Associate Technical Architect at Experion Technologies",
+  /**
+   * Job title without the employer. Use this anywhere the full `position` is too
+   * long — nav sublines, eyebrows, metadata descriptions. These strings were
+   * previously hardcoded in four components and drifted out of sync.
+   */
+  role: "Associate Technical Architect",
+  employer: {
+    name: "Experion Technologies",
+    url: "https://experionglobal.com/",
+  },
   tagline: "Architecting AI platforms, integration systems, and multi-tenant SaaS on Azure",
   aboutMe: "Solution architect who builds the platforms other teams build on. Eleven years across enterprise integration, multi-tenant SaaS and AI platform work, promoted through six roles at one firm into architecture ownership. Most recently a private AI agent platform on Azure AI Foundry for an Australian healthcare provider, and the clinical applications running on top of it. Works best where architecture meets hard constraint: data-sovereignty law, multi-tenant SLAs, offline-tolerant field operations, legacy systems coupled at the database layer. Also ships alone - a live AI resume platform and a paid production access-control integration, both designed, built and operated end to end.",
   location: "Ernakulam,Kerala,India",

@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     template: `%s | ${siteConfig.openGraph.siteName}`
   },
   description: siteConfig.description,
-  keywords: ["Associate Technical Architect", "AI Agents", "Azure AI Foundry", "MCP", "Azure", "Cloud Architecture", "Enterprise Integration", "Multi-tenant SaaS", "Basilin Joe", "Next.js", "TypeScript"],
+  keywords: [siteConfig.role, "AI Agents", "Azure AI Foundry", "MCP", "Azure", "Cloud Architecture", "Enterprise Integration", "Multi-tenant SaaS", "Basilin Joe", "Next.js", "TypeScript"],
   authors: [{ name: siteConfig.name, url: siteConfig.url }],
   creator: siteConfig.name,
   openGraph: siteConfig.openGraph,
