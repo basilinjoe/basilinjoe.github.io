@@ -33,75 +33,24 @@ that a problem spotted during unrelated work does not evaporate when the session
 
 ## Priority order
 
-Severity says how bad something is; this says what to do next. The ordering is
-correctness first, then the cheap documentation fixes that make `DESIGN.md`
-trustworthy again, then visible drift, then hygiene.
+Severity says how bad something is; this says what to do next.
 
-| # | ID | Why here |
-|---|---|---|
-| 1 | P1-010 | Clickable stickers scrape 24px exactly; either raise the padding or bless the case in §8. |
-| 2 | P1-025 | Brand and decorative colours: document an exception to §13, or bring them onto the accent trio. |
-| 3 | P1-013 | The hero blur blobs are either a deliberate exception to "zero blur" or they go. |
+_Empty — nothing is open._
 
-**All three remaining items are design decisions, not defects.** None should be
-"fixed" unilaterally — each has two defensible answers and the choice is the
-owner's. Every mechanical issue from the 2026-09-15 audit is closed.
+When issues are logged again, rank them here. The ordering that worked: correctness
+first, then documentation accuracy (a wrong `DESIGN.md` makes every later review start
+from bad data), then visible drift, then hygiene. Mark anything that is a design
+decision rather than a defect, and do not resolve those unilaterally.
 
 ---
 
 ## Open
 
-### P0 — accessibility floor and user-visible breakage
+**Nothing open.** Every issue from the 2026-09-15 full-app audit is closed — see
+Resolved below, and **Known non-issues** for the things that look like bugs but are
+deliberate.
 
-None open. All six are in Resolved.
-
-### P1 — drift, contradictions, latent failures
-
-#### [P1-010] `.sticker` is used as a button in three places, which §8 forbids
-
-- `components/blog/blog-post-card.tsx:104`
-- `components/blog/blog-post-card.tsx:164`
-- `components/projects-page-new.tsx:175`
-
-`DESIGN.md` §8 says: "If you ever make a sticker clickable, raise its padding to clear
-24px." All three are `<button>` elements.
-
-The doc's own measurement is also wrong. Computed from the real values — `micro`
-line-height `1rem` (16px) + `py-0.5` (2px x2) + `border-2` (2px x2) — the box is
-**exactly 24px**, not the 22px §8 claims. So it scrapes SC 2.5.8 (AA) with zero margin.
-
-- Fix: decide one way. Either bump to `py-1` (28px) and update §8, or correct §8's number
-  and explicitly bless the clickable case.
-
-#### [P1-025] Decorative and brand colours bypass the token system
-
-Surfaced by the P2-019 sweep; not part of the original audit.
-
-- `components/dynamic-greeting.tsx` — time-of-day gradients on raw `yellow-400`,
-  `orange-500`, `purple-400`, `pink-500`, `blue-400`.
-- `components/blog-share.tsx` — `green-500` / `red-500` copy feedback, plus brand hex
-  values (`#1DA1F2`, `#0077B5`, `#3b5998`) for the share targets.
-
-Unlike the `ui/` primitives, these are not accidental shadcn leftovers. Brand colours
-are arguably a legitimate exception — a LinkedIn button that is not LinkedIn blue reads
-as broken — and the greeting gradient is deliberate decoration.
-
-- Violates: `DESIGN.md` §13 as literally written, which carves out no exception.
-- Fix: **needs a decision.** Either add a documented "brand and decorative colour"
-  exception to §13 alongside the `zinc` one in §12, or bring both onto the accent trio.
-  Contrast is not currently at risk in either file; this is consistency only.
-
-#### [P1-013] Home page background contradicts the "zero blur" direction
-
-`components/hero-animation.tsx` renders three 28rem `blur-3xl` accent blobs beneath the
-hero. `DESIGN.md` §2 states the identity as "hard 2px borders, offset shadows with zero
-blur".
-
-It does gate the cursor parallax on `prefers-reduced-motion` (correctly, per §10's
-vestibular list), so this is a direction question rather than a bug.
-
-- Fix: either document it in `DESIGN.md` as a deliberate mood layer exempt from the
-  zero-blur rule, or replace it with the dot-grid texture it already layers on top.
+The next entry gets ID `P?-026`.
 
 ---
 
@@ -139,6 +88,9 @@ vestibular list), so this is a direction question rather than a bug.
 | P1-015 | 2026-09-15 | `themeColor` now uses the resolved `--background` hex, `#f9f8f5` / `#101014`. | `6a5d85f` |
 | P1-017 | 2026-09-15 | Dead click handler removed; the tag chip is a plain label, since a nested `<a>` inside the row link would be invalid HTML. | `6a5d85f` |
 | P2-024 | 2026-09-15 | Skip links now stack vertically below `sm` instead of running past a 390px viewport. | `6a5d85f` |
+| P1-010 | 2026-09-15 | Added `.sticker-button` at 28px for the three clickable chips; `.sticker` stays a 24px label. DESIGN.md §8's stale 22px figure corrected. | pending |
+| P1-025 | 2026-09-15 | `dynamic-greeting`'s palette lived in a `gradient` field that was never rendered — deleted, along with the dead `Tagline` export. `blog-share` feedback moved to `--success`/`--destructive`. Brand colour documented as a §5 exception, gated on measured contrast. | pending |
+| P1-013 | 2026-09-15 | Hero blur layer kept. §2 rewritten to scope "zero blur" to the component language and document the three background layers explicitly. | pending |
 
 Entries predating this file have no ID; they are carried over from `DESIGN.md` §14.
 
@@ -159,3 +111,14 @@ Documented so they are not "discovered" again.
   Verified contrast on their own ground: 17.08 / 14.42 / 7.03, all AAA.
 - **`components/loading-states.tsx` is unreferenced.** True but harmless; folded into
   P2-018 along with the other ten dead files.
+- **Share buttons carry LinkedIn and Facebook brand hex.** Deliberate, documented in
+  `DESIGN.md` §5. Brand identity outweighs the token here, but the exception is gated:
+  both clear 4.5:1 with white text (4.88 and 6.84). Twitter's `#1DA1F2` measured 2.83
+  and was replaced with the ink pair, which is also X's actual branding.
+- **The home hero sits on three blurred background layers.** Deliberate, documented in
+  `DESIGN.md` §2. "Zero blur" governs the component language — borders, shadows, chips
+  — not the page ground. Do not add blurred decoration anywhere else; two similar
+  blobs on `/blog` were removed as drift.
+- **`.sticker` is 24px and `.sticker-button` is 28px.** Not an inconsistency. Labels sit
+  at the SC 2.5.8 minimum; anything interactive uses the taller variant so a future
+  padding change cannot silently drop a control below the minimum.

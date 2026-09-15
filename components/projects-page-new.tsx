@@ -172,7 +172,7 @@ export function ProjectsPage({ repos }: ProjectsPageProps) {
                       <button
                         key={topic}
                         onClick={() => setActiveFilter(topic)}
-                        className="sticker cursor-pointer transition-colors hover:bg-accent-lime hover:text-accent-lime-foreground"
+                        className="sticker-button"
                       >
                         {topic}
                       </button>

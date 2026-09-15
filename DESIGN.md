@@ -27,6 +27,24 @@ Newsprint-and-ink editorial layout crossed with brutalist software UI. Hard 2px
 borders, offset shadows with zero blur, an extreme type scale, and a hot accent trio
 against warm paper neutrals.
 
+**"Zero blur" is a rule about the component language, not the page ground.** Borders,
+shadows, chips, cards and rules are hard-edged with no exceptions. The atmosphere
+*behind* them is allowed to be soft, and deliberately is:
+
+| Layer | Where | What |
+|---|---|---|
+| Paper texture | `body`, via `--paper-texture` | Two faint radial gradients, 2.5% and 2% black in light mode |
+| Hero wash | `components/hero-animation.tsx` | Three 28rem accent blobs at `blur-3xl`, opacity 15–30%, drifting with the cursor |
+| Dot grid | `components/hero-animation.tsx` | `currentColor` dots at 4–6% opacity |
+
+The soft ground is part of why the hard foreground reads as hard. The hero wash is
+built from `--primary`, `--accent-hot` and `--accent-lime` rather than arbitrary
+colour, sits at `-z-10` behind everything, and gates its cursor parallax on
+`prefers-reduced-motion` (§10 lists parallax as a vestibular trigger). **This is a
+deliberate exception, confined to the home hero. Do not add blurred decoration
+anywhere else** — two near-identical decorative blobs on `/blog` were removed as
+drift on 2026-09-15.
+
 **Why this works rather than reading as noise:** maximalism only survives if the
 underlying grid and contrast rules are stricter than a minimalist system would need.
 Decoration is earned by structure. Every dense element sits on the 12-column grid,
@@ -189,6 +207,16 @@ token values rather than trusting a comment. That is how these three were caught
 - Accent colour must carry meaning. Hot orange = "this is the entry point / the
   number / the emphasis." Lime = "this is available / positive / a CTA."
 - Do not introduce a new colour. Use the trio or a neutral.
+- **Third-party brand colour is the one permitted hardcoded hex**, and only on controls
+  that represent that third party — the share buttons in `components/blog-share.tsx`.
+  A LinkedIn button that is not LinkedIn blue reads as broken, so the identity is worth
+  more than the token here. **The exception does not suspend §9:** the brand fill must
+  still clear 4.5:1 against its own foreground, measured, or it does not ship.
+  LinkedIn `#0077B5` (4.88) and Facebook `#3b5998` (6.84) qualify. Twitter's legacy
+  `#1DA1F2` measured **2.83** with white text and did not; that button now uses the ink
+  pair, which is also what X actually brands as.
+  Brand fills are fixed hex, so they do not invert with the theme — same reasoning as
+  the charts in §12. Check both modes anyway.
 - `--border` is full-strength ink or paper, deliberately. The `*` base rule applies
   `border-border/50`; heavy borders opt back up to `border-foreground`.
 
@@ -296,7 +324,8 @@ Defined in `app/globals.css` `@layer components`. Reuse these; do not re-impleme
 | Class | What it is | Where |
 |---|---|---|
 | `.card-brutal` | 2px border, `shadow-brutal`, hover snaps 3px toward viewer into `shadow-brutal-lg` | Work, projects, repos |
-| `.sticker` / `.sticker-hot` / `.sticker-lime` | Bordered micro-caps chip | Tags, labels |
+| `.sticker` / `.sticker-hot` / `.sticker-lime` | Bordered micro-caps chip, **label only** | Tags, metadata |
+| `.sticker-button` | The same chip as an interactive control, 28px tall | Tag filters on `/blog` and `/projects` |
 | `.caps-caption` / `-strong` | Mono micro uppercase, `0.14em` tracking | Eyebrows, metadata |
 | `.display-hero` / `.display-headline` | Serif display ramp with responsive steps | Page H1s |
 | `.column-numeral` | Big italic serif `01`, hot orange | Section markers |
@@ -326,8 +355,15 @@ both modes.
 
 - Button `default` 40px, `lg` 48px, `sm` 32px, `icon` 40px. All pass.
 - Tag filter chips ≈28px. Pass.
-- **`.sticker` computes to ≈22px.** Fine as a *label*, which is its only current use.
-  **If you ever make a sticker clickable, raise its padding to clear 24px.**
+- Marquee pause control 24px. Passes at exactly the minimum.
+- **`.sticker` computes to exactly 24px**, not the ≈22px this section claimed until
+  2026-09-15: `micro`'s 1rem line box, plus `py-0.5` and two 2px borders. It passes,
+  but with zero margin — any later change to the line-height, padding or font size
+  drops it below the minimum silently.
+
+  **Therefore `.sticker` is a label. Anything clickable uses `.sticker-button`**, which
+  is the same chip at `py-1` for a 28px target. Three tag filters were plain `.sticker`
+  buttons until this was split.
 
 ---
 
@@ -501,7 +537,9 @@ Before shipping any visual change:
 - [ ] Any new animation added to the `prefers-reduced-motion` block.
 - [ ] Uses existing component classes rather than a new one-off pattern.
 - [ ] No hardcoded hex or raw Tailwind palette colour; semantic tokens only.
-      *(The component layer is currently clean on this. Keep it that way.)*
+      **Two documented exceptions, and only two:** the highlight.js `zinc` pairing in
+      blog code blocks (§12) and third-party brand colour on share buttons (§5).
+      Everything else is drift. Verify with a grep, not by eye.
 - [ ] If MDX: no `style={{}}`, no `<style>` blocks. Build and grep the output HTML.
 - [ ] `pnpm run predeploy` passes. `npx tsc --noEmit` passes.
       (`pnpm run lint` is broken: Next 16 removed `next lint` and ESLint 9 needs flat config.)
@@ -510,13 +548,18 @@ Before shipping any visual change:
 
 ## 14. Open items
 
-**Open issues now live in [`ISSUES.md`](./ISSUES.md), which is authoritative.** A
-full-app audit against this document on 2026-09-15 found 24 open items, including six
-that breach the §9 accessibility floor. **Twenty-two are closed**, including all six
-P0s, the accuracy problems in this document itself, and all the dead code. **Three
-remain, and all three are design decisions rather than defects** — see the priority
-table in `ISSUES.md`. Do not treat the list below as current; it is the historical
-record of what was closed on the day this document was written.
+**Open issues live in [`ISSUES.md`](./ISSUES.md), which is authoritative. It is
+currently empty.** A full-app audit against this document on 2026-09-15 found 24
+issues, including six that breached the §9 accessibility floor and several places
+where *this document* was wrong. All 24 are closed, plus one found during the work.
+
+`ISSUES.md` also carries a **Known non-issues** list — things that look like bugs and
+are deliberate. Read it before "fixing" the hero's blur layer, the brand colour on
+share buttons, the `zinc` values in code blocks, or the gap between `.sticker` and
+`.sticker-button`.
+
+The list below is the historical record of what was closed on the day this document
+was written.
 
 **Resolved**
 

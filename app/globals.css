@@ -249,6 +249,17 @@
     @apply inline-flex items-center gap-1 border-2 border-foreground bg-background px-2 py-0.5 font-mono text-micro uppercase tracking-wider;
   }
 
+  /* Interactive sticker. `.sticker` computes to exactly 24px tall — `micro`'s 1rem
+     line box plus py-0.5 and the 2px borders — which meets WCAG 2.2 SC 2.5.8 with
+     zero margin. Any later change to the line-height, padding or font size would
+     silently drop it below the minimum, and an exactly-minimum touch target is
+     unpleasant on a phone regardless. Use this for any sticker that is a button or
+     a link; it comes out at 28px. Plain `.sticker` stays a label. */
+  .sticker-button {
+    @apply inline-flex items-center gap-1 border-2 border-foreground bg-background px-2 py-1 font-mono text-micro uppercase tracking-wider transition-colors;
+    @apply hover:bg-accent-lime hover:text-accent-lime-foreground;
+  }
+
   .sticker-hot {
     @apply inline-flex items-center gap-1 border-2 border-foreground bg-accent-hot px-2 py-0.5 font-mono text-micro uppercase tracking-wider text-accent-hot-foreground;
   }

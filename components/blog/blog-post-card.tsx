@@ -101,7 +101,7 @@ export default function BlogPostCard({
                   e.preventDefault()
                   onTagClick(tag)
                 }}
-                className="sticker cursor-pointer transition-colors hover:bg-accent-lime hover:text-accent-lime-foreground"
+                className="sticker-button"
               >
                 {tag}
               </button>
@@ -161,7 +161,7 @@ export default function BlogPostCard({
                   e.preventDefault()
                   onTagClick(tag)
                 }}
-                className="sticker cursor-pointer transition-colors hover:bg-accent-lime hover:text-accent-lime-foreground"
+                className="sticker-button"
               >
                 {tag}
               </button>

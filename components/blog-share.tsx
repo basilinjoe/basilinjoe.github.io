@@ -28,19 +28,21 @@ export function SocialShare({ title, url }: SocialShareProps) {
       name: "Twitter",
       icon: <TwitterIcon className="h-4 w-4" />,
       url: `https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`,
-      color: "bg-[#1DA1F2] hover:bg-[#0c85d0] text-white",
+      // X brands as black-on-white / white-on-black. The legacy #1DA1F2 blue
+      // measured 2.83:1 against white text and failed WCAG AA.
+      color: "bg-foreground text-background hover:bg-accent-hot hover:text-accent-hot-foreground",
     },
     {
       name: "LinkedIn",
       icon: <LinkedinIcon className="h-4 w-4" />,
       url: `https://www.linkedin.com/shareArticle?mini=true&url=${encodedUrl}&title=${encodedTitle}`,
-      color: "bg-[#0077B5] hover:bg-[#005885] text-white",
+      color: "bg-[#0077B5] text-white hover:bg-[#005885]", // 4.88:1 / 7.68:1
     },
     {
       name: "Facebook",
       icon: <FacebookIcon className="h-4 w-4" />,
       url: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
-      color: "bg-[#3b5998] hover:bg-[#2d4373] text-white",
+      color: "bg-[#3b5998] text-white hover:bg-[#2d4373]", // 6.84:1 / 9.71:1
     }
   ]
   
@@ -67,7 +69,7 @@ export function SocialShare({ title, url }: SocialShareProps) {
             href={link.url}
             target="_blank"
             rel="noopener noreferrer"
-            className={`rounded-md px-3 py-2 text-xs font-medium inline-flex items-center gap-2 ${link.color}`}
+            className={`inline-flex items-center gap-2 border-2 border-foreground px-3 py-2 font-mono text-micro font-bold uppercase tracking-widest shadow-brutal-sm transition-all hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-brutal ${link.color}`}
           >
             {link.icon}
             {link.name}
@@ -87,13 +89,13 @@ export function SocialShare({ title, url }: SocialShareProps) {
           )}
           {copyStatus === 'success' && (
             <>
-              <CheckIcon className="h-4 w-4 text-green-500" />
+              <CheckIcon className="h-4 w-4 text-success" />
               Copied!
             </>
           )}
           {copyStatus === 'error' && (
             <>
-              <AlertCircleIcon className="h-4 w-4 text-red-500" />
+              <AlertCircleIcon className="h-4 w-4 text-destructive" />
               Failed to copy
             </>
           )}
