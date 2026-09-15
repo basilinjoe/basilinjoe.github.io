@@ -343,12 +343,27 @@ by `aria-labelledby`.
   "under 100ms is jarring, over 500ms is sluggish" band is secondary-source folklore;
   Material's range is the defensible citation.
 - **Library:** Framer Motion for entrance and layout; CSS keyframes for marquees.
-- **Reduced motion:** the `@media (prefers-reduced-motion: reduce)` block at the foot
-  of `globals.css` kills every marquee, spin, pulse, float, and fade, and disables
-  smooth scroll. **Any new named animation must be added to that list.**
+- **Reduced motion — two mechanisms, both required.**
+
+  1. **CSS animations:** the `@media (prefers-reduced-motion: reduce)` block at the
+     foot of `globals.css` kills every marquee, spin, float, fade, bounce and ping,
+     and disables smooth scroll. **Any new named animation must be added to that
+     list.**
+  2. **Framer Motion:** `components/motion-provider.tsx` wraps the tree in
+     `<MotionConfig reducedMotion="user">`. Framer drives motion from JS and is
+     completely invisible to the CSS block — for a long time every entrance
+     transform on the site kept running for users who had asked for less motion.
+     **Anything animated with Framer is covered only because that provider exists.
+     Do not remove it.**
+
   Per [MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion),
   `reduce` means remove *motion*, not all animation: opacity and colour transitions
-  may stay, transforms and parallax are what to drop.
+  may stay, transforms and parallax are what to drop. `reducedMotion="user"` applies
+  exactly that rule.
+
+  **One deliberate exception:** `animate-pulse` is not in the CSS list. It is
+  opacity-only and it carries the loading affordance on every skeleton, so
+  suppressing it would remove information rather than motion.
 - **Vestibular triggers to avoid:** scaling, panning, parallax, large-object movement
   ([web.dev](https://web.dev/learn/accessibility/motion)).
 
@@ -447,10 +462,10 @@ Before shipping any visual change:
 
 **Open issues now live in [`ISSUES.md`](./ISSUES.md), which is authoritative.** A
 full-app audit against this document on 2026-09-15 found 24 open items, including six
-that breach the §9 accessibility floor. Five were fixed the same day (P0-001 to P0-005);
-**19 remain open**, and `ISSUES.md` carries a recommended priority order. Do not treat
-the list below as current — it is the historical record of what was closed on the day
-this document was written.
+that breach the §9 accessibility floor. Ten were fixed the same day — **all six P0s are
+closed**, along with P1-007 to P1-009 and P1-011. **14 remain open**, and `ISSUES.md`
+carries a recommended priority order. Do not treat the list below as current — it is the
+historical record of what was closed on the day this document was written.
 
 Known contradictions between *this document* and the code are logged as P2-021 through
 P2-023: the §5 contrast table is incomplete and its dark `--paper` value is wrong, §6's

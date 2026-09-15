@@ -448,7 +448,7 @@ function CommandItem({
         <ExternalLink
           className={cn(
             "ml-auto h-3.5 w-3.5 shrink-0",
-            isActive ? "text-accent-lime-foreground/75" : "text-muted-foreground/60"
+            isActive ? "text-accent-lime-foreground/75" : "text-muted-foreground/80"
           )}
         />
       ) : (

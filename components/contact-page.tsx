@@ -276,7 +276,7 @@ export function ContactPage() {
                   "absolute bottom-2 right-3 font-mono text-micro uppercase tracking-widest",
                   charCount > 500
                     ? "text-destructive"
-                    : "text-muted-foreground/70"
+                    : "text-muted-foreground"
                 )}
               >
                 {charCount}/500

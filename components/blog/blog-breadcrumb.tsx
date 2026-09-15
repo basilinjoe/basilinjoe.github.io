@@ -46,7 +46,7 @@ export function BlogBreadcrumb({ postTitle, tag }: BlogBreadcrumbProps) {
               </span>
             )}
             {i < items.length - 1 && (
-              <span aria-hidden className="text-muted-foreground/60">
+              <span aria-hidden className="text-muted-foreground/80">
                 /
               </span>
             )}

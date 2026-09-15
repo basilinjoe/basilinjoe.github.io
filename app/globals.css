@@ -315,8 +315,18 @@
   }
 }
 
-/* Respect prefers-reduced-motion for every marquee/spin/pulse we add.
-   Any NEW named animation must be added to this list. */
+/* Respect prefers-reduced-motion for every looping animation we add.
+   Any NEW named animation must be added to this list.
+
+   Deliberate exception: `animate-pulse` is NOT listed. Per MDN, `reduce` means
+   remove *motion*, not all animation — opacity and colour may stay, transforms
+   and parallax are what to drop. `animate-pulse` is opacity-only and carries the
+   loading affordance on every skeleton, so killing it would remove information
+   rather than motion. `animate-ping` and `animate-bounce` both animate transforms,
+   so they belong here.
+
+   Framer Motion is handled separately: it drives its animation from JS and never
+   saw this block. See components/motion-provider.tsx. */
 @media (prefers-reduced-motion: reduce) {
   .animate-marquee,
   .animate-marquee-slow,
@@ -325,7 +335,9 @@
   .animate-spin-slow,
   .animate-pulse-slow,
   .animate-float,
-  .animate-fade-in {
+  .animate-fade-in,
+  .animate-bounce,
+  .animate-ping {
     animation: none !important;
   }
 
@@ -374,20 +386,24 @@
   max-width: 68ch;
 }
 
+/* Anchor offset: the sticky header is ~66px on mobile (the ticker is
+   `hidden sm:block`) and ~96px from `sm` up, which reading-progress.tsx already
+   hardcodes as `sm:top-[94px]`. `scroll-mt-16` reserved only 64px, so deep links
+   landed headings underneath the header (WCAG 2.2 SC 2.4.11). */
 .markdown h1 {
-  @apply mt-12 mb-6 font-serif text-4xl md:text-5xl font-normal tracking-tight scroll-mt-16;
+  @apply mt-12 mb-6 font-serif text-4xl md:text-5xl font-normal tracking-tight scroll-mt-20 sm:scroll-mt-28;
 }
 
 .markdown h2 {
-  @apply mt-14 mb-5 font-serif text-3xl md:text-4xl font-normal tracking-tight scroll-mt-16 border-b border-foreground/25 pb-2;
+  @apply mt-14 mb-5 font-serif text-3xl md:text-4xl font-normal tracking-tight scroll-mt-20 sm:scroll-mt-28 border-b border-foreground/25 pb-2;
 }
 
 .markdown h3 {
-  @apply mt-10 mb-3 font-sans text-xl md:text-2xl font-bold tracking-tight scroll-mt-16;
+  @apply mt-10 mb-3 font-sans text-xl md:text-2xl font-bold tracking-tight scroll-mt-20 sm:scroll-mt-28;
 }
 
 .markdown h4 {
-  @apply mt-6 mb-2 font-sans text-base md:text-lg font-semibold tracking-tight scroll-mt-16;
+  @apply mt-6 mb-2 font-sans text-base md:text-lg font-semibold tracking-tight scroll-mt-20 sm:scroll-mt-28;
 }
 
 .markdown p {

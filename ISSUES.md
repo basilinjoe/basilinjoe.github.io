@@ -39,22 +39,17 @@ trustworthy again, then visible drift, then hygiene.
 
 | # | ID | Why here |
 |---|---|---|
-| 1 | P0-006 | Last remaining P0. Small, self-contained. |
-| 2 | P1-011 | WCAG AA (2.4.11), affects every deep link into a blog post. One line. |
-| 3 | P1-008 | WCAG AA (1.4.3), live on the contact form. One token. |
-| 4 | P1-009 | WCAG AA (1.4.11), live in the command palette. One token. |
-| 5 | P1-007 | Completes the reduced-motion work started in P0-001. One line. |
-| 6 | P2-021 | **Do early.** `DESIGN.md`'s contrast table is wrong, so every later review starts from bad data. |
-| 7 | P2-022, P2-023 | Same reason: the design doc cannot be the source of truth while it contradicts the code. |
-| 8 | P1-010 | **Needs a decision.** Clickable stickers scrape 24px exactly; either raise the padding or bless the case in §8. |
-| 9 | P1-012 | Most visible remaining drift. Real work, not a one-liner. |
-| 10 | P1-016 | Profile data duplicated outside `config/site.ts`; needs a new `shortPosition` field. |
-| 11 | P1-015, P1-017, P2-024 | Small correctness and polish fixes. |
-| 12 | P1-014 | Type-scale cleanup. Wide but mechanical. |
-| 13 | P2-018, P2-019, P2-020 | Dead code and dead tokens. Deletion, mostly. |
-| 14 | P1-013 | **Needs a decision.** The hero blur blobs are either a deliberate exception or they go. Not a defect either way. |
+| 1 | P2-021 | **Do first.** `DESIGN.md`'s contrast table is wrong, so every later review starts from bad data. |
+| 2 | P2-022, P2-023 | Same reason: the design doc cannot be the source of truth while it contradicts the code. |
+| 3 | P1-010 | **Needs a decision.** Clickable stickers scrape 24px exactly; either raise the padding or bless the case in §8. |
+| 4 | P1-012 | Most visible remaining drift. Real work, not a one-liner. |
+| 5 | P1-016 | Profile data duplicated outside `config/site.ts`; needs a new `shortPosition` field. |
+| 6 | P1-015, P1-017, P2-024 | Small correctness and polish fixes. |
+| 7 | P1-014 | Type-scale cleanup. Wide but mechanical. |
+| 8 | P2-018, P2-019, P2-020 | Dead code and dead tokens. Deletion, mostly. |
+| 9 | P1-013 | **Needs a decision.** The hero blur blobs are either a deliberate exception or they go. Not a defect either way. |
 
-Items 8 and 14 should not be "fixed" unilaterally — they are design calls, not bugs.
+Items 3 and 9 should not be "fixed" unilaterally — they are design calls, not bugs.
 
 ---
 
@@ -62,60 +57,9 @@ Items 8 and 14 should not be "fixed" unilaterally — they are design calls, not
 
 ### P0 — accessibility floor and user-visible breakage
 
-#### [P0-006] Theme toggle never announces its state
-
-`components/mode-toggle.tsx:29` sets `aria-label="Toggle theme"`. In the accessible name
-computation `aria-label` **overrides element content**, so the `sr-only` span
-("Current theme: {theme}. Click to cycle.") at line 38 is never announced.
-
-Visually the button cycles light -> dark -> system but only swaps a Sun/Moon icon keyed
-to the *resolved* theme, so "system" is indistinguishable from whichever theme it
-resolves to.
-
-- Violates: `DESIGN.md` §3, which names "visibility of system status (theme state)" as a
-  binding NN/g heuristic for this site.
-- Fix: drop the `aria-label` and let the `sr-only` text be the accessible name, or move
-  the state into `aria-label` itself. Add a visible indicator for the system state.
+None open. All six are in Resolved.
 
 ### P1 — drift, contradictions, latent failures
-
-#### [P1-007] Looping animations missing from the reduced-motion block
-
-`app/globals.css:320-338` says "Any NEW named animation must be added to this list", but
-these are absent:
-
-- `animate-bounce` — `components/sections/hero-bento-grid.tsx:151` (hero scroll cue). An
-  uncapped transform loop, precisely what `reduce` is meant to stop.
-- `animate-ping` — `components/sections/profile-section.tsx:79` (currently dead code,
-  see P2-018).
-- `animate-pulse` — 6 uses. Opacity-only, so arguably fine to keep per MDN, but
-  `DESIGN.md` §10 asserts it is killed, which is not true.
-
-- Fix: add `animate-bounce` and `animate-ping` to the block. Either add `animate-pulse`
-  or amend §10 to say opacity-only loops are deliberately kept.
-
-#### [P1-008] `text-muted-foreground/70` fails AA in light mode
-
-`components/contact-page.tsx:279` — the message character counter, at 11px `micro`.
-
-Measured: **3.74:1 on background, 3.86:1 on card** (light). Dark passes at 4.85.
-
-- Violates: WCAG 2.2 SC 1.4.3 (AA).
-- Fix: `/80` measures 4.78:1 light, or drop the alpha entirely.
-
-#### [P1-009] `text-muted-foreground/60` fails in light mode (two places)
-
-- `components/blog/blog-breadcrumb.tsx:49` — breadcrumb separator.
-- `components/command-palette.tsx:432` — the external-link icon on social rows.
-
-Measured: **2.98:1 light**, 3.86:1 dark. The icon case also misses SC 1.4.11's 3:1
-non-text minimum.
-
-- Fix: the separator is already `aria-hidden` and reads as decorative, so only the
-  palette icon is a hard miss. Raise it to `/80` (4.78:1 light).
-- Partially addressed 2026-09-15: the *active-row* instance of this icon was fixed
-  under P0-002 (it would otherwise have sat on solid lime at 1.75:1). The inactive
-  branch at `components/command-palette.tsx:445` still measures 2.98:1 and is open.
 
 #### [P1-010] `.sticker` is used as a button in three places, which §8 forbids
 
@@ -132,19 +76,6 @@ line-height `1rem` (16px) + `py-0.5` (2px x2) + `border-2` (2px x2) — the box 
 
 - Fix: decide one way. Either bump to `py-1` (28px) and update §8, or correct §8's number
   and explicitly bless the clickable case.
-
-#### [P1-011] `scroll-mt-16` under-clears the sticky header
-
-`.markdown h1`-`h4` reserve 64px (`app/globals.css:377-395`). The actual sticky header is
-the ticker (`py-1.5` + 16px line + 2px border = 30px) plus the main row (`h-16` + 2px
-border = 66px) = **~96px**. `components/blog/reading-progress.tsx:26` already hardcodes
-`sm:top-[94px]`, which confirms the real height.
-
-Anchor navigation therefore lands headings underneath the header on desktop.
-
-- Violates: WCAG 2.2 SC 2.4.11 Focus Not Obscured (AA), which `DESIGN.md` §9 claims
-  `scroll-mt-16` handles.
-- Fix: `scroll-mt-20 sm:scroll-mt-28`.
 
 #### [P1-012] Pre-brutalist surfaces still render on `/blog`
 
@@ -322,11 +253,16 @@ but the focused second link can push past the 390px viewport.
 | — | 2026-09-15 | Duplicate `og:image` across 5 posts. Metadata override removed. | `5389854` |
 | — | 2026-09-15 | Light/dark inconsistencies in code blocks and SVG charts. | `f694a80` |
 | — | 2026-09-14 | Footer inverted with the theme. | `c6d084d` |
-| P0-005 | 2026-09-15 | MDX dropped the YouTube embed's `style`, so the 16:9 wrapper collapsed. Replaced with an `.embed-16x9` class. | pending |
-| P0-004 | 2026-09-15 | Blog tables had no scroll container and could widen the page body at 390px. Added a `table` override in `mdxComponents` plus `min-width: 100%`. | pending |
-| P0-002 | 2026-09-15 | Command palette active row measured 2.98:1 in dark mode. Now solid `accent-lime` with its own foreground, 13.90 light / 15.22 dark. | pending |
-| P0-001 | 2026-09-15 | Framer Motion ignored `prefers-reduced-motion` across 33 files. Added `MotionProvider` (`MotionConfig reducedMotion="user"`) in the root layout. | pending |
-| P0-003 | 2026-09-15 | Four `aria-labelledby` references pointed at no element. `SectionHeading` now takes an `id`. | pending |
+| P0-005 | 2026-09-15 | MDX dropped the YouTube embed's `style`, so the 16:9 wrapper collapsed. Replaced with an `.embed-16x9` class. | `65a2eaf` |
+| P0-004 | 2026-09-15 | Blog tables had no scroll container and could widen the page body at 390px. Added a `table` override in `mdxComponents` plus `min-width: 100%`. | `65a2eaf` |
+| P0-002 | 2026-09-15 | Command palette active row measured 2.98:1 in dark mode. Now solid `accent-lime` with its own foreground, 13.90 light / 15.22 dark. | `65a2eaf` |
+| P0-001 | 2026-09-15 | Framer Motion ignored `prefers-reduced-motion` across 33 files. Added `MotionProvider` (`MotionConfig reducedMotion="user"`) in the root layout. | `65a2eaf` |
+| P0-003 | 2026-09-15 | Four `aria-labelledby` references pointed at no element. `SectionHeading` now takes an `id`. | `65a2eaf` |
+| P0-006 | 2026-09-15 | `aria-label` suppressed the toggle's state text and "system" was invisible. Rebuilt on three icons with the state in the accessible name. | pending |
+| P1-011 | 2026-09-15 | `scroll-mt-16` reserved 64px against a ~96px header. Now `scroll-mt-20 sm:scroll-mt-28`. | pending |
+| P1-008 | 2026-09-15 | Contact character counter measured 3.74:1 light. Alpha dropped; now 8.09:1. | pending |
+| P1-009 | 2026-09-15 | Breadcrumb separator and palette external-link icon measured 2.98:1 light. Both raised to `/80`, 4.78:1. | pending |
+| P1-007 | 2026-09-15 | `animate-bounce` and `animate-ping` added to the reduced-motion block; `animate-pulse` kept deliberately and DESIGN.md §10 amended to say why. | pending |
 
 Entries predating this file have no ID; they are carried over from `DESIGN.md` §14.
 
