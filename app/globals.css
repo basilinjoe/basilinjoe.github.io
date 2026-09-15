@@ -45,10 +45,16 @@
     --primary-900: 224 80% 22%;
 
     /* --- Accent trio ---------------------------------------------------- */
-    /* Hot orange at 48% L gives ~5:1 with paper for micro text (WCAG AA). */
-    --accent-hot: 18 92% 48%;
+    /* Hot orange at 41% L measures 4.63:1 against paper, clearing WCAG AA
+       (1.4.3) for normal text. This matters because the micro tier is 11px,
+       which is NOT "large scale" (that needs >=24px, or >=18.66px bold), so
+       every eyebrow and kicker needs the full 4.5:1. Contrast is symmetric,
+       so this one value also fixes paper-on-orange inside .sticker-hot.
+       Was 48% / 3.53:1, which failed. Do not lighten without re-measuring. */
+    --accent-hot: 18 92% 41%;
     --accent-hot-foreground: 45 25% 97%;
-    /* Lime at 50% L stays vivid but reaches ~9:1 with ink text. */
+    /* Lime at 50% L reaches 13.96:1 with ink text on top. Background only:
+       as a text colour on paper it is 1.27:1 and effectively invisible. */
     --accent-lime: 74 88% 50%;
     --accent-lime-foreground: 240 15% 8%;
     --accent-pink: 336 92% 55%;
@@ -62,9 +68,11 @@
     --accent-foreground: 240 15% 8%;
 
     /* --- State colors --------------------------------------------------- */
-    --destructive: 0 84% 55%;
+    /* Lightness values chosen to clear 4.5:1 against paper. Previous values
+       (red 55%, green 42%) measured 3.96:1 and 2.62:1 and failed AA. */
+    --destructive: 0 84% 48%;
     --destructive-foreground: 45 25% 97%;
-    --success: 145 65% 42%;
+    --success: 145 65% 31%;
     --success-foreground: 45 25% 97%;
     --warning: 38 92% 50%;
     --warning-foreground: 240 15% 8%;
@@ -307,7 +315,8 @@
   }
 }
 
-/* Respect prefers-reduced-motion for every marquee/spin/pulse we add. */
+/* Respect prefers-reduced-motion for every marquee/spin/pulse we add.
+   Any NEW named animation must be added to this list. */
 @media (prefers-reduced-motion: reduce) {
   .animate-marquee,
   .animate-marquee-slow,
@@ -318,6 +327,13 @@
   .animate-float,
   .animate-fade-in {
     animation: none !important;
+  }
+
+  /* The marquee pause control exists to satisfy WCAG 2.2.2 (Level A). With the
+     animation already suppressed there is nothing to pause, so hide the button
+     rather than leave a toggle that does nothing. */
+  .marquee-control {
+    display: none !important;
   }
 }
 
@@ -332,6 +348,30 @@
    ============================================================================ */
 .markdown {
   @apply max-w-none;
+}
+
+/* ----------------------------------------------------------------------------
+   READING MEASURE
+   Running prose is capped at 68ch. Figures, code blocks, tables and rules are
+   deliberately left unconstrained so they break out to the full column width.
+   h1/h2 also span full width: their bottom rule reads as a section divider, so
+   stopping it short of the column edge would look broken rather than intentional.
+
+   Why 68ch: Butterick's Practical Typography gives 45-90 characters, Bringhurst
+   45-75, and WCAG 1.4.8 (AAA) caps at 80. The previous max-w-4xl container put
+   this at roughly 105 characters, outside all three. The `ch` unit is used so the
+   measure tracks the font rather than a fixed pixel width.
+   ---------------------------------------------------------------------------- */
+.markdown > p,
+.markdown > ul,
+.markdown > ol,
+.markdown > dl,
+.markdown > blockquote,
+.markdown > h3,
+.markdown > h4,
+.markdown > h5,
+.markdown > h6 {
+  max-width: 68ch;
 }
 
 .markdown h1 {

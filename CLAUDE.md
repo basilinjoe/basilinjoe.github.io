@@ -41,9 +41,36 @@ Key layers:
 
 **Deployment target flag:** `DEPLOY_TARGET=gh-pages` is set by the `predeploy` script and by the GitHub Actions workflow. The variable is currently read only informationally (`ghPages` in `next.config.js` is unused at present) — the actual static-export behavior is unconditional. Keep this in mind before wiring anything conditional to it.
 
-## Tailwind config duplication
+## Design system
 
-Both `tailwind.config.js` and `tailwind.config.ts` exist. `components.json` points shadcn at the `.js` file; Next/Tailwind will pick up whichever it finds. If you change theme tokens, update both or consolidate — silently editing only one can cause drift.
+**Read `DESIGN.md` before making any visual or UI change.** It is the source of truth
+for colour tokens, the type scale, component patterns, motion, dark-mode strategy, and
+the accessibility floor, and it documents the system as actually implemented (verified
+against the code, with computed contrast ratios rather than estimates).
+
+Do not deviate without explicit user approval. In QA or review mode, flag code that
+does not match it. `DESIGN.md` §14 tracks known open issues; §13 is the pre-ship
+checklist.
+
+Two repo-specific traps documented there that are easy to hit:
+
+- **MDX silently drops `style`.** In `content/blog/*.mdx`, JSX `style={{...}}` props and
+  `<style>` element children are stripped with no build error. Use plain SVG
+  presentation attributes (`fill`, `fontSize`) instead, and draw chart backgrounds as
+  an explicit `<rect>`.
+- **Don't set `color` on `.markdown pre code`.** It out-specifies highlight.js's `.hljs`
+  rule and breaks syntax highlighting. Scope inline-code styling with
+  `.markdown :not(pre) > code`.
+
+Token authority lives in `app/globals.css` (colours, component classes, prose styles)
+and `tailwind.config.ts` (type scale, shadows, keyframes). `lib/design-system/` is
+legacy and mostly unimported; do not treat it as authoritative.
+
+## Tailwind config
+
+Only `tailwind.config.ts` exists; the duplicate `.js` file was removed and
+`components.json` points at the `.ts`. Theme tokens live there and in
+`app/globals.css` — change both together when adding a colour.
 
 ## Skill routing
 

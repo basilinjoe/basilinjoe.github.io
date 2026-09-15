@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { siteConfig } from "@/config/site"
 import { Icons } from "@/components/icons"
+import { Marquee } from "@/components/marquee"
 
 const socialIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   linkedin: Icons.linkedin,
@@ -40,21 +41,22 @@ export function SiteFooter() {
   return (
     <footer className="mt-24 border-t-2 border-foreground bg-background text-foreground">
       {/* Big marquee — the "let's talk" pull */}
-      <div className="overflow-hidden border-b-2 border-foreground/20 py-8">
-        <div className="ticker-track animate-marquee-slow">
-          {marqueeItems.map((word, i) => (
-            <span
-              key={i}
-              className="mx-6 font-serif text-6xl italic md:text-8xl"
-            >
-              {word}
-              <span aria-hidden className="mx-6 text-accent-hot">
-                ✦
-              </span>
+      <Marquee
+        animation="animate-marquee-slow"
+        label="the scrolling footer banner"
+        className="border-b-2 border-foreground/20 py-8"
+        trackClassName="ticker-track"
+        controlClassName="mr-3 h-8 w-8 border-foreground bg-background text-foreground"
+      >
+        {marqueeItems.map((word, i) => (
+          <span key={i} className="mx-6 font-serif text-6xl italic md:text-8xl">
+            {word}
+            <span aria-hidden className="mx-6 text-accent-hot">
+              ✦
             </span>
-          ))}
-        </div>
-      </div>
+          </span>
+        ))}
+      </Marquee>
 
       {/* Grid content */}
       <div className="container max-w-screen-2xl py-16">

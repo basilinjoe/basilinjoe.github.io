@@ -7,6 +7,7 @@ import { MainNav } from "@/components/main-nav"
 import { MobileNav } from "@/components/mobile-nav"
 import { ModeToggle } from "@/components/mode-toggle"
 import { useCommandPalette } from "@/components/command-palette"
+import { Marquee } from "@/components/marquee"
 import { siteConfig } from "@/config/site"
 import { cn } from "@/lib/utils"
 
@@ -22,21 +23,25 @@ const tickerLines = [
 function TickerBar() {
   const items = [...tickerLines, ...tickerLines, ...tickerLines]
   return (
-    <div className="hidden overflow-hidden border-b-2 border-foreground bg-accent-hot text-accent-hot-foreground sm:block">
-      <div className="animate-marquee flex whitespace-nowrap py-1.5">
-        {items.map((line, i) => (
-          <span
-            key={`${line}-${i}`}
-            className="mx-6 font-mono text-micro font-semibold tracking-widest"
-          >
-            {line}
-            <span aria-hidden className="mx-6 opacity-60">
-              ◆
-            </span>
+    <Marquee
+      animation="animate-marquee"
+      label="the status ticker"
+      className="hidden border-b-2 border-foreground bg-accent-hot text-accent-hot-foreground sm:block"
+      trackClassName="py-1.5"
+      controlClassName="mr-1 bg-accent-hot text-accent-hot-foreground"
+    >
+      {items.map((line, i) => (
+        <span
+          key={`${line}-${i}`}
+          className="mx-6 font-mono text-micro font-semibold tracking-widest"
+        >
+          {line}
+          <span aria-hidden className="mx-6 opacity-60">
+            ◆
           </span>
-        ))}
-      </div>
-    </div>
+        </span>
+      ))}
+    </Marquee>
   )
 }
 

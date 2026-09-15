@@ -26,11 +26,12 @@ export async function generateMetadata({ params }: any): Promise<Metadata> {
   }
 
   const url = `${siteConfig.url}/blog/${slug}`
-  const ogImage = post.coverImage
-    ? [{ url: resolveAssetUrl(post.coverImage), width: 1200, height: 630, alt: post.title }]
-    : siteConfig.openGraph.images
-  const twitterImage = post.coverImage ? [resolveAssetUrl(post.coverImage)] : siteConfig.twitter.images
 
+  // `images` is deliberately omitted from openGraph/twitter so Next's file-based
+  // convention takes over: app/blog/[slug]/opengraph-image.tsx renders a distinct
+  // card per post with its title, excerpt and tags. Setting `images` here would
+  // override that generator, and because several posts share a coverImage it used
+  // to collapse their social previews onto one duplicate picture.
   return {
     title: post.title,
     description: post.excerpt,
@@ -41,7 +42,6 @@ export async function generateMetadata({ params }: any): Promise<Metadata> {
       publishedTime: post.date,
       modifiedTime: post.modified || post.date,
       url,
-      images: ogImage,
       tags: post.tags,
       authors: [siteConfig.name],
     },
@@ -49,7 +49,6 @@ export async function generateMetadata({ params }: any): Promise<Metadata> {
       card: "summary_large_image",
       title: post.title,
       description: post.excerpt,
-      images: twitterImage,
     },
     alternates: { canonical: url },
     keywords: [...(post.tags || []), "blog", "article", siteConfig.name],

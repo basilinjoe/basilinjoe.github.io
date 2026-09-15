@@ -1,34 +1,33 @@
-// Standardized card component with consistent hover behavior
 import * as React from "react"
 import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
-import { hoverEffects } from "@/lib/design-system/hover"
 
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  // Whether to apply hover effects (scale + border color change)
-  interactive?: boolean;
-  // Whether to use Framer Motion for animations
-  animate?: boolean;
-  // Animation variants to apply
-  variants?: any;
+  /** Applies the brutalist hover: the card snaps toward the viewer. */
+  interactive?: boolean
+  /** Render as a motion.div so `variants` can drive entrance animation. */
+  animate?: boolean
+  variants?: any
 }
 
+/**
+ * Base card primitive, aligned with the editorial-tech system in DESIGN.md:
+ * 2px border, hard offset shadow, no blur. For the full pattern including the
+ * hover snap, prefer the `.card-brutal` utility in globals.css.
+ */
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
   ({ className, interactive = false, animate = false, variants, children, ...props }, ref) => {
-    const Component = animate ? motion.div : "div";
-    const interactiveClass = interactive 
-      ? "transition-all hover:border-primary/70 hover:shadow-sm" 
-      : "";
-    
+    const Component = animate ? motion.div : "div"
+
     return (
       <Component
         ref={ref}
         className={cn(
-          "rounded-lg border border-border bg-card text-card-foreground shadow-sm",
-          interactiveClass,
+          "border-2 border-foreground bg-card text-card-foreground shadow-brutal-sm",
+          interactive &&
+            "transition-all duration-150 hover:-translate-x-[3px] hover:-translate-y-[3px] hover:shadow-brutal",
           className
         )}
-        {...(animate && interactive && hoverEffects.card)}
         {...(animate && variants && { variants })}
         {...props}
       >
