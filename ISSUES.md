@@ -196,11 +196,11 @@ but the focused second link can push past the 390px viewport.
 | P1-008 | 2026-09-15 | Contact character counter measured 3.74:1 light. Alpha dropped; now 8.09:1. | `bf49756` |
 | P1-009 | 2026-09-15 | Breadcrumb separator and palette external-link icon measured 2.98:1 light. Both raised to `/80`, 4.78:1. | `bf49756` |
 | P1-007 | 2026-09-15 | `animate-bounce` and `animate-ping` added to the reduced-motion block; `animate-pulse` kept deliberately and DESIGN.md §10 amended to say why. | `bf49756` |
-| P2-021 | 2026-09-15 | §5 contrast table corrected and extended: `--paper` dark value fixed, four missing pairs added, background-only tokens and the alpha-modifier trap written into the rules. | pending |
-| P2-022 | 2026-09-15 | §6's `h1` exemption cited a rule that does not exist. Rewritten with the real reason (a `ch` cap is inert at display sizes). | pending |
-| P2-023 | 2026-09-15 | The deliberate `zinc` pairing in blog code blocks is now documented in §12 as the one sanctioned exception to §13. | pending |
-| P1-012 | 2026-09-15 | Pre-brutalist surfaces on `/blog`. Suspense fallback and skeletons rebuilt on the brutalist system; four decorative blur/outline elements removed. | pending |
-| P1-016 | 2026-09-15 | Profile strings hardcoded in seven places across four files. Added `siteConfig.role` and `siteConfig.employer`; all now read from config. | pending |
+| P2-021 | 2026-09-15 | §5 contrast table corrected and extended: `--paper` dark value fixed, four missing pairs added, background-only tokens and the alpha-modifier trap written into the rules. | `bf54a63` |
+| P2-022 | 2026-09-15 | §6's `h1` exemption cited a rule that does not exist. Rewritten with the real reason (a `ch` cap is inert at display sizes). | `bf54a63` |
+| P2-023 | 2026-09-15 | The deliberate `zinc` pairing in blog code blocks is now documented in §12 as the one sanctioned exception to §13. | `bf54a63` |
+| P1-012 | 2026-09-15 | Pre-brutalist surfaces on `/blog`. Suspense fallback and skeletons rebuilt on the brutalist system; four decorative blur/outline elements removed. | `bf54a63` |
+| P1-016 | 2026-09-15 | Profile strings hardcoded in seven places across four files. Added `siteConfig.role` and `siteConfig.employer`; all now read from config. | `bf54a63` |
 
 Entries predating this file have no ID; they are carried over from `DESIGN.md` §14.
 
