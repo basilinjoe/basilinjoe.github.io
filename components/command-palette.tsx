@@ -435,7 +435,7 @@ function CommandItem({
         {cmd.description && (
           <span
             className={cn(
-              "mt-1 truncate text-[11px]",
+              "mt-1 truncate text-xs",
               // muted-foreground on solid lime is 1.75:1 in dark.
               isActive ? "text-accent-lime-foreground/75" : "text-muted-foreground"
             )}

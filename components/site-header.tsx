@@ -60,7 +60,7 @@ function CommandPaletteButton() {
     >
       <Search className="h-3.5 w-3.5" />
       <span className="hidden lg:inline">Search</span>
-      <kbd className="flex items-center gap-0.5 border border-foreground/30 px-1 font-mono text-[10px]">
+      <kbd className="flex items-center gap-0.5 border border-foreground/30 px-1 font-mono text-micro">
         ⌘K
       </kbd>
     </button>

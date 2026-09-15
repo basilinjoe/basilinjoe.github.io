@@ -4,7 +4,6 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import { BlogPost } from "@/lib/blog"
 import { fadeInUp } from "@/lib/animations"
-import { tagToSlug } from "@/lib/tags"
 
 interface FeaturedPostsProps {
   posts: BlogPost[]
@@ -80,11 +79,12 @@ export function FeaturedPosts({ posts }: FeaturedPostsProps) {
                   </time>
                   <span aria-hidden>·</span>
                   <span>{post.readingTime}</span>
+                  {/* A label, not a control. The whole row is already a link, so
+                      a nested <a> to the tag page would be invalid HTML; the
+                      previous onClick only cancelled the parent link and left a
+                      dead, unfocusable hole in the click target. */}
                   {primaryTag && (
-                    <span
-                      onClick={(e) => e.preventDefault()}
-                      className="sticker-lime hidden md:inline-flex"
-                    >
+                    <span className="sticker-lime hidden md:inline-flex">
                       {primaryTag}
                     </span>
                   )}

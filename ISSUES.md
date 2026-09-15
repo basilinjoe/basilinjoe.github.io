@@ -39,14 +39,13 @@ trustworthy again, then visible drift, then hygiene.
 
 | # | ID | Why here |
 |---|---|---|
-| 1 | P1-010 | **Needs a decision.** Clickable stickers scrape 24px exactly; either raise the padding or bless the case in §8. |
-| 2 | P1-015, P1-017, P2-024 | Small correctness and polish fixes. |
-| 3 | P1-014 | Type-scale cleanup. Wide but mechanical. |
-| 4 | P2-018, P2-019, P2-020 | Dead code and dead tokens. Deletion, mostly. |
-| 5 | P1-013 | **Needs a decision.** The hero blur blobs are either a deliberate exception or they go. Not a defect either way. |
+| 1 | P1-010 | Clickable stickers scrape 24px exactly; either raise the padding or bless the case in §8. |
+| 2 | P1-025 | Brand and decorative colours: document an exception to §13, or bring them onto the accent trio. |
+| 3 | P1-013 | The hero blur blobs are either a deliberate exception to "zero blur" or they go. |
 
-Items 1 and 5 should not be "fixed" unilaterally — they are design calls, not bugs.
-Everything between them is mechanical.
+**All three remaining items are design decisions, not defects.** None should be
+"fixed" unilaterally — each has two defensible answers and the choice is the
+owner's. Every mechanical issue from the 2026-09-15 audit is closed.
 
 ---
 
@@ -74,6 +73,24 @@ line-height `1rem` (16px) + `py-0.5` (2px x2) + `border-2` (2px x2) — the box 
 - Fix: decide one way. Either bump to `py-1` (28px) and update §8, or correct §8's number
   and explicitly bless the clickable case.
 
+#### [P1-025] Decorative and brand colours bypass the token system
+
+Surfaced by the P2-019 sweep; not part of the original audit.
+
+- `components/dynamic-greeting.tsx` — time-of-day gradients on raw `yellow-400`,
+  `orange-500`, `purple-400`, `pink-500`, `blue-400`.
+- `components/blog-share.tsx` — `green-500` / `red-500` copy feedback, plus brand hex
+  values (`#1DA1F2`, `#0077B5`, `#3b5998`) for the share targets.
+
+Unlike the `ui/` primitives, these are not accidental shadcn leftovers. Brand colours
+are arguably a legitimate exception — a LinkedIn button that is not LinkedIn blue reads
+as broken — and the greeting gradient is deliberate decoration.
+
+- Violates: `DESIGN.md` §13 as literally written, which carves out no exception.
+- Fix: **needs a decision.** Either add a documented "brand and decorative colour"
+  exception to §13 alongside the `zinc` one in §12, or bring both onto the accent trio.
+  Contrast is not currently at risk in either file; this is consistency only.
+
 #### [P1-013] Home page background contradicts the "zero blur" direction
 
 `components/hero-animation.tsx` renders three 28rem `blur-3xl` accent blobs beneath the
@@ -85,92 +102,6 @@ vestibular list), so this is a direction question rather than a bug.
 
 - Fix: either document it in `DESIGN.md` as a deliberate mood layer exempt from the
   zero-blur rule, or replace it with the dot-grid texture it already layers on top.
-
-#### [P1-014] Four ad-hoc type tiers below the `micro` floor
-
-`DESIGN.md` §6 defines `micro` (0.6875rem / 11px) as the smallest tier, and §11 warns it
-is already the most fragile type in dark mode. These bypass the scale:
-
-| Size | Where |
-|---|---|
-| `text-[0.6rem]` (9.6px) | `components/main-nav.tsx:39`, `components/ui/badge.tsx:27` |
-| `text-[0.65rem]` (10.4px) | `components/sections/skills-and-tools.tsx:69`, `components/mobile-nav.tsx:64` |
-| `text-[10px]` | `components/site-header.tsx:63` |
-| `text-[11px]` | `components/command-palette.tsx:426` (same size as `micro`, just off-token) |
-
-- Fix: use `text-micro` everywhere; if a smaller tier is genuinely needed, add it to
-  `tailwind.config.ts` and document it in §6.
-
-#### [P1-015] `themeColor` is pure white and pure black
-
-`app/layout.tsx:51-53` sets `white` and `black`. The real page grounds are `45 25% 97%`
-(warm paper) and `240 12% 7%` (near-black blue).
-
-- Violates: `DESIGN.md` §11, whose stated strategy is "never use pure black or pure
-  white". Browser chrome visibly mismatches the page on mobile.
-- Fix: use the resolved hex of `--background` for each mode.
-
-#### [P1-017] Dead click zone inside a link
-
-`components/sections/featured-posts.tsx:82` puts `onClick={(e) => e.preventDefault()}` on
-a plain `<span>` inside the post `<Link>`. The span is not focusable, has no role, and
-the handler only cancels the parent link — so the tag chip is a hole in the row's click
-target with no behaviour of its own.
-
-- Fix: remove the handler, or make the chip a real `<Link>` to the tag page.
-
-### P2 — hygiene and documentation
-
-#### [P2-018] Eleven unreferenced files, ten of them undocumented
-
-`DESIGN.md` §14 lists only `components/loading-states.tsx` as dead. Also unreachable from
-any route:
-
-`components/projects-page.tsx`, `components/terminal-animation.tsx`,
-`components/sections/profile-section.tsx`, `components/sections/social-links.tsx`,
-`components/ui/avatar.tsx`, `components/ui/breadcrumb.tsx`,
-`components/ui/dropdown-menu.tsx`, `components/ui/input.tsx`,
-`components/ui/separator.tsx`, and transitively `components/ui/badge.tsx` and
-`components/ui/card.tsx`.
-
-Most carry the pre-brutalist language (`rounded-full`, `bg-blue-500`, `green-100` and
-`purple-100`, hardcoded `#0a66c2`, `#02b875`), so they are a standing re-drift risk — the
-same argument §4 used to justify deleting `lib/design-system/`.
-
-- Fix: delete, or move under a clearly marked `legacy/` path and note it in §14.
-
-#### [P2-019] Stock shadcn primitives bypass the token system
-
-`components/ui/badge.tsx`, `ui/dialog.tsx`, `ui/input.tsx`, and `ui/dropdown-menu.tsx`
-still carry generated shadcn defaults: `border-zinc-200`, `bg-white`, `dark:bg-zinc-950`,
-`rounded-full`, and `blue-500` / `green-100` / `purple-100` variants.
-
-`ui/dialog.tsx` is live (imported by `command-palette.tsx`, though the palette bypasses
-`DialogContent` and portals `DialogPrimitive.Content` itself). The rest are dead, see
-P2-018.
-
-- Violates: `DESIGN.md` §13 ("No hardcoded hex or raw Tailwind palette colour; semantic
-  tokens only").
-- Fix: retoken `ui/dialog.tsx`; delete the rest.
-
-#### [P2-020] `shadow-glow` references a token that does not exist
-
-`tailwind.config.ts:85` — `'glow': '0 0 15px 2px rgba(var(--primary-rgb)/0.15)'`.
-`--primary-rgb` is defined nowhere in the repo, so the shadow resolves to nothing. It is
-also a blurred shadow in a system whose §8 shadows are all zero-blur.
-
-- Fix: delete the entry.
-
-#### [P2-024] Skip link can overflow at 390px
-
-`components/skip-nav.tsx:26` positions the second link at `left-52` (208px). At 11px mono
-uppercase with `tracking-widest`, "Skip to navigation" plus `px-4` and borders runs to
-roughly 390-400px total.
-
-Only one link is visible at a time (`sr-only focus:not-sr-only`), so they never overlap,
-but the focused second link can push past the 390px viewport.
-
-- Fix: stack the links vertically below 640px, or narrow the offset.
 
 ---
 
@@ -201,6 +132,13 @@ but the focused second link can push past the 390px viewport.
 | P2-023 | 2026-09-15 | The deliberate `zinc` pairing in blog code blocks is now documented in §12 as the one sanctioned exception to §13. | `bf54a63` |
 | P1-012 | 2026-09-15 | Pre-brutalist surfaces on `/blog`. Suspense fallback and skeletons rebuilt on the brutalist system; four decorative blur/outline elements removed. | `bf54a63` |
 | P1-016 | 2026-09-15 | Profile strings hardcoded in seven places across four files. Added `siteConfig.role` and `siteConfig.employer`; all now read from config. | `bf54a63` |
+| P2-018 | 2026-09-15 | Dead code. Deleted 13 files, not the 11 logged: `interactive-hero.tsx` and `sections/social-links.tsx` fell out once their only importers went. | pending |
+| P2-019 | 2026-09-15 | Stock shadcn palette. Scope was wider than logged — `ui/sheet.tsx` and `ui/sonner.tsx` had it too. `components/ui/` is now free of raw palette colour. | pending |
+| P2-020 | 2026-09-15 | `shadow-glow` referenced the undefined `--primary-rgb`. Removed from `tailwind.config.ts`. | pending |
+| P1-014 | 2026-09-15 | Six off-scale type sizes moved onto `micro`; the palette description went to `text-xs` since `micro`'s tracking is for caps. Two more sites died with `ui/badge.tsx`. | pending |
+| P1-015 | 2026-09-15 | `themeColor` now uses the resolved `--background` hex, `#f9f8f5` / `#101014`. | pending |
+| P1-017 | 2026-09-15 | Dead click handler removed; the tag chip is a plain label, since a nested `<a>` inside the row link would be invalid HTML. | pending |
+| P2-024 | 2026-09-15 | Skip links now stack vertically below `sm` instead of running past a 390px viewport. | pending |
 
 Entries predating this file have no ID; they are carried over from `DESIGN.md` §14.
 

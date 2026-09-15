@@ -67,7 +67,7 @@ export function SkillsAndTools() {
                     <span className="font-serif text-xl leading-tight">
                       {skill.name}
                     </span>
-                    <span className="font-mono text-[0.65rem] font-bold uppercase tracking-widest text-muted-foreground">
+                    <span className="font-mono text-micro font-bold uppercase tracking-widest text-muted-foreground">
                       {proficiencyMark(skill.proficiency)}
                     </span>
                   </li>

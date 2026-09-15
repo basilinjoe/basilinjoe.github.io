@@ -33,10 +33,10 @@ export function MainNav() {
           JOE
         </motion.span>
         <span className="hidden flex-col leading-none sm:flex">
-          <span className="font-mono text-[0.7rem] font-bold uppercase tracking-widest text-foreground">
+          <span className="font-mono text-micro font-bold uppercase tracking-widest text-foreground">
             {siteConfig.name}
           </span>
-          <span className="mt-0.5 font-mono text-[0.6rem] uppercase tracking-widest text-muted-foreground">
+          <span className="mt-0.5 font-mono text-micro uppercase tracking-widest text-muted-foreground">
             {siteConfig.role}
           </span>
         </span>

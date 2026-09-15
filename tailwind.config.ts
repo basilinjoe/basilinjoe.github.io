@@ -82,7 +82,6 @@ const config: Config = {
         },
       },
       boxShadow: {
-        'glow': '0 0 15px 2px rgba(var(--primary-rgb)/0.15)',
         // Brutalist offset shadows: hard, no blur, big offset.
         'brutal-sm': '3px 3px 0 0 hsl(var(--foreground))',
         'brutal': '6px 6px 0 0 hsl(var(--foreground))',

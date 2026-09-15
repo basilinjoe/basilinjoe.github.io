@@ -48,9 +48,13 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
+  // Resolved values of `--background`, not `white`/`black`. The page grounds are
+  // warm paper and a near-black blue (DESIGN.md §11: never pure black or white),
+  // so the literal values made the browser chrome visibly mismatch the page.
+  // Keep in sync with `--background` in app/globals.css.
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "white" },
-    { media: "(prefers-color-scheme: dark)", color: "black" },
+    { media: "(prefers-color-scheme: light)", color: "#f9f8f5" },
+    { media: "(prefers-color-scheme: dark)", color: "#101014" },
   ],
 }
 

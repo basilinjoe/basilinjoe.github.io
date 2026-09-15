@@ -106,7 +106,7 @@ modifiers (`bg-accent-hot/40`).
 | `--paper` | `45 25% 97%` | `240 12% 8%` | Alias. **Not identical to `--background` in dark**, 8% vs 7%. |
 | `--ink` / `--foreground` | `240 15% 8%` | `45 25% 97%` | Body text, borders |
 | `--primary` | `224 100% 52%` | `224 95% 62%` | Links, focus ring token |
-| `--accent-hot` | `18 92% 48%` | `18 100% 62%` | Eyebrows, numerals, focus ring, emphasis |
+| `--accent-hot` | `18 92% 41%` | `18 100% 62%` | Eyebrows, numerals, focus ring, emphasis |
 | `--accent-lime` | `74 88% 50%` | `74 92% 62%` | Positive/CTA surfaces. **Background only** |
 | `--accent-pink` | `336 92% 55%` | `336 95% 68%` | Reserved, currently unused |
 | `--border` | `240 15% 8%` | `45 25% 97%` | Heavy 2px borders |
@@ -512,18 +512,11 @@ Before shipping any visual change:
 
 **Open issues now live in [`ISSUES.md`](./ISSUES.md), which is authoritative.** A
 full-app audit against this document on 2026-09-15 found 24 open items, including six
-that breach the §9 accessibility floor. Fifteen were fixed the same day — **all six P0s
-are closed**, along with the accuracy problems in this document itself. **9 remain
-open**, two of which are design decisions rather than defects. `ISSUES.md` carries the
-priority order. Do not treat the list below as current — it is the historical record of
-what was closed on the day this document was written.
-
-Known contradictions between *this document* and the code are logged as P2-021 through
-P2-023: the §5 contrast table is incomplete and its dark `--paper` value is wrong, §6's
-justification for exempting `h1` from the measure cites a rule that does not exist, §8
-mismeasures `.sticker` as 22px when it computes to 24px, and §13's "no raw palette
-colour" rule does not acknowledge the deliberate `zinc` pairing in blog prose. Fix the
-document alongside the code.
+that breach the §9 accessibility floor. **Twenty-two are closed**, including all six
+P0s, the accuracy problems in this document itself, and all the dead code. **Three
+remain, and all three are design decisions rather than defects** — see the priority
+table in `ISSUES.md`. Do not treat the list below as current; it is the historical
+record of what was closed on the day this document was written.
 
 **Resolved**
 

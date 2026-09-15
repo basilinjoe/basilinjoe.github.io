@@ -61,7 +61,7 @@ export function MobileNav() {
                     isActive && "border-accent-hot"
                   )}
                 >
-                  <span className="font-mono text-[0.65rem] uppercase tracking-widest text-muted-foreground">
+                  <span className="font-mono text-micro uppercase tracking-widest text-muted-foreground">
                     0{index + 1}
                   </span>
                   <span
