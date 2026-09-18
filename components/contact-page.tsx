@@ -210,14 +210,17 @@ export function ContactPage() {
           />
 
           <div className="grid gap-6 sm:grid-cols-2">
-            <Field label="Name" error={errors.name} required>
+            <Field htmlFor="contact-name" label="Name" error={errors.name} required>
               <input
+                id="contact-name"
                 type="text"
                 name="name"
                 value={fields.name}
                 onChange={handleChange}
                 placeholder="Your name"
                 disabled={isSubmitting}
+                aria-invalid={!!errors.name}
+                aria-describedby={errors.name ? "contact-name-error" : undefined}
                 className={cn(
                   inputBase,
                   errors.name ? "border-destructive" : "border-foreground"
@@ -225,14 +228,17 @@ export function ContactPage() {
               />
             </Field>
 
-            <Field label="Email" error={errors.email} required>
+            <Field htmlFor="contact-email" label="Email" error={errors.email} required>
               <input
+                id="contact-email"
                 type="email"
                 name="email"
                 value={fields.email}
                 onChange={handleChange}
                 placeholder="you@example.com"
                 disabled={isSubmitting}
+                aria-invalid={!!errors.email}
+                aria-describedby={errors.email ? "contact-email-error" : undefined}
                 className={cn(
                   inputBase,
                   errors.email ? "border-destructive" : "border-foreground"
@@ -241,14 +247,17 @@ export function ContactPage() {
             </Field>
           </div>
 
-          <Field label="Subject" error={errors.subject} required>
+          <Field htmlFor="contact-subject" label="Subject" error={errors.subject} required>
             <input
+              id="contact-subject"
               type="text"
               name="subject"
               value={fields.subject}
               onChange={handleChange}
               placeholder="What's this about?"
               disabled={isSubmitting}
+              aria-invalid={!!errors.subject}
+              aria-describedby={errors.subject ? "contact-subject-error" : undefined}
               className={cn(
                 inputBase,
                 errors.subject ? "border-destructive" : "border-foreground"
@@ -256,15 +265,18 @@ export function ContactPage() {
             />
           </Field>
 
-          <Field label="Message" error={errors.message} required>
+          <Field htmlFor="contact-message" label="Message" error={errors.message} required>
             <div className="relative">
               <textarea
+                id="contact-message"
                 name="message"
                 value={fields.message}
                 onChange={handleChange}
                 placeholder="Write your message here… (20-500 characters)"
                 rows={6}
                 disabled={isSubmitting}
+                aria-invalid={!!errors.message}
+                aria-describedby={errors.message ? "contact-message-error" : undefined}
                 className={cn(
                   inputBase,
                   "resize-none",
@@ -362,11 +374,13 @@ function ContactRow({
 }
 
 function Field({
+  htmlFor,
   label,
   error,
   children,
   required,
 }: {
+  htmlFor: string
   label: string
   error?: string
   children: React.ReactNode
@@ -374,13 +388,20 @@ function Field({
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="flex items-center gap-1.5 font-mono text-micro font-bold uppercase tracking-widest">
+      <label
+        htmlFor={htmlFor}
+        className="flex items-center gap-1.5 font-mono text-micro font-bold uppercase tracking-widest"
+      >
         {label}
         {required && <span className="text-accent-hot">*</span>}
       </label>
       {children}
       {error && (
-        <p className="flex items-center gap-1.5 font-mono text-xs text-destructive">
+        <p
+          id={`${htmlFor}-error`}
+          role="alert"
+          className="flex items-center gap-1.5 font-mono text-xs text-destructive"
+        >
           <span aria-hidden>▲</span>
           {error}
         </p>

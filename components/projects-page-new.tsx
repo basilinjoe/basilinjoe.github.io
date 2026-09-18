@@ -121,6 +121,7 @@ export function ProjectsPage({ repos }: ProjectsPageProps) {
               No projects match &quot;{activeFilter}&quot;.
             </p>
             <button
+              type="button"
               onClick={() => setActiveFilter("All")}
               className="mt-3 font-mono text-micro font-bold uppercase tracking-widest text-accent-hot underline"
             >
@@ -170,6 +171,7 @@ export function ProjectsPage({ repos }: ProjectsPageProps) {
                   <div className="mt-4 flex flex-wrap gap-1.5">
                     {repo.topics.slice(0, 5).map((topic) => (
                       <button
+                        type="button"
                         key={topic}
                         onClick={() => setActiveFilter(topic)}
                         className="sticker-button"
@@ -249,6 +251,7 @@ function FilterChip({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       className={cn(
         "shrink-0 border-2 border-foreground px-3 py-1 font-mono text-micro font-bold uppercase tracking-widest transition-all",

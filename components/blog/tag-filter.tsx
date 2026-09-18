@@ -39,6 +39,7 @@ export default function TagFilter({ allTags, selectedTag }: TagFilterProps) {
           const isActive = isAll ? !selectedTag : selectedTag === chip
           return (
             <button
+              type="button"
               key={chip}
               onClick={() => handleTagClick(isAll ? null : chip)}
               className={cn(

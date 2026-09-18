@@ -57,6 +57,7 @@ export default function PaginationControls({
               p === totalPages
             return (
               <button
+                type="button"
                 key={p}
                 onClick={() => handlePageChange(p)}
                 aria-current={isCurrent ? "page" : undefined}
@@ -99,6 +100,7 @@ function PageBtn({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       disabled={disabled}
       aria-label={label}

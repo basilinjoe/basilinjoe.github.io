@@ -11,12 +11,23 @@ pnpm dev           # Next.js dev server on http://localhost:3000
 pnpm build         # Standard Next.js build
 pnpm run predeploy # Static export build (writes to ./out)
 pnpm run deploy    # Publish ./out to gh-pages branch via gh-pages CLI
-pnpm run lint      # eslint . (ESLint 9 flat config in eslint.config.mjs)
+pnpm run lint      # biome lint . && eslint .  (both must pass)
+pnpm run lint:fast # biome only — ~50ms, covers most rules
+pnpm run lint:fix  # biome safe autofixes
 ```
 
 There is no test runner configured in this repo — do not invent one. CI (`.github/workflows/nextjs.yml`) runs `pnpm run predeploy` on pushes to `master` and deploys to GitHub Pages.
 
 Verify changes with `pnpm run lint`, `npx tsc --noEmit`, and `pnpm run predeploy` (end-to-end static export). Lint currently passes clean — keep it that way rather than adding suppressions.
+
+**Two linters, on purpose.** Biome (`biome.json`) is primary: it lints 80 files in ~50ms versus ESLint's ~3.5s. ESLint is kept *only* for the React Compiler `react-hooks/*` rules, which have no equivalent among Biome's 554 rules. This is not redundancy — measured on a 14-defect probe (2026-09-18), Biome missed `set-state-in-effect` and `set-state-in-render`, and the former caught two real bugs in this repo the same day (P1-029, P1-030). Every rule Biome already covers is switched off in `eslint.config.mjs` so the two never double-report. If Biome ships React Compiler rules, delete `eslint.config.mjs` and the `eslint*` devDependencies.
+
+Two Biome caveats specific to this repo:
+
+- **The formatter is disabled** (`"formatter": {"enabled": false}`). Enabling it reformats all 81 files, which would bury real changes in whitespace churn. Turn it on only as a deliberate, standalone commit.
+- **`app/globals.css` is excluded.** Biome's CSS parser only understands Tailwind 4 directives; this repo is on Tailwind 3, so `@apply` produces ~53 spurious parse errors. Revisit on a Tailwind 4 upgrade.
+
+Suppressions use `// biome-ignore lint/<group>/<rule>: <reason>` — a reason is mandatory.
 
 ## Architecture
 

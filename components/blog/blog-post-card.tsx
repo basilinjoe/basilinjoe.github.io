@@ -96,6 +96,7 @@ export default function BlogPostCard({
           <div className="mt-3 flex flex-wrap gap-1.5">
             {post.tags?.slice(1, 5).map((tag) => (
               <button
+                type="button"
                 key={tag}
                 onClick={(e) => {
                   e.preventDefault()
@@ -156,6 +157,7 @@ export default function BlogPostCard({
           <div className="flex flex-wrap gap-1.5">
             {post.tags.slice(1, 4).map((tag) => (
               <button
+                type="button"
                 key={tag}
                 onClick={(e) => {
                   e.preventDefault()

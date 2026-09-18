@@ -405,6 +405,7 @@ function CommandItem({
 
   return (
     <button
+      type="button"
       ref={ref}
       onClick={cmd.action}
       onMouseEnter={onHover}

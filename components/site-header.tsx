@@ -1,6 +1,5 @@
 "use client"
 
-import * as React from "react"
 import { motion } from "framer-motion"
 import { Search } from "lucide-react"
 import { MainNav } from "@/components/main-nav"
@@ -49,6 +48,7 @@ function CommandPaletteButton() {
   const { setOpen } = useCommandPalette()
   return (
     <button
+      type="button"
       onClick={() => setOpen(true)}
       className={cn(
         "hidden items-center gap-2 border-2 border-foreground bg-background px-3 py-1.5",

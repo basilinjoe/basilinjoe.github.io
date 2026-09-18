@@ -1,0 +1,52 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.5.14/schema.json",
+	"vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+	"files": {
+		"ignoreUnknown": false,
+		"includes": [
+			"**",
+			"!.next/**",
+			"!out/**",
+			"!build/**",
+			"!next-env.d.ts",
+			"!app/globals.css"
+		]
+	},
+	"formatter": {
+		"enabled": false
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"recommended": true,
+			"correctness": {
+				"useExhaustiveDependencies": "warn",
+				"useHookAtTopLevel": "error",
+				"useJsxKeyInIterable": "error"
+			},
+			"performance": {
+				"noImgElement": "warn",
+				"noSyncScripts": "error"
+			},
+			"style": {
+				"noHeadElement": "warn",
+				"useImportType": "off"
+			},
+			"suspicious": {
+				"noDocumentImportInPage": "error",
+				"noHeadImportInDocument": "error",
+				"useGoogleFontDisplay": "warn",
+				"noArrayIndexKey": "warn",
+				"noExplicitAny": "warn",
+				"noUnknownAtRules": "off"
+			},
+			"security": {
+				"noDangerouslySetInnerHtml": "off"
+			}
+		}
+	},
+	"assist": {
+		"enabled": true,
+		"actions": { "source": { "organizeImports": "off" } }
+	}
+}

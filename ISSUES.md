@@ -68,7 +68,7 @@ needs a decision, so it is left open rather than guessed at.
 (GA was checked at the same time and is fine: `G-631LG05FS6` is a live property;
 `googletagmanager.com/gtag/js?id=G-631LG05FS6` returns a real 523 KB config payload.)
 
-The next entry gets ID `P?-038`.
+The next entry gets ID `P?-042`.
 
 ---
 
@@ -120,6 +120,10 @@ The next entry gets ID `P?-038`.
 | P2-034 | 2026-09-18 | `types/nav.ts` (unreferenced `NavItem`) and `components/markdown-content.tsx` (a 15-line wrapper adding one class, used once) were dead weight. Deleted; the wrapper is inlined as `<div className="markdown mt-10">`. | `5f07380` |
 | P2-035 | 2026-09-18 | `REDESIGN_PLAN.md` described a Feb-2026 plan whose work is done or abandoned (it still claimed "Next.js 15", "Projects section commented out", and listed a testimonials carousel that does not exist). Removed as stale; `DESIGN.md` and `ISSUES.md` are the live documents. | `5f07380` |
 | P2-036 | 2026-09-18 | Self-inflicted in `5f07380`: a code comment in `hero-animation.tsx` containing the bare word "static" made Tailwind's JIT emit an unused `.static{position:static}` rule (stylesheet 59,683 -> 59,707 bytes). Caught by diffing the built export against the pre-refactor build. Comment reworded. | `f1136dc` |
+| P1-038 | 2026-09-18 | **No label in the contact form was associated with its input.** `Field` rendered a bare `<label>` and none of the four inputs carried an `id`, so clicking a label did not focus its field and screen readers announced the controls unlabelled (WCAG 1.3.1 / 3.3.2). Added `htmlFor`/`id` pairs plus `aria-invalid` and `aria-describedby` pointing at `role="alert"` error text. Verified in-browser: clicking each of the 4 labels now focuses its control. Found by Biome's `a11y/noLabelWithoutControl`; ESLint's config never flagged it. | _this commit_ |
+| P2-039 | 2026-09-18 | 10 action buttons lacked `type="button"` (`blog-post-card` x2, `pagination-controls` x2, `tag-filter`, `command-palette`, `projects-page-new` x3, `site-header`). A `<button>` without an explicit type defaults to `submit`, which is a latent form-submission bug for any button placed inside a `<form>`. Found by Biome's `a11y/useButtonType`. | _this commit_ |
+| P2-040 | 2026-09-18 | Three unused imports survived the dead-code sweep in `5f07380` because ESLint's Next preset does not enable `no-unused-vars`: `React` in `main-nav.tsx` and `site-header.tsx`, and one icon in `icons.tsx`. Found by Biome's `correctness/noUnusedImports`. | _this commit_ |
+| P2-041 | 2026-09-18 | The custom Medium `<svg>` in `icons.tsx` was exposed to assistive tech with no accessible name. It is decorative (always paired with visible link text), so it now carries `aria-hidden="true"` and `focusable="false"` rather than a redundant `<title>`. Found by Biome's `a11y/noSvgWithoutTitle`. | _this commit_ |
 
 Entries predating this file have no ID; they are carried over from `DESIGN.md` §14.
 
