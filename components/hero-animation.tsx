@@ -26,8 +26,8 @@ export function HeroAnimation() {
   const x = useSpring(mouseX, springConfig)
   const y = useSpring(mouseY, springConfig)
 
-  // Server render has no matchMedia, so the static export starts at `false`
-  // and React re-checks on hydration.
+  // Server render has no matchMedia, so the prerendered HTML starts at
+  // `false` and React re-checks on hydration.
   const reduced = useSyncExternalStore(
     subscribeToReducedMotion,
     () => window.matchMedia(REDUCED_MOTION).matches,
