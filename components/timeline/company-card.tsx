@@ -41,8 +41,7 @@ export function CompanyCard({
       {/* Initials tile */}
       <div className="relative flex h-16 w-16 shrink-0 items-center justify-center border-2 border-foreground bg-accent-lime shadow-brutal-sm">
         {logo ? (
-          // biome-ignore lint/performance/noImgElement: `output: "export"` disables
-          // next/image optimization, so a plain <img> is the correct element here.
+          // biome-ignore lint/performance/noImgElement: output:"export" disables next/image optimization, so a plain <img> is the correct element here.
           <img
             src={logo}
             alt={company}

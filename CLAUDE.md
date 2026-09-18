@@ -11,13 +11,13 @@ pnpm dev           # Next.js dev server on http://localhost:3000
 pnpm build         # Standard Next.js build
 pnpm run predeploy # Static export build (writes to ./out)
 pnpm run deploy    # Publish ./out to gh-pages branch via gh-pages CLI
-pnpm run lint      # biome lint . — ~50ms for 79 files
+pnpm run lint      # biome lint --error-on-warnings . — ~50ms for 79 files
 pnpm run lint:fix  # biome safe autofixes
 ```
 
 There is no test runner configured in this repo — do not invent one. CI (`.github/workflows/nextjs.yml`) runs `pnpm run predeploy` on pushes to `master` and deploys to GitHub Pages.
 
-Verify changes with `pnpm run lint`, `npx tsc --noEmit`, and `pnpm run predeploy` (end-to-end static export). Lint currently passes clean — keep it that way rather than adding suppressions.
+Verify changes with `pnpm run lint`, `npx tsc --noEmit`, and `pnpm run predeploy` (end-to-end static export). All three also run in CI and gate the deploy. Lint is at zero diagnostics — keep it there.
 
 **Biome is the only linter.** ESLint was removed on 2026-09-18 (14 packages), config in `biome.json`. Lint runs in ~50ms instead of ~3.5s.
 
@@ -25,12 +25,29 @@ Verify changes with `pnpm run lint`, `npx tsc --noEmit`, and `pnpm run predeploy
 
 If Biome ever ships React Compiler rules, enable them and delete this warning.
 
-Two Biome caveats specific to this repo:
+**`pnpm run lint` is `biome lint --error-on-warnings .`** Warnings fail the command,
+so they cannot silently accumulate the way they had before 2026-09-18 (22 had piled
+up, invisible to CI because Biome exits 0 on warnings by default). The tree is at
+zero diagnostics; keep it there. Fix the finding, or suppress it with a reason that
+says why it is correct — do not downgrade a rule to make output quiet.
 
-- **The formatter is disabled** (`"formatter": {"enabled": false}`). Enabling it reformats all 81 files, which would bury real changes in whitespace churn. Turn it on only as a deliberate, standalone commit.
-- **`app/globals.css` is excluded.** Biome's CSS parser only understands Tailwind 4 directives; this repo is on Tailwind 3, so `@apply` produces ~53 spurious parse errors. Revisit on a Tailwind 4 upgrade.
+Three settled decisions, not open questions:
 
-Suppressions use `// biome-ignore lint/<group>/<rule>: <reason>` — a reason is mandatory.
+- **The formatter stays disabled** (`"formatter": {"enabled": false}`). Measured
+  2026-09-18: enabling it rewrites 77 of 79 files. The existing style is consistent
+  and hand-maintained, so the churn buys nothing and would wreck `git blame`. Only
+  revisit as a deliberate, standalone commit that changes nothing else.
+- **`app/globals.css` stays excluded.** Biome's CSS parser only understands Tailwind
+  4 directives; this repo is on Tailwind 3, so `@apply` produces 53 spurious parse
+  errors. `noUnknownAtRules` is also off for the same reason. Re-include the file and
+  re-enable that rule as part of any Tailwind 4 upgrade — not before.
+- **`useImportType` is off.** It would add `import type` across most files for no
+  runtime benefit under `isolatedModules`.
+
+**Suppressions must be one line.** Use
+`// biome-ignore lint/<group>/<rule>: <reason>` — the reason is mandatory, and
+wrapping it onto a second comment line silently breaks the suppression. Two
+`noImgElement` ignores were inert for exactly that reason until 2026-09-18.
 
 **All 22 explicitly-enabled rules were verified live on 2026-09-18** by planting a
 matching defect for each and confirming it fires (22/22), and by confirming the two

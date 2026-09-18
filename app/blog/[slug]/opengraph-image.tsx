@@ -85,7 +85,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
               display: "flex",
             }}
           >
-            {excerpt.length > 120 ? excerpt.slice(0, 120) + "…" : excerpt}
+            {excerpt.length > 120 ? `${excerpt.slice(0, 120)}…` : excerpt}
           </div>
         )}
 

@@ -123,6 +123,7 @@ export function GithubProjects({ repos }: ProjectsListProps) {
         {featured.length === 0
           ? Array.from({ length: 3 }).map((_, i) => (
               <div
+                // biome-ignore lint/suspicious/noArrayIndexKey: fixed-length aria-hidden placeholder; items have no identity
                 key={i}
                 aria-hidden
                 className="h-56 animate-pulse border-2 border-foreground/20 bg-muted"

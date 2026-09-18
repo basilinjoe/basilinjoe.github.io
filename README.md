@@ -24,7 +24,7 @@ pnpm dev      # starts Next.js on http://localhost:3000
 Lint and type-check the project with:
 
 ```bash
-pnpm run lint       # Biome — lints the whole project in ~50ms
+pnpm run lint       # Biome — lints the whole project in ~50ms (warnings fail)
 pnpm run lint:fix   # apply Biome's safe autofixes
 pnpm exec tsc --noEmit
 ```

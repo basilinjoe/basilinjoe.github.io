@@ -8,7 +8,7 @@ import { TimelineItem } from "@/components/timeline/timeline-item"
 function formatDateShort(dateStr: string): string {
   if (!dateStr) return "Present"
   const [, month, year] = dateStr.split("/")
-  const date = new Date(parseInt(year), parseInt(month) - 1)
+  const date = new Date(parseInt(year, 10), parseInt(month, 10) - 1)
   return date.toLocaleDateString("en-US", { month: "short", year: "numeric" })
 }
 
@@ -84,6 +84,7 @@ export default function AboutPage() {
       <section className="py-16 md:py-24">
         <div className="space-y-16">
           {siteConfig.experience.map((exp, expIndex) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: experience comes from the static siteConfig timeline; order never changes
             <div key={expIndex} className="space-y-6">
               <CompanyCard
                 company={exp.company}
@@ -96,6 +97,7 @@ export default function AboutPage() {
               <div className="ml-4 space-y-0 md:ml-6">
                 {exp.roles.map((role, roleIndex) => (
                   <TimelineItem
+                    // biome-ignore lint/suspicious/noArrayIndexKey: roles come from the static siteConfig timeline; order never changes
                     key={roleIndex}
                     role={role}
                     index={roleIndex}

@@ -21,11 +21,8 @@ const mdxComponents = {
       />
     )
   },
-  // Plain <img> on purpose: `output: "export"` disables next/image
-  // optimization, and MDX authors supply the alt text in the markdown.
   img: (props: React.ImgHTMLAttributes<HTMLImageElement>) => (
-    // biome-ignore lint/performance/noImgElement: `output: "export"` disables
-    // next/image optimization, so a plain <img> is the correct element here.
+    // biome-ignore lint/performance/noImgElement: output:"export" disables next/image optimization, so a plain <img> is correct here; MDX authors supply alt text in the markdown.
     <img {...props} alt={props.alt ?? ""} loading="lazy" />
   ),
   // Tables get their own scroll container so a wide table never makes the page

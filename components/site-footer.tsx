@@ -49,6 +49,7 @@ export function SiteFooter() {
         controlClassName="mr-3 h-8 w-8 border-foreground bg-background text-foreground"
       >
         {marqueeItems.map((word, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: repeated marquee word, deliberately duplicated; index is the only identity
           <span key={i} className="mx-6 font-serif text-6xl italic md:text-8xl">
             {word}
             <span aria-hidden className="mx-6 text-accent-hot">

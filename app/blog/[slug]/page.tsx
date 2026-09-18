@@ -10,11 +10,14 @@ import { BlogPostSharingSection } from "@/components/blog/blog-post-sharing-sect
 import { BlogPostLayout } from "@/components/blog/blog-post-layout"
 import { RelatedPosts } from "@/components/blog/related-posts"
 
+// Next 16 passes route params as a Promise; both handlers await it below.
+type BlogPostParams = { params: Promise<{ slug: string }> }
+
 export async function generateStaticParams() {
   return getAllPosts().map((post) => ({ slug: post.id }))
 }
 
-export async function generateMetadata({ params }: any): Promise<Metadata> {
+export async function generateMetadata({ params }: BlogPostParams): Promise<Metadata> {
   const { slug } = await params
   const post = getAllPosts().find((p) => p.id === slug)
 
@@ -55,7 +58,7 @@ export async function generateMetadata({ params }: any): Promise<Metadata> {
   }
 }
 
-export default async function BlogPostPage({ params }: any) {
+export default async function BlogPostPage({ params }: BlogPostParams) {
   const { slug } = await params
   const allPosts = getAllPosts()
   const currentIndex = allPosts.findIndex((p) => p.id === slug)

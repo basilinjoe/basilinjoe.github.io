@@ -29,6 +29,7 @@ export function BlogBreadcrumb({ postTitle, tag }: BlogBreadcrumbProps) {
     >
       <ol className="flex flex-wrap items-center gap-2">
         {items.map((item, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: breadcrumb trail is rebuilt per render and never reordered
           <li key={i} className="flex items-center gap-2">
             {item.href ? (
               <Link

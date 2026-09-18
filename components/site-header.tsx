@@ -31,6 +31,7 @@ function TickerBar() {
     >
       {items.map((line, i) => (
         <span
+          // biome-ignore lint/suspicious/noArrayIndexKey: repeated ticker line; index disambiguates duplicate text
           key={`${line}-${i}`}
           className="mx-6 font-mono text-micro font-semibold tracking-widest"
         >

@@ -10,7 +10,10 @@ export async function generateStaticParams() {
   return getAllTags().map((tag) => ({ tag: tagToSlug(tag) }))
 }
 
-export async function generateMetadata({ params }: any): Promise<Metadata> {
+// Next 16 passes route params as a Promise; both handlers await it below.
+type TagParams = { params: Promise<{ tag: string }> }
+
+export async function generateMetadata({ params }: TagParams): Promise<Metadata> {
   const { tag: slug } = await params
   const tag = getTagBySlug(slug)
 
@@ -29,7 +32,7 @@ export async function generateMetadata({ params }: any): Promise<Metadata> {
   }
 }
 
-export default async function TagPage({ params }: any) {
+export default async function TagPage({ params }: TagParams) {
   const { tag: slug } = await params
   const tag = getTagBySlug(slug)
 

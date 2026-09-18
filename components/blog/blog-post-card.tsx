@@ -15,7 +15,7 @@ interface BlogPostCardProps {
 
 /** Highlights matching text inside search results. */
 function Highlight({ text, query }: { text: string; query?: string }) {
-  if (!query || !query.trim()) return <>{text}</>
+  if (!query?.trim()) return <>{text}</>
   const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
   const regex = new RegExp(`(${escaped})`, "gi")
   const parts = text.split(regex)
@@ -24,6 +24,7 @@ function Highlight({ text, query }: { text: string; query?: string }) {
       {parts.map((part, i) =>
         regex.test(part) ? (
           <mark
+            // biome-ignore lint/suspicious/noArrayIndexKey: split() fragments of one string; position is the identity
             key={i}
             className="bg-accent-lime px-0.5 not-italic text-accent-lime-foreground"
           >

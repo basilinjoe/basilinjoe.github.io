@@ -49,6 +49,7 @@ export function SkeletonText({ lines = 3, className }: { lines?: number; classNa
     <div className={cn("space-y-2", className)}>
       {Array.from({ length: lines }).map((_, i) => (
         <Skeleton
+          // biome-ignore lint/suspicious/noArrayIndexKey: fixed-length skeleton placeholder; items have no identity
           key={i}
           className={cn(
             "h-4",

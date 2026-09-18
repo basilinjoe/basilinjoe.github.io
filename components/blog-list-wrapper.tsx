@@ -50,6 +50,7 @@ function BlogListFallback() {
         {/* Tag filter row */}
         <div className="flex flex-wrap gap-2 px-4 sm:px-6 md:px-0">
           {Array.from({ length: 5 }).map((_, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: fixed-length skeleton placeholder; items have no identity
             <Skeleton key={`tag-${i}`} className="h-7 w-16" />
           ))}
         </div>
@@ -71,6 +72,7 @@ function BlogListFallback() {
           </div>
 
           {Array.from({ length: 5 }).map((_, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: fixed-length skeleton placeholder; items have no identity
             <SkeletonCard key={`post-${i}`} />
           ))}
         </div>

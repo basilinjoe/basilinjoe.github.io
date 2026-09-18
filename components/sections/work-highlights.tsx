@@ -61,6 +61,7 @@ export function WorkHighlights() {
 
             <ul className="space-y-2 text-sm text-muted-foreground md:text-base">
               {role.responsibilities.slice(0, 2).map((resp, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: static responsibility strings from siteConfig; never reordered
                 <li key={i} className="flex gap-2">
                   <span aria-hidden className="mt-2 h-1 w-1 shrink-0 bg-accent-hot" />
                   <span>{resp}</span>

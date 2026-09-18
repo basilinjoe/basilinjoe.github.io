@@ -18,7 +18,7 @@ interface TimelineItemProps {
 function formatDate(dateStr: string): string {
   if (!dateStr) return "Present"
   const [, month, year] = dateStr.split("/")
-  const date = new Date(parseInt(year), parseInt(month) - 1)
+  const date = new Date(parseInt(year, 10), parseInt(month, 10) - 1)
   return date.toLocaleDateString("en-US", { month: "short", year: "numeric" })
 }
 
@@ -83,6 +83,7 @@ export function TimelineItem({ role, index, isLast }: TimelineItemProps) {
           <ul className="mb-4 space-y-2">
             {role.responsibilities.map((item, i) => (
               <motion.li
+                // biome-ignore lint/suspicious/noArrayIndexKey: static responsibility strings from siteConfig; never reordered
                 key={i}
                 initial={{ opacity: 0, x: 8 }}
                 whileInView={{ opacity: 1, x: 0 }}
