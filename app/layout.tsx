@@ -8,13 +8,12 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { MotionProvider } from "@/components/motion-provider"
 import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
-import { GoogleAnalytics } from '@/components/google-analytics'
+import { GoogleAnalytics } from '@next/third-parties/google'
 import { PersonJsonLd, WebsiteJsonLd } from '@/components/json-ld'
 import { SkipNav } from '@/components/skip-nav'
 import { ScrollToTop } from '@/components/scroll-to-top'
 import { CommandPaletteProvider } from '@/components/command-palette'
 import { Toaster } from '@/components/ui/sonner'
-// import { ThemeSwitcher } from '@/components/theme-switcher'
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -96,8 +95,7 @@ export default function RootLayout({
               </CommandPaletteProvider>
             </MotionProvider>
           </ThemeProvider>
-          {/* <ThemeSwitcher /> */}
-          <GoogleAnalytics gaId={siteConfig.gaid}/>
+          <GoogleAnalytics gaId={siteConfig.gaid} />
           <PersonJsonLd />
           <WebsiteJsonLd />
         </body>

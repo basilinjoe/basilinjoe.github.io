@@ -1,9 +1,7 @@
-const ghPages = process.env.DEPLOY_TARGET === 'gh-pages';
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    // Static export for GitHub Pages: everything must render at build time.
     output: "export",
-    basePath: "",
-    assetPrefix: "",
     images: {
         unoptimized: true,
     },

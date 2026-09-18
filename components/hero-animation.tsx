@@ -1,7 +1,15 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useSyncExternalStore } from "react"
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion"
+
+const REDUCED_MOTION = "(prefers-reduced-motion: reduce)"
+
+function subscribeToReducedMotion(onChange: () => void) {
+  const media = window.matchMedia(REDUCED_MOTION)
+  media.addEventListener("change", onChange)
+  return () => media.removeEventListener("change", onChange)
+}
 
 /**
  * Cursor-parallax editorial blob background.
@@ -18,15 +26,13 @@ export function HeroAnimation() {
   const x = useSpring(mouseX, springConfig)
   const y = useSpring(mouseY, springConfig)
 
-  const [reduced, setReduced] = useState(false)
-
-  useEffect(() => {
-    const media = window.matchMedia("(prefers-reduced-motion: reduce)")
-    setReduced(media.matches)
-    const listener = () => setReduced(media.matches)
-    media.addEventListener("change", listener)
-    return () => media.removeEventListener("change", listener)
-  }, [])
+  // Server render has no matchMedia, so the static export starts at `false`
+  // and React re-checks on hydration.
+  const reduced = useSyncExternalStore(
+    subscribeToReducedMotion,
+    () => window.matchMedia(REDUCED_MOTION).matches,
+    () => false
+  )
 
   useEffect(() => {
     if (reduced) return

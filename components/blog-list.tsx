@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion"
 import { staggerContainer } from "@/lib/animations"
 import { BlogPost } from "@/lib/blog"
-import { useEffect, useState, useCallback } from "react"
+import { useCallback, useMemo } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import BlogHeader from "@/components/blog/blog-header"
 import TagFilter from "@/components/blog/tag-filter"
@@ -18,88 +18,73 @@ interface BlogListProps {
   allTags: string[];
 }
 
+const POSTS_PER_PAGE = 6
+
+/**
+ * The query string is the single source of truth for page/tag/search. Every
+ * other value here is derived from it during render, so there is no state to
+ * keep in sync and no effects: a URL change re-renders with the right list.
+ */
 export default function BlogList({ allPosts, allTags }: BlogListProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const [selectedTag, setSelectedTag] = useState<string | undefined>(undefined);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filteredPosts, setFilteredPosts] = useState<BlogPost[]>(allPosts);
-  const [paginatedPosts, setPaginatedPosts] = useState<BlogPost[]>([]);
-  const [totalPages, setTotalPages] = useState(1);
+  const selectedTag = searchParams.get('tag') || undefined;
+  const searchQuery = searchParams.get('q') || "";
+  const requestedPage = Number(searchParams.get('page')) || 1;
 
-  const postsPerPage = 6;
-  const isFiltering = !!(selectedTag || searchQuery);
-  const showFeatured = currentPage === 1 && !isFiltering;
-
-  useEffect(() => {
-    const page = searchParams.get('page') ? Number(searchParams.get('page')) : 1;
-    const tag = searchParams.get('tag') || undefined;
-    const search = searchParams.get('q') || "";
-
-    setCurrentPage(page);
-    setSelectedTag(tag);
-    setSearchQuery(search);
-  }, [searchParams]);
-
-  useEffect(() => {
+  const filteredPosts = useMemo(() => {
     let filtered = allPosts;
-
     if (selectedTag) {
-      filtered = filtered.filter(post => post.tags && post.tags.includes(selectedTag));
+      filtered = filtered.filter((post) => post.tags?.includes(selectedTag));
     }
-
     if (searchQuery) {
       filtered = searchBlogPosts(filtered, searchQuery);
     }
+    return filtered;
+  }, [allPosts, selectedTag, searchQuery]);
 
-    setFilteredPosts(filtered);
+  const totalPages = Math.max(1, Math.ceil(filteredPosts.length / POSTS_PER_PAGE));
+  // Clamp rather than redirect: a stale ?page=9 from a wider result set shows
+  // the last real page instead of an empty grid.
+  const currentPage = Math.min(Math.max(requestedPage, 1), totalPages);
 
-    const total = Math.ceil(filtered.length / postsPerPage);
-    setTotalPages(total);
+  const paginatedPosts = useMemo(() => {
+    const startIndex = (currentPage - 1) * POSTS_PER_PAGE;
+    return filteredPosts.slice(startIndex, startIndex + POSTS_PER_PAGE);
+  }, [filteredPosts, currentPage]);
 
-    if (currentPage > total && total > 0) {
-      setCurrentPage(1);
-    }
-  }, [selectedTag, searchQuery, allPosts, currentPage]);
+  const isFiltering = !!(selectedTag || searchQuery);
+  const showFeatured = currentPage === 1 && !isFiltering;
 
-  useEffect(() => {
-    const startIndex = (currentPage - 1) * postsPerPage;
-    const endIndex = startIndex + postsPerPage;
-    setPaginatedPosts(filteredPosts.slice(startIndex, endIndex));
-  }, [filteredPosts, currentPage, postsPerPage]);
-
-  const handleTagClick = (tag: string) => {
+  // Any filter change resets pagination, so `page` is always dropped here.
+  const updateQuery = useCallback((mutate: (params: URLSearchParams) => void) => {
     const params = new URLSearchParams(searchParams.toString());
-
-    if (selectedTag === tag) {
-      params.delete('tag');
-      setSelectedTag(undefined);
-    } else {
-      params.set('tag', tag);
-      setSelectedTag(tag);
-    }
-
+    mutate(params);
     params.delete('page');
-    setCurrentPage(1);
-    router.push(`/blog?${params.toString()}`, { scroll: false });
-  };
+    const query = params.toString();
+    router.push(query ? `/blog?${query}` : '/blog', { scroll: false });
+  }, [searchParams, router]);
+
+  const handleTagClick = useCallback((tag: string) => {
+    updateQuery((params) => {
+      if (params.get('tag') === tag) {
+        params.delete('tag');
+      } else {
+        params.set('tag', tag);
+      }
+    });
+  }, [updateQuery]);
 
   const handleSearch = useCallback((query: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-
-    if (query) {
-      params.set('q', query);
-    } else {
-      params.delete('q');
-    }
-
-    params.delete('page');
-    setCurrentPage(1);
-    setSearchQuery(query);
-    router.push(`/blog?${params.toString()}`, { scroll: false });
-  }, [searchParams, router]);
+    updateQuery((params) => {
+      if (query) {
+        params.set('q', query);
+      } else {
+        params.delete('q');
+      }
+    });
+  }, [updateQuery]);
 
   return (
     <div className="relative overflow-x-hidden">
@@ -116,6 +101,7 @@ export default function BlogList({ allPosts, allTags }: BlogListProps) {
         <BlogHeader />
 
         <BlogSearch
+          initialQuery={searchQuery}
           onSearch={handleSearch}
           className="mb-2 px-4 sm:px-6 md:px-0 max-w-md"
         />

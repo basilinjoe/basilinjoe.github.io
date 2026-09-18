@@ -56,8 +56,6 @@ jobs:
         
       - name: Build with Next.js
         run: pnpm run predeploy
-        env:
-          DEPLOY_TARGET: gh-pages
           
       - name: Create .nojekyll file
         run: touch ./out/.nojekyll

@@ -50,7 +50,7 @@ decision rather than a defect, and do not resolve those unilaterally.
 Resolved below, and **Known non-issues** for the things that look like bugs but are
 deliberate.
 
-The next entry gets ID `P?-028`.
+The next entry gets ID `P?-036`.
 
 ---
 
@@ -93,6 +93,14 @@ The next entry gets ID `P?-028`.
 | P1-013 | 2026-09-15 | Hero blur layer kept. §2 rewritten to scope "zero blur" to the component language and document the three background layers explicitly. | `57040e1` |
 | P2-026 | 2026-09-15 | `CLAUDE.md` still told future sessions to prefer importing from `lib/design-system/`, deleted in `5389854`, and listed `projects-page.tsx`, deleted in `6a5d85f`. Corrected. | `5537b99` |
 | P2-027 | 2026-09-15 | Default Vercel favicon and unused `next.svg` / `vercel.svg` scaffolding replaced with a brand icon set. | `5537b99` |
+| P1-028 | 2026-09-18 | `pnpm run lint` was dead: Next 16 removed `next lint` and ESLint 9 ignores `.eslintrc.json`. Migrated to flat config (`eslint.config.mjs`, importing `eslint-config-next/core-web-vitals` directly — it already exports a flat array, so `FlatCompat` is unnecessary). Lint now runs clean. | _this commit_ |
+| P1-029 | 2026-09-18 | `components/blog-list.tsx` mirrored URL state into 6 `useState`s synced by 3 `useEffect`s, tripping `react-hooks/set-state-in-effect` 3x. Side effect: a deep-linked `/blog?q=term` filtered the list but left the search box empty. Now derived from `useSearchParams()` during render; `BlogSearch` takes `initialQuery`. 121 -> 134 lines but zero sync effects. | _this commit_ |
+| P1-030 | 2026-09-18 | `components/hero-animation.tsx:25` called `setState` directly in an effect to read `prefers-reduced-motion`. Replaced with `useSyncExternalStore`, which is the correct primitive for an external store and gives a proper SSR snapshot. | _this commit_ |
+| P2-031 | 2026-09-18 | `components/google-analytics.tsx` was a vendored copy of `@next/third-parties/google` — including its commented-out `sendGAEvent` — while that package was already a dependency. Deleted; `app/layout.tsx` imports upstream. | _this commit_ |
+| P2-032 | 2026-09-18 | Four dependencies were installed but imported nowhere: `@radix-ui/react-avatar`, `@radix-ui/react-dropdown-menu`, `@radix-ui/react-icons`, `@radix-ui/react-separator`. Removed. (`CLAUDE.md` claimed `@radix-ui/react-icons` was in use for icons; it was not.) | _this commit_ |
+| P2-033 | 2026-09-18 | `DEPLOY_TARGET=gh-pages` was threaded through `cross-env`, the `predeploy` script, and the CI workflow, but `next.config.js` only assigned it to an unused `ghPages` const. Removed the flag, the `cross-env` dep, and the dead `basePath`/`assetPrefix: ""` no-ops. | _this commit_ |
+| P2-034 | 2026-09-18 | `types/nav.ts` (unreferenced `NavItem`) and `components/markdown-content.tsx` (a 15-line wrapper adding one class, used once) were dead weight. Deleted; the wrapper is inlined as `<div className="markdown mt-10">`. | _this commit_ |
+| P2-035 | 2026-09-18 | `REDESIGN_PLAN.md` described a Feb-2026 plan whose work is done or abandoned (it still claimed "Next.js 15", "Projects section commented out", and listed a testimonials carousel that does not exist). Removed as stale; `DESIGN.md` and `ISSUES.md` are the live documents. | _this commit_ |
 
 Entries predating this file have no ID; they are carried over from `DESIGN.md` §14.
 

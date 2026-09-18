@@ -1,7 +1,6 @@
 import { MDXRemote } from "next-mdx-remote/rsc"
 import rehypeHighlight from "rehype-highlight"
 import remarkGfm from "remark-gfm"
-import { MarkdownContent } from "@/components/markdown-content"
 import { BlogPost } from "@/lib/blog"
 import "highlight.js/styles/github-dark.css"
 
@@ -22,8 +21,11 @@ const mdxComponents = {
       />
     )
   },
+  // Plain <img> on purpose: `output: "export"` disables next/image
+  // optimization, and MDX authors supply the alt text in the markdown.
   img: (props: React.ImgHTMLAttributes<HTMLImageElement>) => (
-    <img {...props} loading="lazy" />
+    // eslint-disable-next-line @next/next/no-img-element
+    <img {...props} alt={props.alt ?? ""} loading="lazy" />
   ),
   // Tables get their own scroll container so a wide table never makes the page
   // body scroll horizontally (DESIGN.md §7). remark-gfm emits a bare <table>,
@@ -43,7 +45,7 @@ export function BlogPostContent({ post }: BlogPostContentProps) {
         {post.excerpt}
       </p>
 
-      <MarkdownContent className="mt-10">
+      <div className="markdown mt-10">
         <MDXRemote
           source={post.content}
           components={mdxComponents}
@@ -56,7 +58,7 @@ export function BlogPostContent({ post }: BlogPostContentProps) {
             },
           }}
         />
-      </MarkdownContent>
+      </div>
     </div>
   )
 }

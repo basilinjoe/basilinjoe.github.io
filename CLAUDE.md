@@ -9,14 +9,14 @@ Package manager: **pnpm** (see `packageManager` in `package.json`). npm works to
 ```bash
 pnpm dev           # Next.js dev server on http://localhost:3000
 pnpm build         # Standard Next.js build
-pnpm run predeploy # Static export build (writes to ./out) — sets DEPLOY_TARGET=gh-pages
+pnpm run predeploy # Static export build (writes to ./out)
 pnpm run deploy    # Publish ./out to gh-pages branch via gh-pages CLI
-pnpm run lint      # next lint (ESLint 9, extends eslint-config-next)
+pnpm run lint      # eslint . (ESLint 9 flat config in eslint.config.mjs)
 ```
 
 There is no test runner configured in this repo — do not invent one. CI (`.github/workflows/nextjs.yml`) runs `pnpm run predeploy` on pushes to `master` and deploys to GitHub Pages.
 
-**`pnpm run lint` is currently broken** — Next.js 16 removed `next lint`, and ESLint 9 requires flat config (`eslint.config.js`) but the repo still ships `.eslintrc.json`. Use `npx tsc --noEmit` for type checks and `pnpm run predeploy` for end-to-end verification until this is migrated.
+Verify changes with `pnpm run lint`, `npx tsc --noEmit`, and `pnpm run predeploy` (end-to-end static export). Lint currently passes clean — keep it that way rather than adding suppressions.
 
 ## Architecture
 
@@ -32,13 +32,15 @@ Key layers:
 - **`components/`** — mix of page-level composites (`home-page.tsx`, `about-page.tsx`, `projects-page-new.tsx`, `contact-page.tsx`, `blog-list.tsx`), section pieces under `components/sections/` and `components/blog/`, and shadcn/ui primitives under `components/ui/`.
 - **`lib/utils.ts`** — the `cn()` helper (clsx + tailwind-merge). shadcn convention.
 
-**Styling & UI:** Tailwind CSS + shadcn/ui (config in `components.json`, base color zinc, aliases `@/components` and `@/lib/utils`). Dark mode is class-based via `next-themes`. Framer Motion is used throughout for animation. Icons: `lucide-react` and `@radix-ui/react-icons`.
+**Styling & UI:** Tailwind CSS + shadcn/ui (config in `components.json`, base color zinc, aliases `@/components` and `@/lib/utils`). Dark mode is class-based via `next-themes`. Framer Motion is used throughout for animation. Icons: `lucide-react`, plus the hand-rolled brand glyphs in `components/icons.tsx`.
 
 **Path alias:** `@/*` → repo root (see `tsconfig.json`). Use `@/components/...`, `@/lib/...`, `@/config/site`.
 
 **SEO / metadata:** Per-page metadata is set via the App Router `metadata` export. JSON-LD is centralized in `components/json-ld.tsx`. `public/llms.txt` and `public/robots.txt` are hand-maintained. The RSS feed (`app/feed.xml/route.ts`) is a static route handler (`dynamic = 'force-static'`) — it works under `output: 'export'` and is discovered via `alternates.types` in `app/layout.tsx`. When adding a blog post, no code changes are needed anywhere — sitemap, RSS, tag pages, and OG images all regenerate from `content/blog` at build. Use `resolveAssetUrl()` from `lib/utils.ts` when building absolute URLs from `coverImage` values (it passes through already-absolute URLs).
 
-**Deployment target flag:** `DEPLOY_TARGET=gh-pages` is set by the `predeploy` script and by the GitHub Actions workflow. The variable is currently read only informationally (`ghPages` in `next.config.js` is unused at present) — the actual static-export behavior is unconditional. Keep this in mind before wiring anything conditional to it.
+**Deployment:** static export is unconditional, so `predeploy` is just `next build`. The old `DEPLOY_TARGET=gh-pages` flag and its `cross-env` wrapper were removed on 2026-09-18 — nothing ever read the value. Do not reintroduce an env flag unless something actually branches on it.
+
+**Blog index state:** `components/blog-list.tsx` treats the query string as the single source of truth. `tag`, `q`, and `page` are read from `useSearchParams()` and everything else (filtered posts, total pages, the current page) is derived during render via `useMemo`. Do not reintroduce `useState` mirrors synced by `useEffect`; that was the previous shape and it tripped `react-hooks/set-state-in-effect` and dropped deep-linked `?q=` values.
 
 ## Design system
 

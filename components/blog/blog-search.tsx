@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { Search, X } from "lucide-react"
 import { motion } from "framer-motion"
 import { fadeInUp } from "@/lib/animations"
@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils"
 
 interface BlogSearchProps {
   onSearch: (query: string) => void
+  /** Current query from the URL, so a shared/reloaded link shows its search term. */
+  initialQuery?: string
   placeholder?: string
   className?: string
 }
@@ -18,20 +20,18 @@ interface BlogSearchProps {
  */
 export function BlogSearch({
   onSearch,
+  initialQuery = "",
   placeholder = "Search title, content, tags…",
   className,
 }: BlogSearchProps) {
-  const [query, setQuery] = useState("")
+  const [query, setQuery] = useState(initialQuery)
 
   useEffect(() => {
+    // Already reflected in the URL — firing again would push a duplicate entry.
+    if (query === initialQuery) return
     const timer = setTimeout(() => onSearch(query), 300)
     return () => clearTimeout(timer)
-  }, [query, onSearch])
-
-  const handleClear = useCallback(() => {
-    setQuery("")
-    onSearch("")
-  }, [onSearch])
+  }, [query, initialQuery, onSearch])
 
   return (
     <motion.div variants={fadeInUp} className={className}>
@@ -59,7 +59,7 @@ export function BlogSearch({
         {query && (
           <button
             type="button"
-            onClick={handleClear}
+            onClick={() => setQuery("")}
             aria-label="Clear search"
             className="mr-1 border-2 border-foreground bg-background px-2 py-1 text-foreground hover:bg-accent-hot hover:text-accent-hot-foreground"
           >
