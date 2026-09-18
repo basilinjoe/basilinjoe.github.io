@@ -11,8 +11,7 @@ pnpm dev           # Next.js dev server on http://localhost:3000
 pnpm build         # Standard Next.js build
 pnpm run predeploy # Static export build (writes to ./out)
 pnpm run deploy    # Publish ./out to gh-pages branch via gh-pages CLI
-pnpm run lint      # biome lint . && eslint .  (both must pass)
-pnpm run lint:fast # biome only — ~50ms, covers most rules
+pnpm run lint      # biome lint . — ~50ms for 79 files
 pnpm run lint:fix  # biome safe autofixes
 ```
 
@@ -20,7 +19,11 @@ There is no test runner configured in this repo — do not invent one. CI (`.git
 
 Verify changes with `pnpm run lint`, `npx tsc --noEmit`, and `pnpm run predeploy` (end-to-end static export). Lint currently passes clean — keep it that way rather than adding suppressions.
 
-**Two linters, on purpose.** Biome (`biome.json`) is primary: it lints 80 files in ~50ms versus ESLint's ~3.5s. ESLint is kept *only* for the React Compiler `react-hooks/*` rules, which have no equivalent among Biome's 554 rules. This is not redundancy — measured on a 14-defect probe (2026-09-18), Biome missed `set-state-in-effect` and `set-state-in-render`, and the former caught two real bugs in this repo the same day (P1-029, P1-030). Every rule Biome already covers is switched off in `eslint.config.mjs` so the two never double-report. If Biome ships React Compiler rules, delete `eslint.config.mjs` and the `eslint*` devDependencies.
+**Biome is the only linter.** ESLint was removed on 2026-09-18 (14 packages), config in `biome.json`. Lint runs in ~50ms instead of ~3.5s.
+
+**Known, accepted coverage gap.** Biome has no equivalent for the React Compiler rules `react-hooks/set-state-in-effect` and `set-state-in-render` — verified absent across all 554 Biome rules. Those two caught real bugs in this repo on 2026-09-18 (P1-029, P1-030), so the class is not hypothetical here. The tradeoff was accepted deliberately for speed and one-tool simplicity. **The mitigation is review, not tooling:** when touching a `"use client"` component, check by hand that no `useEffect` calls `setState` synchronously to mirror a prop, URL value, or other derived state. Derive it during render instead. See the "Blog index state" note below for the shape this bug took.
+
+If Biome ever ships React Compiler rules, enable them and delete this warning.
 
 Two Biome caveats specific to this repo:
 

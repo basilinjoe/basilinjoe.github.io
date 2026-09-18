@@ -51,7 +51,7 @@ export function SocialShare({ title, url }: SocialShareProps) {
       await navigator.clipboard.writeText(url)
       setCopyStatus('success')
       setTimeout(() => setCopyStatus('idle'), 2000)
-    } catch (err) {
+    } catch {
       setCopyStatus('error')
       setTimeout(() => setCopyStatus('idle'), 2000)
     }

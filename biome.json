@@ -5,9 +5,9 @@
 		"ignoreUnknown": false,
 		"includes": [
 			"**",
-			"!.next/**",
-			"!out/**",
-			"!build/**",
+			"!.next",
+			"!out",
+			"!build",
 			"!next-env.d.ts",
 			"!app/globals.css"
 		]
@@ -18,30 +18,52 @@
 	"linter": {
 		"enabled": true,
 		"rules": {
-			"recommended": true,
+			"preset": "recommended",
+			"a11y": {
+				"noAmbiguousAnchorText": "warn",
+				"noNoninteractiveElementInteractions": "warn",
+				"noNoninteractiveTabindex": "error",
+				"useAnchorContent": "error",
+				"useFocusableInteractive": "error",
+				"useHeadingContent": "error",
+				"useValidAnchor": "error",
+				"useButtonType": "error",
+				"noSvgWithoutTitle": "error",
+				"noLabelWithoutControl": "error"
+			},
 			"correctness": {
 				"useExhaustiveDependencies": "warn",
 				"useHookAtTopLevel": "error",
-				"useJsxKeyInIterable": "error"
+				"useJsxKeyInIterable": "error",
+				"noUnusedImports": "warn",
+				"noUnusedVariables": "warn",
+				"noBeforeInteractiveScriptOutsideDocument": "error",
+				"noNextAsyncClientComponent": "error",
+				"useInlineScriptId": "error"
 			},
 			"performance": {
 				"noImgElement": "warn",
-				"noSyncScripts": "error"
+				"noSyncScripts": "error",
+				"noUnwantedPolyfillio": "error",
+				"useGoogleFontPreconnect": "warn"
 			},
 			"style": {
-				"noHeadElement": "warn",
+				"noHeadElement": "error",
 				"useImportType": "off"
 			},
 			"suspicious": {
 				"noDocumentImportInPage": "error",
 				"noHeadImportInDocument": "error",
 				"useGoogleFontDisplay": "warn",
+				"noDuplicateFontNames": "error",
+				"noDuplicateJsxProps": "error",
 				"noArrayIndexKey": "warn",
 				"noExplicitAny": "warn",
 				"noUnknownAtRules": "off"
 			},
 			"security": {
-				"noDangerouslySetInnerHtml": "off"
+				"noDangerouslySetInnerHtml": "off",
+				"noScriptUrl": "error"
 			}
 		}
 	},
