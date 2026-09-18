@@ -62,6 +62,10 @@ Two repo-specific traps documented there that are easy to hit:
 - **Don't set `color` on `.markdown pre code`.** It out-specifies highlight.js's `.hljs`
   rule and breaks syntax highlighting. Scope inline-code styling with
   `.markdown :not(pre) > code`.
+- **Tailwind scans comments, not just JSX.** A code comment containing a bare utility
+  name (`static`, `container`, `grid`, …) makes the JIT emit that rule into the
+  stylesheet. Cost P2-036 an unused `.static{position:static}`. If a comment needs such
+  a word, phrase it so the token is not standalone.
 
 Token authority lives in `app/globals.css` (colours, component classes, prose styles)
 and `tailwind.config.ts` (type scale, shadows, keyframes). `lib/design-system/` was

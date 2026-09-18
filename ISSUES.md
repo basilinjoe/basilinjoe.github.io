@@ -50,7 +50,7 @@ decision rather than a defect, and do not resolve those unilaterally.
 Resolved below, and **Known non-issues** for the things that look like bugs but are
 deliberate.
 
-The next entry gets ID `P?-036`.
+The next entry gets ID `P?-037`.
 
 ---
 
@@ -101,6 +101,7 @@ The next entry gets ID `P?-036`.
 | P2-033 | 2026-09-18 | `DEPLOY_TARGET=gh-pages` was threaded through `cross-env`, the `predeploy` script, and the CI workflow, but `next.config.js` only assigned it to an unused `ghPages` const. Removed the flag, the `cross-env` dep, and the dead `basePath`/`assetPrefix: ""` no-ops. | `5f07380` |
 | P2-034 | 2026-09-18 | `types/nav.ts` (unreferenced `NavItem`) and `components/markdown-content.tsx` (a 15-line wrapper adding one class, used once) were dead weight. Deleted; the wrapper is inlined as `<div className="markdown mt-10">`. | `5f07380` |
 | P2-035 | 2026-09-18 | `REDESIGN_PLAN.md` described a Feb-2026 plan whose work is done or abandoned (it still claimed "Next.js 15", "Projects section commented out", and listed a testimonials carousel that does not exist). Removed as stale; `DESIGN.md` and `ISSUES.md` are the live documents. | `5f07380` |
+| P2-036 | 2026-09-18 | Self-inflicted in `5f07380`: a code comment in `hero-animation.tsx` containing the bare word "static" made Tailwind's JIT emit an unused `.static{position:static}` rule (stylesheet 59,683 -> 59,707 bytes). Caught by diffing the built export against the pre-refactor build. Comment reworded. | `f1136dc` |
 
 Entries predating this file have no ID; they are carried over from `DESIGN.md` §14.
 
