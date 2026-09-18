@@ -53,7 +53,16 @@ jobs:
             
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-        
+
+      # Lint and types gate the deploy. `next build` type-checks too, but it
+      # runs after page collection, so a type error would otherwise surface
+      # minutes later. Biome takes ~50ms.
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Typecheck
+        run: pnpm exec tsc --noEmit
+
       - name: Build with Next.js
         run: pnpm run predeploy
           

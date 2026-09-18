@@ -21,11 +21,15 @@ pnpm install  # or npm install
 pnpm dev      # starts Next.js on http://localhost:3000
 ```
 
-Lint the project with:
+Lint and type-check the project with:
 
 ```bash
-pnpm run lint
+pnpm run lint       # Biome — lints the whole project in ~50ms
+pnpm run lint:fix   # apply Biome's safe autofixes
+pnpm exec tsc --noEmit
 ```
+
+Both run in CI on every push to `master` and must pass before the site deploys.
 
 ## Building and Deployment
 
@@ -40,8 +44,6 @@ The site will be generated in the `out` directory. Deploy it to GitHub Pages wit
 ```bash
 pnpm run deploy
 ```
-
-Set the `DEPLOY_TARGET=gh-pages` environment variable if you are building directly using `next build`.
 
 ## Adding Blog Posts
 

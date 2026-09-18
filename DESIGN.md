@@ -542,16 +542,21 @@ Before shipping any visual change:
       Everything else is drift. Verify with a grep, not by eye.
 - [ ] If MDX: no `style={{}}`, no `<style>` blocks. Build and grep the output HTML.
 - [ ] `pnpm run predeploy` passes. `npx tsc --noEmit` passes.
-      (`pnpm run lint` is broken: Next 16 removed `next lint` and ESLint 9 needs flat config.)
+      `pnpm run lint` passes (Biome; ESLint was removed on 2026-09-18). All three
+      also run in CI and gate the deploy.
 
 ---
 
 ## 14. Open items
 
-**Open issues live in [`ISSUES.md`](./ISSUES.md), which is authoritative. It is
-currently empty.** A full-app audit against this document on 2026-09-15 found 24
-issues, including six that breached the §9 accessibility floor and several places
-where *this document* was wrong. All 24 are closed, plus one found during the work.
+**Open issues live in [`ISSUES.md`](./ISSUES.md), which is authoritative.** A
+full-app audit against this document on 2026-09-15 found 24 issues, including six
+that breached the §9 accessibility floor and several places where *this document*
+was wrong. All 24 are closed, plus one found during the work.
+
+**One issue is open as of 2026-09-18: `P0-037`** — the contact form posts to the
+scaffold placeholder `formspreeId: "YOUR_FORM_ID"`, so every submission fails with
+"Form not found". It needs the site owner's Formspree account to fix.
 
 `ISSUES.md` also carries a **Known non-issues** list — things that look like bugs and
 are deliberate. Read it before "fixing" the hero's blur layer, the brand colour on
