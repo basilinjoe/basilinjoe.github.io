@@ -46,11 +46,29 @@ decision rather than a defect, and do not resolve those unilaterally.
 
 ## Open
 
-**Nothing open.** Every issue from the 2026-09-15 full-app audit is closed — see
-Resolved below, and **Known non-issues** for the things that look like bugs but are
-deliberate.
+### [P0-037] The contact form silently fails for every visitor
 
-The next entry gets ID `P?-037`.
+`config/site.ts:49` still holds the scaffold placeholder `formspreeId: "YOUR_FORM_ID"`.
+`components/contact-page.tsx:72` POSTs to `https://formspree.io/f/YOUR_FORM_ID`, so every
+submission fails. Verified against the live API on 2026-09-18:
+
+```
+POST https://formspree.io/f/YOUR_FORM_ID
+{"error":"Form not found","errors":[{"code":"FORM_NOT_FOUND","message":"Form not found"}]}
+```
+
+The form validates input, shows a spinner, then surfaces "Failed to send — Form not
+found" via toast. A visitor's only working route is the `mailto:` link further down the
+page. This is user-visible failure on a primary conversion surface, hence P0.
+
+**Fix:** create a Formspree form and replace the placeholder with its real ID, or drop
+the form and keep the `mailto:` route. Cannot be fixed without the owner's account —
+needs a decision, so it is left open rather than guessed at.
+
+(GA was checked at the same time and is fine: `G-631LG05FS6` is a live property;
+`googletagmanager.com/gtag/js?id=G-631LG05FS6` returns a real 523 KB config payload.)
+
+The next entry gets ID `P?-038`.
 
 ---
 
