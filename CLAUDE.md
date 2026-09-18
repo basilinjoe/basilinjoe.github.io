@@ -32,6 +32,13 @@ Two Biome caveats specific to this repo:
 
 Suppressions use `// biome-ignore lint/<group>/<rule>: <reason>` — a reason is mandatory.
 
+**All 22 explicitly-enabled rules were verified live on 2026-09-18** by planting a
+matching defect for each and confirming it fires (22/22), and by confirming the two
+lost React Compiler rules stay silent. Biome rejects unknown rule keys in
+`biome.json` with `Found an unknown key`, so a misspelled rule fails loudly rather
+than sitting inert — but if you add a rule, still plant a defect once to confirm it
+catches what you think it does.
+
 ## Architecture
 
 **Next.js App Router site statically exported to GitHub Pages.** Everything must be renderable at build time — `next.config.js` sets `output: "export"` and `images.unoptimized: true`. No API routes, no server-only runtime, no `next/image` optimization. Any dynamic route (e.g. `app/blog/[slug]`) must implement `generateStaticParams`.
