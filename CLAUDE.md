@@ -40,7 +40,7 @@ Key layers:
 
 **Deployment:** static export is unconditional, so `predeploy` is just `next build`. The old `DEPLOY_TARGET=gh-pages` flag and its `cross-env` wrapper were removed on 2026-09-18 — nothing ever read the value. Do not reintroduce an env flag unless something actually branches on it.
 
-**Blog index state:** `components/blog-list.tsx` treats the query string as the single source of truth. `tag`, `q`, and `page` are read from `useSearchParams()` and everything else (filtered posts, total pages, the current page) is derived during render via `useMemo`. Do not reintroduce `useState` mirrors synced by `useEffect`; that was the previous shape and it tripped `react-hooks/set-state-in-effect` and dropped deep-linked `?q=` values.
+**Blog index state:** `components/blog-list.tsx` treats the query string as the single source of truth. `tag`, `q`, and `page` are read from `useSearchParams()` and everything else (filtered posts, total pages, the current page) is derived during render via `useMemo`. Do not reintroduce `useState` mirrors synced by `useEffect`; that was the previous shape, it tripped `react-hooks/set-state-in-effect`, and it made `/blog?q=term` a dead link (the debounce in `BlogSearch` overwrote the incoming query with `""` before it could take effect). `BlogSearch` must keep taking `initialQuery` and skipping its debounce when the value already equals the URL, or that bug returns.
 
 ## Design system
 
