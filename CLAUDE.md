@@ -17,6 +17,8 @@ pnpm run lint:fix  # biome safe autofixes
 
 There is no test runner configured in this repo — do not invent one. CI (`.github/workflows/nextjs.yml`) runs `pnpm run predeploy` on pushes to `master` and deploys to GitHub Pages.
 
+**There is no `main` and no PR flow: `master` is the default branch, and pushing to it deploys straight to production.** CI installs with `--frozen-lockfile`, then gates on `pnpm run lint` and `pnpm exec tsc --noEmit` before building. Treat a push as a deploy — verify locally first, and never push work you have not built end to end.
+
 Verify changes with `pnpm run lint`, `npx tsc --noEmit`, and `pnpm run predeploy` (end-to-end static export). All three also run in CI and gate the deploy. Lint is at zero diagnostics — keep it there.
 
 **Biome is the only linter.** ESLint was removed on 2026-09-18 (14 packages), config in `biome.json`. Lint runs in ~50ms instead of ~3.5s.
