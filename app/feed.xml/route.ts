@@ -13,6 +13,22 @@ function escapeXml(unsafe: string): string {
     .replace(/'/g, "&apos;")
 }
 
+const IMAGE_MIME_TYPES: Record<string, string> = {
+  avif: "image/avif",
+  gif: "image/gif",
+  jpeg: "image/jpeg",
+  jpg: "image/jpeg",
+  png: "image/png",
+  svg: "image/svg+xml",
+  webp: "image/webp",
+}
+
+function imageMimeType(pathOrUrl: string): string {
+  const path = pathOrUrl.split(/[?#]/)[0]
+  const ext = path.split(".").pop()?.toLowerCase() ?? ""
+  return IMAGE_MIME_TYPES[ext] ?? "image/webp"
+}
+
 export async function GET() {
   const posts = getAllPosts()
   const buildDate = new Date().toUTCString()
@@ -26,7 +42,7 @@ export async function GET() {
         .map((tag) => `      <category>${escapeXml(tag)}</category>`)
         .join("\n")
       const image = post.coverImage
-        ? `      <enclosure url="${escapeXml(resolveAssetUrl(post.coverImage))}" type="image/webp" />`
+        ? `      <enclosure url="${escapeXml(resolveAssetUrl(post.coverImage))}" type="${imageMimeType(post.coverImage)}" />`
         : ""
 
       return `    <item>
