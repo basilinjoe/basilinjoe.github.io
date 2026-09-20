@@ -27,6 +27,10 @@ Technical articles on cloud architecture, DevOps, and software engineering.
 - Autonomous Agents: The Future of AI Automation: https://basilinjoe.github.io/blog/autonomous-agents
 - AI Coding Assistants: A Practical Developer's Guide: https://basilinjoe.github.io/blog/efficient-use-of-ai-coding-assistants
 - Deploying AKS with Bicep: Production-Ready IaC: https://basilinjoe.github.io/blog/deploying-aks-with-bicep
+- MCP Server Design Is Changing: From API Endpoints to Agent Workflows: https://basilinjoe.github.io/blog/mcp-server-design-is-changing
+- When Coding Gets Cheap, Judgment Gets Expensive: https://basilinjoe.github.io/blog/when-coding-gets-cheap
+- Why the Humanities Matter More in the Age of AI: https://basilinjoe.github.io/blog/why-humanities-matter-in-ai-era
+- System One Models and Jev: How to Read the Benchmarks: https://basilinjoe.github.io/blog/system-one-models-and-jev
 
 - Blog index: https://basilinjoe.github.io/blog
 - Topics: Azure, Kubernetes, DevOps, AI/ML, software development
