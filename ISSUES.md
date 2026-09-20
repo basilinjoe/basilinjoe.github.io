@@ -68,7 +68,45 @@ needs a decision, so it is left open rather than guessed at.
 (GA was checked at the same time and is fine: `G-631LG05FS6` is a live property;
 `googletagmanager.com/gtag/js?id=G-631LG05FS6` returns a real 523 KB config payload.)
 
-The next entry gets ID `P?-049`.
+### [P2-050] `robots.txt` allows two retired Anthropic crawler names but not the current one
+
+`public/robots.txt:28` and `:31` grant `Allow: /` to `Claude-Web` and `anthropic-ai`.
+Both are legacy user-agent strings. Anthropic's current crawler identifies as
+`ClaudeBot`, which is not named, so it falls through to the `User-agent: *` block at
+line 2 rather than the explicit allowance the other AI crawlers get.
+
+Every other major AI crawler is explicitly allowed: `GPTBot`, `ChatGPT-User`,
+`PerplexityBot`, `Amazonbot`, `cohere-ai`. The omission reads as the name having
+changed after the file was written, not as a deliberate exclusion.
+
+**Not fixed here, deliberately.** `robots.txt` is crawler policy, and the change was
+outside the scope of "write a blog post". The owner should confirm the intent before
+it changes. If the intent is what it appears to be, the fix is four lines:
+
+```
+User-agent: ClaudeBot
+Allow: /
+```
+
+### [P2-051] `coverImage` is declared and indexed but never rendered on the page
+
+Every post sets `coverImage` in frontmatter. It reaches `BlogPostJsonLd` as the
+BlogPosting `image` (`components/blog/blog-post-layout.tsx:49`) and the RSS
+`<enclosure>` (`app/feed.xml/route.ts:29`), both of which are useful. But no component
+renders it: `blog-post-header.tsx`, `blog-post-content.tsx`, `blog-post-card.tsx` and
+`blog-posts-grid.tsx` contain no reference to it, so the asset never loads in the page
+body or on an index card.
+
+Not a bug, and arguably good for page weight, since the cards are text-forward by
+design. Logged because it is surprising: adding a post naturally leads you to produce a
+cover image, and it is worth knowing up front that the image does structured-data and
+feed work only, never visual work. The largest existing cover is 619.8 KB, which buys
+nothing a smaller file would not.
+
+**Decide one way:** either render it (blog index card or post header) or note in
+`CLAUDE.md` that covers are metadata-only and should be sized accordingly.
+
+The next entry gets ID `P?-052`.
 
 ---
 
@@ -76,6 +114,7 @@ The next entry gets ID `P?-049`.
 
 | ID | Date | Issue | Fixed in |
 |---|---|---|---|
+| P2-049 | 2026-09-20 | RSS `<enclosure>` hardcoded `type="image/webp"` for every cover image. Not latent as first logged: the two Pixabay `.jpg` covers (`mcp-server-design-is-changing`, `why-humanities-matter-in-ai-era`) were shipping mislabelled in the live feed. Now derived from the extension via an `IMAGE_MIME_TYPES` map, query/hash stripped first. | `9506787` |
 | — | 2026-09-15 | `--accent-hot` 3.53:1 AA failure across 108 usages. Now 4.63:1. | `5389854` |
 | — | 2026-09-15 | `--success` 2.62:1 and `--destructive` 3.96:1 AA failures. Now 4.57 and 4.59. | `5389854` |
 | — | 2026-09-15 | Prose measure ~105ch. Now capped at 68ch, figures and code break out. | `5389854` |
@@ -172,3 +211,12 @@ Documented so they are not "discovered" again.
 - **`app/apple-icon.png` has no border frame** while `icon.svg` does. Deliberate: iOS
   masks the icon with a rounded rectangle, which would clip a square frame at the
   corners.
+
+- **Local `out/` holds RSC payloads at nested paths while production serves them
+  flat.** A locally built `out/` contains `out/blog/__next.blog/__PAGE__.txt`, but the
+  browser requests `/blog/__next.blog.__PAGE__.txt`, so a naive local static server
+  returns 404 for every prefetch and the console fills with errors. This is not a site
+  defect: checked against production on 2026-09-20, `basilinjoe.github.io` serves the
+  flat dotted path with 200 and the nested path with 404, which is the opposite of the
+  local tree. Client-side navigation works on the deployed site. If you serve `out/`
+  locally and see prefetch 404s, it is your server, not the build.
