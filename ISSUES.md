@@ -46,6 +46,40 @@ decision rather than a defect, and do not resolve those unilaterally.
 
 ## Open
 
+### [P1-052] Blog skill helpers invoke `python3`, which is a stub on this machine
+
+The blog skill resolves its Python helpers and then runs them with `python3`
+(`.claude/skills/blog/SKILL.md:242-244`, `.claude/skills/blog/SKILL.md:289`). On this
+machine `python3` resolves to the Windows App Execution Alias at
+`/c/Users/basil/AppData/Local/Microsoft/WindowsApps/python3`, a Microsoft Store stub that
+runs nothing. Measured 2026-09-22:
+
+```
+$ python3 .claude/scripts/load_untrusted_root.py --help
+Python was not found; run without arguments to install from the Microsoft Store, ...
+
+$ python .claude/scripts/load_untrusted_root.py --help
+usage: load_untrusted_root.py [-h] [--root ROOT] [--json] ...
+$ python --version
+Python 3.13.1
+```
+
+Real Python 3.13.1 is on PATH as `python`
+(`/c/Users/basil/AppData/Local/Programs/Python/Python313/python`). Every helper
+invocation in the skill therefore fails: the delivery-contract preflight gates
+(`blog_preflight.py`, `blog_render.py`, `generate_hero.py`) and the untrusted-context
+loader. The loader's documented failure mode is to skip project-root `BRAND.md` /
+`VOICE.md` / `DISCOURSE.md` rather than error, so this degrades silently.
+
+Pre-existing and independent of where the scripts live — it failed identically while they
+were at `~/.claude/scripts`. Verified the scripts themselves are fine: run under `python`,
+`load_untrusted_root.py` emits a correctly nonced fence and exits 0.
+
+Fix: disable the `python3` App Execution Alias (Settings > Apps > Advanced app settings >
+App execution aliases) so `python3` reaches the real interpreter, or add a `python3` shim
+on PATH. Changing the skill files is the worse option — they are vendored upstream content
+and `python3` is correct on macOS and Linux.
+
 ### [P0-037] The contact form silently fails for every visitor
 
 `config/site.ts:49` still holds the scaffold placeholder `formspreeId: "YOUR_FORM_ID"`.
