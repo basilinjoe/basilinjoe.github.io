@@ -1,0 +1,497 @@
+---
+title: "MCP Server Authorization: The Token You Must Never Forward"
+date: "2026-09-28"
+modified: "2026-09-28"
+excerpt: "A valid token is not permission. Here's how OAuth works for MCP servers, why scopes don't replace object-level checks, and the passthrough mistake that turns your server into a confused deputy."
+tags: ["MCP", "Security", "OAuth", "AI Agents", "API Design"]
+coverImage: "/blog/ai-coding-assistants-cover.webp"
+---
+
+A valid token is not permission.
+
+That sentence is the whole post, and it is the thing most MCP server implementations get wrong on the first pass. The token proves someone authenticated. It says nothing about whether *this* principal may delete *that* document.
+
+There is a second sentence worth putting next to it:
+
+**The model is not the authorized party.**
+
+The host calls your MCP server carrying a token that represents a user or a workload. Your server still has to decide whether that principal may invoke a particular tool with particular arguments. No amount of clever tool design moves that decision somewhere else.
+
+This is the security half of a topic I wrote about earlier from the design side, in [MCP Server Design Is Changing](/blog/mcp-server-design-is-changing). That post was about what to expose. This one is about who gets to call it.
+
+Everything below is against the **`2026-07-28`** revision, the current MCP specification ([modelcontextprotocol.io](https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization), retrieved September 28, 2026). That matters more than usual here: this revision removed protocol-level sessions outright, and a good deal of MCP security writing predates it.
+
+> **Key Takeaways**
+> - For HTTP transports, your MCP server is an OAuth 2.1 **resource server**. It validates tokens; it does not issue them. Authorization is *optional* in MCP — but an HTTP server that supports it **SHOULD** conform to the spec, which is what makes arbitrary clients able to connect ([MCP authorization spec](https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization)).
+> - **Scopes are coarse permissions, not object-level authorization.** A token with `documents:write` says the caller may write documents in principle. A second check decides whether they may write *this* customer's document.
+> - **Never forward an incoming MCP token to an upstream API.** The spec is unambiguous: servers "**MUST NOT** accept any tokens that were not explicitly issued for the MCP server," and "**MUST NOT** pass through the token it received from the MCP client" ([security best practices](https://modelcontextprotocol.io/docs/2026-07-28/tutorials/security/security_best_practices)).
+> - The `2026-07-28` revision **removed the `initialize` handshake and `Mcp-Session-Id` entirely** ([changelog](https://modelcontextprotocol.io/specification/2026-07-28/changelog)). Authorization "**MUST** be included in every HTTP request from client to server."
+> - That statelessness created a **new named attack class — state handle hijacking**. Servers now mint their own workflow handles, and possession of one is not authentication.
+> - `401` means "I don't know who you are." `403` with `insufficient_scope` means "I know who you are and you need more." Returning the wrong one sends clients into retry loops they cannot escape.
+
+
+---
+
+## The three questions OAuth answers
+
+It helps to keep these separate, because they are enforced in different places by different systems.
+
+| Concern | Question | Enforced by |
+|---|---|---|
+| Authentication | Who is making this request? | Authorization server issues a token; MCP server validates it |
+| Authorization | May this identity perform this exact action? | **Your MCP server**, against scopes, tenant, ownership, roles, and request arguments |
+| Consent | Did the user approve this access? | Authorization-server consent screen, plus host-level tool approval |
+
+Only the middle row is yours to own end to end. Teams that adopt an off-the-shelf identity provider often assume it covers all three. It does not. The identity provider answers "who," and it can carry "what they consented to" as scopes. It has no idea that document `4417` belongs to a different tenant.
+
+Authorization itself is optional in MCP. The value of following the spec when you do need it is interoperability: a client that has never seen your server can still authenticate against it, with no bespoke integration work on either side.
+
+---
+
+## The end-to-end flow
+
+Before the individual rules, the shape of the whole handshake. A client that has never talked to your server discovers everything it needs from a `401`.
+
+<figure>
+<svg role="img" aria-labelledby="flow-title flow-desc" viewBox="0 0 720 600" xmlns="http://www.w3.org/2000/svg">
+  <title id="flow-title">OAuth handshake between an MCP client, MCP server, and authorization server</title>
+  <desc id="flow-desc">Sequence diagram. The client calls the MCP server without a token and receives a 401 with a resource metadata pointer. It fetches that metadata, discovers the authorization server, sends the user through consent, exchanges an authorization code with PKCE and a resource parameter, receives an access token scoped to the MCP server, and retries the original call with a bearer token.</desc>
+  <defs>
+    <marker id="ar" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#93c5fd" />
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="720" height="600" fill="#0f172a" />
+  <text x="20" y="28" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="15" fontWeight="600">MCP authorization handshake</text>
+  <text x="20" y="46" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="11">Discovery begins with a 401. The client needs no prior knowledge of the authorization server.</text>
+
+  <rect x="26" y="62" width="108" height="26" fill="#1e293b" stroke="#334155" rx="4" />
+  <text x="80" y="79" textAnchor="middle" fill="#e5e7eb" fontFamily="system-ui, sans-serif" fontSize="11">Client / host</text>
+  <rect x="206" y="62" width="108" height="26" fill="#1e293b" stroke="#334155" rx="4" />
+  <text x="260" y="79" textAnchor="middle" fill="#e5e7eb" fontFamily="system-ui, sans-serif" fontSize="11">MCP server</text>
+  <rect x="396" y="62" width="128" height="26" fill="#1e293b" stroke="#334155" rx="4" />
+  <text x="460" y="79" textAnchor="middle" fill="#e5e7eb" fontFamily="system-ui, sans-serif" fontSize="11">Authorization server</text>
+  <rect x="606" y="62" width="88" height="26" fill="#1e293b" stroke="#334155" rx="4" />
+  <text x="650" y="79" textAnchor="middle" fill="#e5e7eb" fontFamily="system-ui, sans-serif" fontSize="11">User</text>
+
+  <line x1="80" y1="92" x2="80" y2="556" stroke="#334155" strokeWidth="1" strokeDasharray="3 3" />
+  <line x1="260" y1="92" x2="260" y2="556" stroke="#334155" strokeWidth="1" strokeDasharray="3 3" />
+  <line x1="460" y1="92" x2="460" y2="556" stroke="#334155" strokeWidth="1" strokeDasharray="3 3" />
+  <line x1="650" y1="92" x2="650" y2="556" stroke="#334155" strokeWidth="1" strokeDasharray="3 3" />
+
+  <text x="84" y="112" fill="#cbd5e1" fontFamily="system-ui, sans-serif" fontSize="10">POST /mcp — no token</text>
+  <line x1="80" y1="120" x2="254" y2="120" stroke="#93c5fd" strokeWidth="1.5" markerEnd="url(#ar)" />
+
+  <text x="84" y="142" fill="#fca5a5" fontFamily="system-ui, sans-serif" fontSize="10">401 + WWW-Authenticate + resource_metadata</text>
+  <line x1="260" y1="150" x2="86" y2="150" stroke="#f87171" strokeWidth="1.5" markerEnd="url(#ar)" />
+
+  <text x="84" y="172" fill="#cbd5e1" fontFamily="system-ui, sans-serif" fontSize="10">GET protected-resource metadata</text>
+  <line x1="80" y1="180" x2="254" y2="180" stroke="#93c5fd" strokeWidth="1.5" markerEnd="url(#ar)" />
+
+  <text x="84" y="202" fill="#cbd5e1" fontFamily="system-ui, sans-serif" fontSize="10">canonical resource URI, auth server, scopes</text>
+  <line x1="260" y1="210" x2="86" y2="210" stroke="#64748b" strokeWidth="1.5" markerEnd="url(#ar)" />
+
+  <text x="84" y="232" fill="#cbd5e1" fontFamily="system-ui, sans-serif" fontSize="10">discover OAuth metadata, register client</text>
+  <line x1="80" y1="240" x2="454" y2="240" stroke="#93c5fd" strokeWidth="1.5" markerEnd="url(#ar)" />
+
+  <text x="84" y="262" fill="#cbd5e1" fontFamily="system-ui, sans-serif" fontSize="10">open authorization + consent</text>
+  <line x1="80" y1="270" x2="644" y2="270" stroke="#93c5fd" strokeWidth="1.5" markerEnd="url(#ar)" />
+
+  <text x="464" y="292" fill="#cbd5e1" fontFamily="system-ui, sans-serif" fontSize="10">authenticate, approve scopes</text>
+  <line x1="650" y1="300" x2="466" y2="300" stroke="#64748b" strokeWidth="1.5" markerEnd="url(#ar)" />
+
+  <text x="84" y="322" fill="#cbd5e1" fontFamily="system-ui, sans-serif" fontSize="10">authorization code + iss</text>
+  <line x1="460" y1="330" x2="86" y2="330" stroke="#64748b" strokeWidth="1.5" markerEnd="url(#ar)" />
+
+  <text x="84" y="352" fill="#fde68a" fontFamily="system-ui, sans-serif" fontSize="10">code + PKCE verifier + resource=https://api.example.com/mcp</text>
+  <line x1="80" y1="360" x2="454" y2="360" stroke="#fbbf24" strokeWidth="1.5" markerEnd="url(#ar)" />
+
+  <text x="84" y="382" fill="#fde68a" fontFamily="system-ui, sans-serif" fontSize="10">access token — audience = your MCP server</text>
+  <line x1="460" y1="390" x2="86" y2="390" stroke="#fbbf24" strokeWidth="1.5" markerEnd="url(#ar)" />
+
+  <text x="84" y="412" fill="#cbd5e1" fontFamily="system-ui, sans-serif" fontSize="10">POST /mcp + Authorization: Bearer</text>
+  <line x1="80" y1="420" x2="254" y2="420" stroke="#93c5fd" strokeWidth="1.5" markerEnd="url(#ar)" />
+
+  <rect x="196" y="436" width="128" height="44" fill="#1e293b" stroke="#475569" rx="4" />
+  <text x="260" y="453" textAnchor="middle" fill="#e5e7eb" fontFamily="system-ui, sans-serif" fontSize="10">validate token</text>
+  <text x="260" y="469" textAnchor="middle" fill="#e5e7eb" fontFamily="system-ui, sans-serif" fontSize="10">+ action policy</text>
+
+  <text x="84" y="502" fill="#86efac" fontFamily="system-ui, sans-serif" fontSize="10">MCP result, or 403 insufficient_scope</text>
+  <line x1="260" y1="510" x2="86" y2="510" stroke="#4ade80" strokeWidth="1.5" markerEnd="url(#ar)" />
+
+  <line x1="20" y1="540" x2="700" y2="540" stroke="#334155" strokeWidth="1" />
+  <text x="20" y="562" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="10">Yellow steps bind the token to one audience. That binding is what makes passthrough detectable.</text>
+</svg>
+<figcaption>The MCP authorization handshake. A client discovers the authorization server from the 401 challenge, so no out-of-band configuration is required.</figcaption>
+</figure>
+
+Two things in that diagram do the heavy lifting, and both are easy to skip.
+
+The `resource` parameter (yellow) tells the authorization server which resource the token is for. Without it you get a token that is valid *somewhere*, which is the beginning of most audience-confusion bugs.
+
+The `validate token + action policy` box is not one step. It is two, and the second one is the subject of most of this post.
+
+---
+
+## 1. Publish protected-resource metadata
+
+Pick a stable canonical URI for your MCP endpoint and treat it as an identity, not a URL you might tidy up later:
+
+```text
+https://api.example.com/mcp
+```
+
+When authorization is enabled, MCP servers **MUST** implement OAuth 2.0 Protected Resource Metadata ([RFC 9728](https://datatracker.ietf.org/doc/html/rfc9728)), naming that resource and the authorization servers permitted to issue tokens for it:
+
+```json
+{
+  "resource": "https://api.example.com/mcp",
+  "authorization_servers": [
+    "https://login.example.com"
+  ],
+  "scopes_supported": [
+    "mcp:basic",
+    "documents:read",
+    "documents:write"
+  ]
+}
+```
+
+Then return a challenge that points at it when a caller arrives without a token:
+
+```http
+HTTP/1.1 401 Unauthorized
+WWW-Authenticate: Bearer resource_metadata="https://api.example.com/.well-known/oauth-protected-resource/mcp",
+                         scope="mcp:basic"
+```
+
+This is what makes an MCP server connectable by a client that has never seen it. The `401` is not just a rejection; it is the entry point to discovery.
+
+---
+
+## 2. Discovery and client registration
+
+The metadata points at an issuer. The client discovers the authorization endpoint, token endpoint, and supported PKCE methods from that issuer's OAuth or OpenID Connect metadata.
+
+For a client you have never seen before, prefer registration mechanisms in this order:
+
+1. An existing client registration for that authorization server.
+2. **Client ID Metadata Documents**, where the client ID is an HTTPS URL that resolves to the client's metadata.
+3. Dynamic Client Registration, for older systems.
+4. Credentials pre-registered by a user or developer.
+
+Dynamic Client Registration ([RFC 7591](https://datatracker.ietf.org/doc/html/rfc7591)) is now explicitly **deprecated** as a registration mechanism, in favour of Client ID Metadata Documents; it "remains available for backwards compatibility" ([client registration](https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/client-registration)). The practical reason is operational: an endpoint that mints registrations on demand accumulates junk and needs its own abuse controls. A metadata document moves the trust anchor to a URL you can fetch and re-fetch.
+
+CIMD brings one risk worth knowing about before you enable it. Because the authorization server *fetches* a URL supplied by the client as its `client_id`, a malicious client can point it at internal infrastructure and turn the AS into an SSRF vector. If you operate the authorization server, block private IP ranges, enforce HTTPS, and fetch through an egress proxy.
+
+Credentials issued by one authorization server must never be replayed against another issuer.
+
+Where your responsibility lands depends on what you operate:
+
+| You operate | You own |
+|---|---|
+| Resource server only, with an existing IdP | Correct metadata, and configuring the IdP to issue tokens for your resource |
+| Resource server **and** authorization server | All of the above, plus client registration, consent, redirect validation, and token issuance |
+
+Most teams are in the first row and should stay there.
+
+---
+
+## 3. Authorization code flow with PKCE
+
+Interactive clients use the authorization code flow with PKCE. Before redirecting the user, the client records:
+
+- A random `code_verifier`
+- A derived `code_challenge`, using `S256`
+- A random `state` value
+- The validated authorization-server issuer
+
+PKCE is not optional: clients **MUST** implement it, **MUST** verify the authorization server supports it before proceeding, and **MUST** use `S256` where technically capable.
+
+The client then requests a token for your exact resource, using Resource Indicators ([RFC 8707](https://datatracker.ietf.org/doc/html/rfc8707)). The `resource` parameter **MUST** appear in **both** the authorization request and the token request:
+
+```text
+resource=https://api.example.com/mcp
+```
+
+On return, the client validates `state`, and validates the returned `iss` against the issuer it recorded *before* the redirect, per [RFC 9207](https://datatracker.ietf.org/doc/html/rfc9207) §2.4. These are not ceremony. They defend against authorization-code interception, CSRF, and authorization-server mix-up attacks, where a malicious server tricks a client into presenting a code to the wrong issuer.
+
+Worth being precise about, because it is a common misreading: **PKCE alone does not prevent mix-up.** The spec says so directly. PKCE binds the code to the client; it is the `iss` check that binds the *response* to the authorization server the client chose before redirecting. You need both.
+
+---
+
+## 4. Validate the token on every request
+
+Authorization "**MUST** be included in every HTTP request from client to server." That requirement stands on its own — it is not a consequence of anything new.
+
+What *is* new is that the `2026-07-28` revision removed the `initialize` / `notifications/initialized` handshake and protocol-level sessions, including `Mcp-Session-Id`, outright ([changelog](https://modelcontextprotocol.io/specification/2026-07-28/changelog)). So there is now no session construct to be tempted by in the first place. If you are porting a server written against an older revision, look for any authorization decision cached against a session or connection: that shortcut no longer has anything to hang on.
+
+```http
+Authorization: Bearer <access-token>
+```
+
+Never accept tokens through URL parameters. They end up in logs, proxies, referrer headers, and browser history.
+
+At minimum, validate that:
+
+1. The token is well formed.
+2. Its signature verifies, or introspection succeeds for opaque tokens.
+3. Its issuer is trusted.
+4. It has not expired.
+5. **Its audience is your canonical MCP URI.**
+6. Its scopes permit the requested operation.
+7. The authenticated subject may reach the specific tenant, record, file, or account named in the request.
+
+Steps 1 through 6 are authentication and coarse authorization. Step 7 is where real breaches are prevented.
+
+Use the token's verified subject, tenant, roles, and scopes for decisions. Do **not** treat MCP client metadata — client name, version, declared identity — as proof of anything. It is self-reported by the caller.
+
+---
+
+## 5. Return the right failure
+
+Getting status codes wrong is not cosmetic. Clients drive their retry and re-authorization logic from them, so a `403` where you meant `401` can strand a client in a loop it has no way to resolve.
+
+| Situation | Response |
+|---|---|
+| No bearer token | `401` with `WWW-Authenticate` and `resource_metadata` |
+| Expired, malformed, wrong issuer, or wrong audience | `401` |
+| Valid token, missing scope | `403` with `error="insufficient_scope"` |
+| Valid scope, but no ownership or tenant access | `403`, and **do not** advertise a scope upgrade that cannot fix it |
+| Malformed MCP or HTTP request | `400`, or the applicable JSON-RPC error |
+
+That fourth row is the subtle one. If a user lacks access to a record, telling them to go acquire `documents:admin` is both useless and a small information leak about how your permissions are shaped.
+
+When a valid token is merely missing scope, return every scope the operation needs in one challenge:
+
+```http
+HTTP/1.1 403 Forbidden
+WWW-Authenticate: Bearer error="insufficient_scope",
+                         scope="documents:read documents:write",
+                         resource_metadata="https://api.example.com/.well-known/oauth-protected-resource/mcp"
+```
+
+The client can then request the union of its existing and newly required scopes, obtain a new token, and retry a bounded number of times. That is step-up authorization, and returning scopes one at a time turns it into a slow, consent-prompt-heavy crawl.
+
+Step-up only works if your scopes are shaped for it. The spec calls out three mistakes by name:
+
+- **Wildcard scopes**, which hand over far more than the operation needs.
+- **Publishing everything in `scopes_supported`**, which invites clients to request the maximum up front.
+- **Omnibus bundling**, where one scope quietly covers unrelated capabilities.
+
+Each one collapses progressive least-privilege back into a single all-or-nothing consent prompt.
+
+---
+
+## 6. Authorize at two levels
+
+Here is the part that separates a server which authenticates from a server which is actually secure.
+
+<figure>
+<svg role="img" aria-labelledby="gate-title gate-desc" viewBox="0 0 680 300" xmlns="http://www.w3.org/2000/svg">
+  <title id="gate-title">Two-level authorization pipeline for an MCP request</title>
+  <desc id="gate-desc">Pipeline diagram. A request passes through token validation, then a baseline access gate, then method identification, then an operation-specific scope check, then a policy evaluation of tenant, ownership, role and arguments, before the tool executes. The first four stages are labelled coarse checks; the fifth is labelled the object-level check where most implementations stop too early.</desc>
+  <rect x="0" y="0" width="680" height="300" fill="#0f172a" />
+  <text x="20" y="28" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="15" fontWeight="600">Where a request is allowed to stop</text>
+  <text x="20" y="46" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="11">Stages 1–4 answer "may this identity do this kind of thing." Stage 5 answers "to this object."</text>
+
+  <rect x="24" y="76" width="118" height="44" fill="#1e3a5f" stroke="#3b82f6" rx="4" />
+  <text x="83" y="95" textAnchor="middle" fill="#dbeafe" fontFamily="system-ui, sans-serif" fontSize="11">1. validate</text>
+  <text x="83" y="110" textAnchor="middle" fill="#dbeafe" fontFamily="system-ui, sans-serif" fontSize="11">bearer token</text>
+
+  <rect x="158" y="76" width="118" height="44" fill="#1e3a5f" stroke="#3b82f6" rx="4" />
+  <text x="217" y="95" textAnchor="middle" fill="#dbeafe" fontFamily="system-ui, sans-serif" fontSize="11">2. baseline</text>
+  <text x="217" y="110" textAnchor="middle" fill="#dbeafe" fontFamily="system-ui, sans-serif" fontSize="11">MCP access</text>
+
+  <rect x="292" y="76" width="118" height="44" fill="#1e3a5f" stroke="#3b82f6" rx="4" />
+  <text x="351" y="95" textAnchor="middle" fill="#dbeafe" fontFamily="system-ui, sans-serif" fontSize="11">3. identify</text>
+  <text x="351" y="110" textAnchor="middle" fill="#dbeafe" fontFamily="system-ui, sans-serif" fontSize="11">method</text>
+
+  <rect x="426" y="76" width="118" height="44" fill="#1e3a5f" stroke="#3b82f6" rx="4" />
+  <text x="485" y="95" textAnchor="middle" fill="#dbeafe" fontFamily="system-ui, sans-serif" fontSize="11">4. operation</text>
+  <text x="485" y="110" textAnchor="middle" fill="#dbeafe" fontFamily="system-ui, sans-serif" fontSize="11">scope</text>
+
+  <rect x="24" y="168" width="252" height="52" fill="#422006" stroke="#f59e0b" strokeWidth="2" rx="4" />
+  <text x="150" y="189" textAnchor="middle" fill="#fde68a" fontFamily="system-ui, sans-serif" fontSize="11" fontWeight="600">5. tenant, ownership, role,</text>
+  <text x="150" y="205" textAnchor="middle" fill="#fde68a" fontFamily="system-ui, sans-serif" fontSize="11" fontWeight="600">and argument policy</text>
+
+  <rect x="426" y="168" width="118" height="52" fill="#14532d" stroke="#22c55e" rx="4" />
+  <text x="485" y="198" textAnchor="middle" fill="#bbf7d0" fontFamily="system-ui, sans-serif" fontSize="11">execute</text>
+
+  <line x1="142" y1="98" x2="156" y2="98" stroke="#64748b" strokeWidth="1.5" />
+  <line x1="276" y1="98" x2="290" y2="98" stroke="#64748b" strokeWidth="1.5" />
+  <line x1="410" y1="98" x2="424" y2="98" stroke="#64748b" strokeWidth="1.5" />
+  <line x1="485" y1="120" x2="485" y2="140" stroke="#64748b" strokeWidth="1.5" />
+  <line x1="485" y1="140" x2="150" y2="140" stroke="#64748b" strokeWidth="1.5" />
+  <line x1="150" y1="140" x2="150" y2="166" stroke="#64748b" strokeWidth="1.5" />
+  <line x1="276" y1="194" x2="424" y2="194" stroke="#22c55e" strokeWidth="1.5" />
+
+  <text x="20" y="258" fill="#fbbf24" fontFamily="system-ui, sans-serif" fontSize="11" fontWeight="600">Stopping after stage 4 is the most common MCP authorization gap.</text>
+  <text x="20" y="276" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="11">A token with documents:write is not permission to write a particular customer's document.</text>
+</svg>
+<figcaption>Two-level authorization. Scope checks are necessary and not sufficient; object-level policy runs immediately before the sensitive operation.</figcaption>
+</figure>
+
+Mapped onto real operations, it looks like this:
+
+```text
+tools/list                      → mcp:discover
+tools/call: searchDocuments     → documents:read
+tools/call: deleteDocument      → documents:delete + document ownership
+resources/read: customer://123  → customers:read + tenant check
+tools/call: createPayment       → payments:write + explicit host confirmation
+```
+
+Two rules follow from this.
+
+**Tool metadata is discovery information, not enforcement.** A tool description that says "admin only" enforces nothing. Policy runs on the server, immediately before the operation, after the caller *and the arguments* have been validated.
+
+**If your tool names leak capability, protect discovery too.** A server may expose public `tools/list` while protecting every tool. But if listing reveals `exportCustomerPII` or `issueRefund`, the list itself is sensitive and should sit behind the baseline gate.
+
+---
+
+## 7. Never pass an MCP token upstream
+
+This is the rule I would put on the wall.
+
+<figure>
+<svg role="img" aria-labelledby="aud-title aud-desc" viewBox="0 0 680 280" xmlns="http://www.w3.org/2000/svg">
+  <title id="aud-title">Correct versus incorrect token handling when an MCP server calls an upstream API</title>
+  <desc id="aud-desc">Comparison diagram. On the left, marked incorrect, the client token with audience mcp-server is forwarded unchanged to an upstream API, which is labelled confused deputy. On the right, marked correct, the MCP server exchanges the incoming token for a separate token whose audience is the upstream API.</desc>
+  <rect x="0" y="0" width="680" height="280" fill="#0f172a" />
+  <text x="20" y="28" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="15" fontWeight="600">Token audience when calling upstream</text>
+
+  <text x="24" y="60" fill="#fca5a5" fontFamily="system-ui, sans-serif" fontSize="12" fontWeight="600">Passthrough — forbidden</text>
+  <rect x="24" y="72" width="300" height="82" fill="#450a0a" stroke="#ef4444" rx="4" />
+  <text x="40" y="94" fill="#fecaca" fontFamily="system-ui, sans-serif" fontSize="10">client token   aud = your-mcp-server</text>
+  <line x1="40" y1="104" x2="300" y2="104" stroke="#ef4444" strokeWidth="1" strokeDasharray="3 3" />
+  <text x="40" y="124" fill="#fecaca" fontFamily="system-ui, sans-serif" fontSize="10">forwarded unchanged →  upstream API</text>
+  <text x="40" y="142" fill="#f87171" fontFamily="system-ui, sans-serif" fontSize="10" fontWeight="600">upstream cannot tell who is really calling</text>
+
+  <text x="356" y="60" fill="#86efac" fontFamily="system-ui, sans-serif" fontSize="12" fontWeight="600">Token exchange — correct</text>
+  <rect x="356" y="72" width="300" height="82" fill="#052e16" stroke="#22c55e" rx="4" />
+  <text x="372" y="94" fill="#bbf7d0" fontFamily="system-ui, sans-serif" fontSize="10">client token   aud = your-mcp-server</text>
+  <line x1="372" y1="104" x2="632" y2="104" stroke="#22c55e" strokeWidth="1" strokeDasharray="3 3" />
+  <text x="372" y="124" fill="#bbf7d0" fontFamily="system-ui, sans-serif" fontSize="10">new token      aud = upstream-api</text>
+  <text x="372" y="142" fill="#4ade80" fontFamily="system-ui, sans-serif" fontSize="10" fontWeight="600">audience checks hold at every hop</text>
+
+  <text x="24" y="190" fill="#e5e7eb" fontFamily="system-ui, sans-serif" fontSize="11" fontWeight="600">What passthrough costs you</text>
+  <text x="24" y="212" fill="#cbd5e1" fontFamily="system-ui, sans-serif" fontSize="10">• token-audience validation becomes meaningless downstream</text>
+  <text x="24" y="230" fill="#cbd5e1" fontFamily="system-ui, sans-serif" fontSize="10">• confused-deputy: upstream acts on your server's authority, not the user's</text>
+  <text x="24" y="248" fill="#cbd5e1" fontFamily="system-ui, sans-serif" fontSize="10">• audit trails attribute actions to the wrong principal</text>
+  <text x="24" y="266" fill="#cbd5e1" fontFamily="system-ui, sans-serif" fontSize="10">• a compromised upstream now holds a token for your MCP server</text>
+</svg>
+<figcaption>Audience separation. An MCP server that calls another API acquires its own token for that API rather than replaying the caller's.</figcaption>
+</figure>
+
+If your MCP server calls another API, get a separate token whose audience is that API. Do not forward the incoming bearer token.
+
+The spec requires servers to reject tokens that were not issued for their own resource, and forbids passthrough. But the requirement exists because of what passthrough does in practice: it collapses two distinct trust relationships into one, and the resulting system cannot answer "who actually authorized this action?" after the fact.
+
+---
+
+## 8. State handle hijacking
+
+This section is the one I would flag to anyone whose MCP security reading predates July 2026, because the attack class is new and it is a direct consequence of removing sessions.
+
+With no protocol-level session, multi-step workflows need explicit handles, which the *server* now mints and hands back as ordinary tool arguments:
+
+```text
+createReport   → returns report_handle
+updateReport   → receives report_handle
+publishReport  → receives report_handle
+```
+
+A handle that arrives in a tool call is untrusted input, no different from any other argument, even though your own server issued it a moment ago. The spec is explicit that servers **MUST NOT** treat possession of a handle as authentication, and **SHOULD** bind each handle server-side to the authenticated user — the documented pattern being a composite of the form:
+
+```text
+<user_id>:<handle>
+```
+
+Make handles opaque, hard to guess, and short lived, then re-check that binding on every use. **Possession of a handle is not authorization to use it.**
+
+This is stage 5 from the previous section wearing different clothes, and it is easy to skip for exactly that reason: the handle feels like internal state. It is not. It made a round trip through the client.
+
+---
+
+## 9. Transport and deployment
+
+For Streamable HTTP servers:
+
+- Validate the `Origin` header to prevent DNS rebinding.
+- Bind local servers to `127.0.0.1`, not `0.0.0.0`.
+- Require HTTPS for remote deployments.
+- Require bearer authentication before serving protected content.
+- Never log `Authorization` headers, access tokens, refresh tokens, or sensitive tool arguments.
+- Rate-limit authentication failures and sensitive operations.
+- Correlate security events by request or trace ID, without logging secrets.
+
+The logging rule deserves emphasis. Tool arguments are attractive to log because they are excellent debugging material, and they are exactly where the sensitive values live.
+
+---
+
+## 10. `stdio` changes the credential path, not the need for authorization
+
+For a local `stdio` server, the guidance is to take credentials from the environment rather than run the HTTP OAuth flow — a local credential store, a cloud SDK identity chain, the OS account, or a preconfigured service token.
+
+That changes how identity arrives. It does not remove the need to decide what that identity may do.
+
+A local MCP server often runs with the full privileges of the developer who launched it, which makes it *more* dangerous than a remote one, not less. Installation consent, visibility into what command is actually being run, least privilege, and sandboxing carry the weight that OAuth carries remotely.
+
+---
+
+## Frequently Asked Questions
+
+### Do I need OAuth to build an MCP server?
+
+No. Authorization is optional, and a local `stdio` server typically uses environment credentials instead. If you expose an HTTP server to anyone other than yourself, you need it.
+
+### Can I just check scopes and be done?
+
+No, and this is the most common gap. Scopes authorize a *kind* of operation. They cannot express that document `4417` belongs to another tenant. You need a second check against the request's arguments.
+
+### Why can't I forward the caller's token to my upstream API?
+
+Because that token's audience is your MCP server. Forwarding it makes audience validation meaningless, creates a confused deputy, and destroys the audit trail. Acquire a separate token for the upstream API.
+
+### What's the difference between 401 and 403 here?
+
+`401` means the token is missing or unusable — absent, expired, malformed, wrong issuer, wrong audience. `403` means the token is fine but insufficient. Use `insufficient_scope` only when more scope would actually resolve it.
+
+### Is Dynamic Client Registration dead?
+
+Deprecated, not removed. The `2026-07-28` revision deprecates RFC 7591 in favour of Client ID Metadata Documents, and keeps it available for backwards compatibility. Prefer an existing registration or CIMD for anything new.
+
+### What changed for security in the 2026-07-28 revision?
+
+The big one is statelessness: the `initialize` handshake and `Mcp-Session-Id` are gone, which introduced state handle hijacking as a new risk surface. Alongside that, DCR was deprecated in favour of CIMD (which brings its own SSRF consideration for authorization servers), `iss` validation was formalised into an explicit decision table, and HTTP+SSE was formally reclassified as deprecated and eligible for removal.
+
+### Does the model itself get authorized?
+
+No. The model is never the authorized party. The host holds a token representing a user or workload, and your server authorizes *that* principal, evaluated against the specific arguments of the specific call.
+
+---
+
+## The short version
+
+If you keep only one thing from this: **validate the token, then authorize the action, then authorize the object.**
+
+Most MCP servers do the first. Many do the second. The third is where the actual security lives, and it is the one that cannot be delegated to your identity provider, inferred from a tool description, or assumed from the fact that a handle came back from an earlier call.
+
+A valid token is not permission.
+
+---
+
+## References
+
+- [MCP authorization specification](https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization)
+- [Authorization-server discovery](https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/authorization-server-discovery)
+- [Client registration](https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/client-registration)
+- [Authorization security considerations](https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/security-considerations)
+- [Streamable HTTP security requirements](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/streamable-http)
+- [MCP security best practices](https://modelcontextprotocol.io/docs/2026-07-28/tutorials/security/security_best_practices)
+- [What's new in the 2026-07-28 revision (changelog)](https://modelcontextprotocol.io/specification/2026-07-28/changelog)
+
+Underlying standards: [RFC 9728](https://datatracker.ietf.org/doc/html/rfc9728) (Protected Resource Metadata), [RFC 8707](https://datatracker.ietf.org/doc/html/rfc8707) (Resource Indicators), [RFC 9207](https://datatracker.ietf.org/doc/html/rfc9207) (Authorization Server Issuer Identification), [RFC 7591](https://datatracker.ietf.org/doc/html/rfc7591) (Dynamic Client Registration, deprecated for MCP).
+
+All specification claims in this post were verified against the linked pages on September 28, 2026.

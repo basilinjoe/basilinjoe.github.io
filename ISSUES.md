@@ -46,6 +46,32 @@ decision rather than a defect, and do not resolve those unilaterally.
 
 ## Open
 
+### [P2-053] Internal editorial markers ship inside the served HTML payload
+
+`content/blog/*.mdx` posts carry authoring annotations as MDX comments, e.g.
+`content/blog/mcp-server-design-is-changing.mdx:45`:
+
+```
+{/* [UNIQUE INSIGHT]: ... */}
+```
+
+MDX comments do not render, so these are correctly invisible to readers. But
+`components/blog/blog-post-content.tsx` renders via `next-mdx-remote/rsc`, which passes
+the raw MDX source as a prop, and that string is serialized into the RSC flight payload
+inside a `<script>` tag in the exported HTML. Measured on the 2026-09-28 build: 4 of 9
+built posts (`out/blog/*.html`) contain the literal string `UNIQUE INSIGHT`, confirmed
+inside `<script>` and not in visible body text. (`mcp-server-authorization.mdx` was
+authored with such a marker and had it removed before commit rather than adding a fifth.)
+
+Consequence is disclosure, not display: anyone reading page source sees the internal
+editorial notes, and they add weight to every page (the raw MDX source is embedded in
+full regardless).
+
+Not introduced by any one post — it is how the RSC MDX renderer works. Options: strip
+`{/* ... */}` comments from the source before passing it to `MDXRemote`, or keep
+authoring notes out of the committed `.mdx` entirely. Decide which before the marker
+convention spreads further.
+
 ### [P1-052] Blog skill helpers invoke `python3`, which is a stub on this machine
 
 The blog skill resolves its Python helpers and then runs them with `python3`
