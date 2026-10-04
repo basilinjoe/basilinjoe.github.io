@@ -1,0 +1,586 @@
+---
+title: "How AI Agents Talk to External Systems: Six Patterns and When to Use Each"
+date: "2026-10-04"
+modified: "2026-10-04"
+excerpt: "The model never touches the network. It emits a request and your harness acts. Six integration patterns answer what sits on the other side, and each one sets who owns the interface, where data lives, and how far a mistake can reach."
+tags: ["AI Agents", "MCP", "Function Calling", "Agent Architecture", "A2A"]
+coverImage: "/blog/ai-coding-assistants-cover.webp"
+---
+
+The model never touches the network.
+
+It cannot call your database, open a pull request, or click a button. It emits text in a structured shape, and a program you wrote (or someone else wrote) reads that text and decides what to do with it.
+
+That program is the harness. Every way an agent reaches an external system is a variation on one question: what sits on the other side of that structured request, and who decides its shape?
+
+There are six common answers. Native function calling, MCP, code execution, computer and browser use, agent-to-agent protocols, and event-driven triggers. They are not rivals. They differ in who owns the interface, where intermediate data lives, and how much damage a bad decision can do.
+
+This post walks through each one: how it works, when to pick it, when to avoid it, and what it costs. If you want the agent basics first, I covered the reasoning loop in [Autonomous Agents](/blog/autonomous-agents). Here we stay on the boundary.
+
+> **Key Takeaways**
+> - Every integration pattern is the same loop: the model emits a structured request, the harness executes it, and the result goes back into context. The patterns differ in what executes it and who defined the interface.
+> - Choose a pattern by three things: who owns the interface, whether intermediate data lives in the model's context or in an execution environment, and the blast radius if the model is wrong or manipulated.
+> - Past roughly ten tools, definitions and intermediate results become the cost. Tool search, code execution, and programmatic tool calling exist to keep both out of the context window.
+> - Computer use is the fallback when no API exists. It is improving quickly, and it is also the pattern most exposed to hostile content on the screen.
+> - Real systems layer the patterns. An event triggers an agent, the agent calls MCP servers through code execution, and it delegates part of the work to a remote agent.
+
+---
+
+## The one loop underneath all of them
+
+Every pattern in this post is the same loop with a different back end. The model returns a structured request, the harness runs it somewhere, and the output is appended to the conversation for the next turn.
+
+In Anthropic's API, that looks like a response with `stop_reason: "tool_use"` and one or more `tool_use` blocks. Your code executes the request and sends back a `tool_result` ([Anthropic tool use overview](https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview)). OpenAI documents the same loop in five steps: send a request with tools, receive a tool call, execute it on the application side, send a second request with the tool output, and get the final response ([OpenAI function calling guide](https://developers.openai.com/api/docs/guides/function-calling)).
+
+The Anthropic docs put the distinction plainly: "Tools differ primarily by where the code executes." Client tools run in your code. Server tools, such as web search, web fetch, code execution, and tool search, run on Anthropic's side.
+
+<figure>
+<svg role="img" aria-labelledby="loop-title loop-desc" viewBox="0 0 720 500" xmlns="http://www.w3.org/2000/svg">
+  <title id="loop-title">The model talks only to a harness, which reaches six kinds of outside systems</title>
+  <desc id="loop-desc">Architecture diagram. A model box on the left exchanges structured requests and results with a harness box in the middle. Five outbound lanes leave the harness: function calls to your own code, MCP to MCP servers, code execution to a sandbox and then to APIs and CLIs, computer and browser use to a graphical interface, and agent-to-agent to a remote agent. A sixth lane, events from webhooks and queues, is drawn in amber with its arrow pointing into the harness, because the outside world starts that exchange.</desc>
+  <defs>
+    <marker id="loop-arrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#93c5fd" />
+    </marker>
+    <marker id="loop-arrow-amber" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#fbbf24" />
+    </marker>
+    <marker id="loop-arrow-green" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#34d399" />
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="720" height="500" fill="#0f172a" />
+  <text x="20" y="28" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="15" fontWeight="600">The model never touches the network</text>
+  <text x="20" y="46" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="11">Six lanes leave the harness. Five start with the model's request. One starts with the outside world.</text>
+
+  <rect x="20" y="210" width="110" height="80" fill="#1e3a5f" stroke="#3b82f6" rx="6" />
+  <text x="75" y="246" textAnchor="middle" fill="#dbeafe" fontFamily="system-ui, sans-serif" fontSize="13" fontWeight="600">Model</text>
+  <text x="75" y="264" textAnchor="middle" fill="#dbeafe" fontFamily="system-ui, sans-serif" fontSize="10">text in, text out</text>
+
+  <line x1="132" y1="236" x2="196" y2="236" stroke="#93c5fd" strokeWidth="1.5" markerEnd="url(#loop-arrow)" />
+  <line x1="196" y1="264" x2="132" y2="264" stroke="#34d399" strokeWidth="1.5" markerEnd="url(#loop-arrow-green)" />
+  <text x="164" y="228" textAnchor="middle" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="9">request</text>
+  <text x="164" y="282" textAnchor="middle" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="9">result</text>
+
+  <rect x="198" y="70" width="120" height="400" fill="#1e293b" stroke="#475569" rx="6" />
+  <text x="258" y="262" textAnchor="middle" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="13" fontWeight="600">Harness</text>
+  <text x="258" y="280" textAnchor="middle" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="10">validates, runs,</text>
+  <text x="258" y="294" textAnchor="middle" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="10">returns results</text>
+
+  <line x1="320" y1="104" x2="380" y2="104" stroke="#93c5fd" strokeWidth="1.5" markerEnd="url(#loop-arrow)" />
+  <rect x="382" y="80" width="318" height="48" fill="#1e3a5f" stroke="#3b82f6" rx="4" />
+  <text x="396" y="100" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="12" fontWeight="600">Function calls</text>
+  <text x="396" y="117" fill="#e5e7eb" fontFamily="system-ui, sans-serif" fontSize="11">your code, your schema</text>
+
+  <line x1="320" y1="168" x2="380" y2="168" stroke="#93c5fd" strokeWidth="1.5" markerEnd="url(#loop-arrow)" />
+  <rect x="382" y="144" width="318" height="48" fill="#1e3a5f" stroke="#3b82f6" rx="4" />
+  <text x="396" y="164" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="12" fontWeight="600">MCP</text>
+  <text x="396" y="181" fill="#e5e7eb" fontFamily="system-ui, sans-serif" fontSize="11">MCP servers, schema owned by the server</text>
+
+  <line x1="320" y1="232" x2="380" y2="232" stroke="#93c5fd" strokeWidth="1.5" markerEnd="url(#loop-arrow)" />
+  <rect x="382" y="208" width="318" height="48" fill="#1e3a5f" stroke="#3b82f6" rx="4" />
+  <text x="396" y="228" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="12" fontWeight="600">Code execution</text>
+  <text x="396" y="245" fill="#e5e7eb" fontFamily="system-ui, sans-serif" fontSize="11">sandbox, then APIs and CLIs</text>
+
+  <line x1="320" y1="296" x2="380" y2="296" stroke="#93c5fd" strokeWidth="1.5" markerEnd="url(#loop-arrow)" />
+  <rect x="382" y="272" width="318" height="48" fill="#1e3a5f" stroke="#3b82f6" rx="4" />
+  <text x="396" y="292" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="12" fontWeight="600">Computer and browser use</text>
+  <text x="396" y="309" fill="#e5e7eb" fontFamily="system-ui, sans-serif" fontSize="11">a graphical interface, no API required</text>
+
+  <line x1="320" y1="360" x2="380" y2="360" stroke="#93c5fd" strokeWidth="1.5" markerEnd="url(#loop-arrow)" />
+  <rect x="382" y="336" width="318" height="48" fill="#1e3a5f" stroke="#3b82f6" rx="4" />
+  <text x="396" y="356" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="12" fontWeight="600">Agent-to-agent (A2A)</text>
+  <text x="396" y="373" fill="#e5e7eb" fontFamily="system-ui, sans-serif" fontSize="11">a remote agent with its own reasoning</text>
+
+  <line x1="380" y1="424" x2="322" y2="424" stroke="#fbbf24" strokeWidth="1.5" markerEnd="url(#loop-arrow-amber)" />
+  <rect x="382" y="400" width="318" height="48" fill="#422006" stroke="#f59e0b" rx="4" />
+  <text x="396" y="420" fill="#fde68a" fontFamily="system-ui, sans-serif" fontSize="12" fontWeight="600">Events</text>
+  <text x="396" y="437" fill="#fde68a" fontFamily="system-ui, sans-serif" fontSize="11">webhooks and queues, arrow points into the agent</text>
+
+  <text x="20" y="486" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="10">Blue lanes: the model asks, the harness acts. Amber lane: something outside asks, and the harness wakes the agent.</text>
+</svg>
+<figcaption>The six integration patterns as lanes out of one harness. Five are outbound. Events are inbound, which changes who controls timing.</figcaption>
+</figure>
+
+Three decisions fall out of this picture, and they are the real content of the rest of the post.
+
+**Who owns the interface.** With function calling, you do. With MCP, the server author does. With A2A, the remote agent does. With computer use, nobody does, because the interface is a screen built for humans.
+
+**Where intermediate data lives.** In the classic loop, every result passes through the model's context. Code execution moves that data into an environment the model only inspects when it chooses to.
+
+**What a mistake costs.** A wrong call to a read-only function is an annoyance. A wrong click in a logged-in browser is a different category of problem.
+
+Keep those three in mind. Each pattern below is a different set of answers.
+
+---
+
+## Native function calling
+
+Function calling is the baseline: you describe tools to the model, the model asks for one, and your code runs it. You own the schema, the execution, and the error handling.
+
+### How it works
+
+You send tool definitions with the request. Each has a name, a description, and a JSON Schema for its input. Setting `strict: true` makes tool calls always match your schema, so you can parse arguments without defensive guessing ([Anthropic tool use overview](https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview)).
+
+```json
+{
+  "name": "get_order_status",
+  "description": "Look up the shipping status of one order by its ID. Use when the user asks where an order is.",
+  "strict": true,
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "order_id": { "type": "string", "description": "The order ID, e.g. A-10442" }
+    },
+    "required": ["order_id"],
+    "additionalProperties": false
+  }
+}
+```
+
+OpenAI's strict mode makes calls "reliably adhere to the function schema, instead of being best effort," and requires `additionalProperties: false` ([OpenAI function calling guide](https://developers.openai.com/api/docs/guides/function-calling)). Both vendors converged on the same idea: constrain the output so your parser never has to forgive.
+
+The description does more work than it looks. The model chooses tools by reading it, so a vague description is a routing bug. I go deeper on writing tools that suit agents rather than mirroring endpoints in [MCP Server Design Is Changing](/blog/mcp-server-design-is-changing), and the advice applies to plain function calling too.
+
+### Choose it when
+
+- You have a small, stable set of tools, and every request is likely to use some of them.
+- The integration is private to your application, so nothing else needs to reuse it.
+- You want full control over validation, retries, and permissions in one codebase.
+
+Anthropic's guidance for tool search draws the line numerically: standard calling is better for fewer than 10 tools used on every request ([tool search docs](https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool)). OpenAI recommends "fewer than 20 functions available at the start of a turn."
+
+### Avoid it when
+
+- The same capability must work across several hosts or clients. You will rewrite the glue for each.
+- Tool count is growing. Definitions are input tokens on every request, and selection accuracy drops as the list grows. Anthropic states that Claude's ability to pick the right tool degrades once you exceed 30 to 50 available tools.
+
+### What it costs you
+
+You pay in tokens and in maintenance. Definitions are billed as input on every turn, and every tool is code you maintain, version, and secure. The upside is that nothing sits between you and the model, so there is nothing to debug but your own code.
+
+---
+
+## MCP: a shared interface owned by the server
+
+MCP (Model Context Protocol) standardizes the tool interface so one server can serve many hosts. The interface belongs to the server author, and the client discovers it at runtime.
+
+### How it works
+
+An MCP server exposes tools, resources, and prompts. A client can also support elicitation, where the server asks the user for input. Two transports are defined: stdio, where the client launches the server as a subprocess, and Streamable HTTP, where each message is an HTTP POST to a single endpoint ([MCP specification, revision 2026-07-28](https://modelcontextprotocol.io/specification/2026-07-28)).
+
+A tool call on the wire is JSON-RPC. This is abridged:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 7,
+  "method": "tools/call",
+  "params": {
+    "name": "get_order_status",
+    "arguments": { "order_id": "A-10442" }
+  }
+}
+```
+
+The model never sees this. Your MCP client turns the model's tool request into that message, sends it, and returns the result. From the model's side, an MCP tool looks like any other tool.
+
+The current revision made the protocol stateless. The `initialize` handshake is gone, and the protocol version and client capabilities travel in `_meta` on every request. `Mcp-Session-Id` and protocol sessions were removed, so servers that need state hand out explicit handles passed as tool arguments. A new `server/discover` RPC replaces much of what the handshake did. HTTP+SSE is formally deprecated, and Roots, Sampling, and Logging are deprecated with a minimum twelve-month window. Tasks moved out of core into an official extension ([MCP changelog](https://modelcontextprotocol.io/specification/2026-07-28/changelog)).
+
+### Choose it when
+
+- You want one integration to work in many clients: ChatGPT, Cursor, Gemini, Microsoft Copilot, and VS Code all support MCP, per the announcement that Anthropic donated the protocol to the Agentic AI Foundation under the Linux Foundation ([Anthropic, December 9, 2025](https://www.anthropic.com/news/donating-the-model-context-protocol-and-establishing-of-the-agentic-ai-foundation)).
+- A third party, or another team, owns the system and should own the tool definitions.
+- You want a growing ecosystem to do the integration work. At the time of that announcement, there were more than 10,000 active public MCP servers and 97M+ monthly SDK downloads across Python and TypeScript ([Linux Foundation press release](https://www.linuxfoundation.org/press/linux-foundation-announces-the-formation-of-the-agentic-ai-foundation)).
+
+### Avoid it when
+
+- The integration is private, tiny, and used by exactly one application. A plain function is less machinery.
+- You plan to expose every endpoint as a tool. That is the most common way to build a bad server, and it floods the context window. My view on the better shape is in [MCP Server Design Is Changing](/blog/mcp-server-design-is-changing).
+
+### What it costs you
+
+You take on a second trust boundary. A server runs with some authority, and a connected client receives its tool descriptions as model-visible text. If the server is remote, you also take on OAuth, audience validation, and the rule against forwarding tokens, all covered in [MCP Server Authorization](/blog/mcp-server-authorization).
+
+You also inherit the context cost. Many servers connected at once means many definitions in every request, which is the problem the scaling section below addresses.
+
+---
+
+## Code execution: let the agent write the glue
+
+In the code execution pattern, the agent writes a program that calls APIs, CLIs, or MCP tools, and the program runs in a sandbox. Only what the program prints returns to the model.
+
+### How it works
+
+The classic loop has a quiet cost. Anthropic's engineering team names two problems: tool definitions overload the context, and "every intermediate result must pass through the model" ([Code execution with MCP](https://www.anthropic.com/engineering/code-execution-with-mcp)). Fetch a long document with one tool, then pass it to another, and the whole document passes through the model twice.
+
+The fix is to present tools as code APIs and let the agent write a script. Anthropic reports that doing this for an example workflow reduced usage from 150,000 tokens to 2,000, "a time and cost saving of 98.7%."
+
+Cloudflare reached the same design from a different direction in its "Code Mode" post, with a simple argument: "LLMs have seen a lot of code. They have not seen a lot of 'tool calls'" ([Cloudflare, September 26, 2025](https://blog.cloudflare.com/code-mode/)). Models write code fluently, so give them a medium they are good at.
+
+Here is the shape of it. The module names are hypothetical, but the pattern is the point:
+
+```ts
+import { listTickets } from "./servers/helpdesk";
+import { getCustomer } from "./servers/crm";
+
+const tickets = await listTickets({ status: "open", limit: 500 });
+const urgent = tickets.filter((t) => t.priority === "urgent");
+
+const rows = [];
+for (const t of urgent) {
+  const c = await getCustomer({ id: t.customerId });
+  rows.push({ id: t.id, plan: c.plan });
+}
+console.log(rows.slice(0, 10)); // only this reaches the model
+```
+
+Five hundred tickets stay in the sandbox. The loop runs without a model round trip per call. The model sees ten rows.
+
+Anthropic ships this as programmatic tool calling: Claude writes code that calls your tools in a loop inside code execution, without a model round trip for each call. Tools opt in with `allowed_callers` ([programmatic tool calling docs](https://platform.claude.com/docs/en/agents-and-tools/tool-use/programmatic-tool-calling)). On complex research tasks, Anthropic measured average tokens falling from 43,588 to 27,297, a 37% reduction ([Advanced tool use](https://www.anthropic.com/engineering/advanced-tool-use)).
+
+There is also a quieter cousin: Agent Skills. Anthropic launched them on October 16, 2025 and published them as an open standard on December 18, 2025. They load by progressive disclosure, in three stages: discovery, activation, and execution. Clients including Claude Code, Codex, GitHub Copilot, VS Code, Cursor, Gemini CLI, and goose support them ([Anthropic](https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills), [agentskills.io](https://agentskills.io/)). A skill packages instructions and scripts so the agent only pays for them when relevant. Anthropic also ships a bash tool that runs shell commands in a persistent session that maintains state, which is the simplest form of this pattern.
+
+### Choose it when
+
+- A task involves loops, filtering, joins, or other data shaping.
+- Intermediate results are large and the model does not need to read them.
+- You have many tools and want the agent to discover what it needs instead of carrying every definition.
+
+### Avoid it when
+
+- A single call answers the question. A sandbox adds latency and operational weight for nothing.
+- You cannot provide a real sandbox. Letting model-written code run next to production credentials is not a shortcut, it is an incident.
+- The calls are individually consequential and need a human to approve each one. Batching them into a script makes per-call review harder.
+
+### What it costs you
+
+You now run an execution environment: isolation, resource limits, secrets handling, and logs. You also move debugging from "read the tool call" to "read the program the model wrote." That is a good trade at scale and a poor one for a three-tool app.
+
+One caution from the docs is worth repeating: "Do not rely on allowed_callers as a security boundary." It controls which tools code can call, but it is not a substitute for permission checks inside the tools themselves.
+
+---
+
+## Browser and computer use: when there is no API
+
+Computer use lets the model look at a screen and act on it with clicks and keystrokes. It is the only pattern that works when the other side has no programmatic interface at all.
+
+### How it works
+
+The harness takes screenshots, sends them to the model, and the model returns actions: move the pointer, click, type. The harness performs them and returns a fresh screenshot. Anthropic's current docs list `computer_toolset_20260801` and `browser_toolset_20260801` ([computer use docs](https://platform.claude.com/docs/en/agents-and-tools/tool-use/computer-use-tool)).
+
+Vendors differ on scope. Google's Gemini 2.5 Computer Use model, released October 7, 2025, is "primarily optimized for web browsers" and "not yet optimized for desktop OS-level control." It includes a per-step safety service ([Google DeepMind](https://blog.google/technology/google-deepmind/gemini-computer-use-model/)).
+
+### How good is it?
+
+The benchmark most people cite is OSWorld. Its 2024 paper found humans accomplish 72.36% of tasks, while the best model at the time reached 12.24% ([OSWorld](https://osworld-v1.xlang.ai/)). Claude Sonnet 4.5, released September 29, 2025, led at 61.4%, and Anthropic noted that "just four months ago, Sonnet 4 held the lead at 42.2%" ([Anthropic](https://www.anthropic.com/news/claude-sonnet-4-5)).
+
+<figure>
+<svg role="img" aria-labelledby="osw-title osw-desc" viewBox="0 0 680 360" xmlns="http://www.w3.org/2000/svg">
+  <title id="osw-title">OSWorld scores for the best model over time against the human baseline</title>
+  <desc id="osw-desc">Lollipop chart of OSWorld task success. The best model in the original 2024 paper scored 12.24 percent. Claude Sonnet 4 scored 42.2 percent about four months before September 2025. Claude Sonnet 4.5 scored 61.4 percent in September 2025. A dashed horizontal line marks the human result of 72.36 percent.</desc>
+  <rect x="0" y="0" width="680" height="360" fill="#0f172a" />
+  <text x="20" y="28" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="15" fontWeight="600">OSWorld: best reported model vs. humans</text>
+  <text x="20" y="46" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="11">Task success rate, percent. Scores come from different points in time.</text>
+
+  <line x1="70" y1="290" x2="650" y2="290" stroke="#334155" strokeWidth="1" />
+  <line x1="70" y1="235" x2="650" y2="235" stroke="#1e293b" strokeWidth="1" />
+  <line x1="70" y1="180" x2="650" y2="180" stroke="#1e293b" strokeWidth="1" />
+  <line x1="70" y1="125" x2="650" y2="125" stroke="#1e293b" strokeWidth="1" />
+  <line x1="70" y1="70" x2="650" y2="70" stroke="#1e293b" strokeWidth="1" />
+  <text x="62" y="294" textAnchor="end" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="10">0%</text>
+  <text x="62" y="239" textAnchor="end" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="10">20%</text>
+  <text x="62" y="184" textAnchor="end" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="10">40%</text>
+  <text x="62" y="129" textAnchor="end" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="10">60%</text>
+  <text x="62" y="74" textAnchor="end" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="10">80%</text>
+
+  <line x1="70" y1="91" x2="650" y2="91" stroke="#fbbf24" strokeWidth="1.5" strokeDasharray="6 4" />
+  <text x="646" y="83" textAnchor="end" fill="#fbbf24" fontFamily="system-ui, sans-serif" fontSize="11" fontWeight="600">Humans: 72.36%</text>
+
+  <line x1="170" y1="290" x2="170" y2="256" stroke="#60a5fa" strokeWidth="2" />
+  <circle cx="170" cy="256" r="7" fill="#60a5fa" />
+  <text x="170" y="242" textAnchor="middle" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="12" fontWeight="600">12.24%</text>
+  <text x="170" y="310" textAnchor="middle" fill="#e5e7eb" fontFamily="system-ui, sans-serif" fontSize="11">Best model in</text>
+  <text x="170" y="324" textAnchor="middle" fill="#e5e7eb" fontFamily="system-ui, sans-serif" fontSize="11">OSWorld paper</text>
+  <text x="170" y="338" textAnchor="middle" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="10">2024</text>
+
+  <line x1="360" y1="290" x2="360" y2="174" stroke="#60a5fa" strokeWidth="2" />
+  <circle cx="360" cy="174" r="7" fill="#60a5fa" />
+  <text x="360" y="160" textAnchor="middle" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="12" fontWeight="600">42.2%</text>
+  <text x="360" y="310" textAnchor="middle" fill="#e5e7eb" fontFamily="system-ui, sans-serif" fontSize="11">Claude Sonnet 4</text>
+  <text x="360" y="324" textAnchor="middle" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="10">about four months</text>
+  <text x="360" y="338" textAnchor="middle" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="10">before Sep 2025</text>
+
+  <line x1="550" y1="290" x2="550" y2="121" stroke="#34d399" strokeWidth="2" />
+  <circle cx="550" cy="121" r="7" fill="#34d399" />
+  <text x="550" y="107" textAnchor="middle" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="12" fontWeight="600">61.4%</text>
+  <text x="550" y="310" textAnchor="middle" fill="#e5e7eb" fontFamily="system-ui, sans-serif" fontSize="11">Claude Sonnet 4.5</text>
+  <text x="550" y="324" textAnchor="middle" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="10">September 2025</text>
+</svg>
+<figcaption>OSWorld task success: the best model in the 2024 paper, Claude Sonnet 4, and Claude Sonnet 4.5, against the human result. Sources: OSWorld project page; Anthropic, "Introducing Claude Sonnet 4.5" (September 29, 2025). Scores come from different points in time and the model scores are vendor-reported.</figcaption>
+</figure>
+
+The direction is clear, with caveats. These are different points in time, the later numbers are vendor-reported, and a benchmark is not your workflow. Anthropic's Claude Sonnet 4.6 announcement (February 17, 2026) says early users are "seeing human-level capability in tasks like navigating a complex spreadsheet or filling out a multi-step web form," with no number attached ([Anthropic](https://www.anthropic.com/news/claude-sonnet-4-6)). I would treat that as a signal to evaluate the pattern on your own tasks, not as a guarantee.
+
+### Choose it when
+
+- The system has no API, and you cannot get one: a legacy desktop app, a vendor portal, an internal tool nobody will modernize.
+- You are automating a workflow that spans several apps and the cost of a wrong click is low.
+- You can run the agent in a disposable environment.
+
+### Avoid it when
+
+- An API exists. Calling an API is faster, cheaper, and far easier to audit than steering a pointer.
+- The task is irreversible and there is no human checkpoint.
+- The agent would see content you do not control while holding credentials you do.
+
+### What it costs you
+
+Latency, tokens for screenshots, and a large attack surface. The screen is untrusted input by definition. Anthropic's docs warn that "instructions on webpages or contained in images might override your instructions or cause Claude to make mistakes." OpenAI's guide says it more bluntly: "Treat screen content as untrusted. Text in a page, document, or tool result cannot grant permission or override the user's instructions" ([OpenAI computer use guide](https://developers.openai.com/api/docs/guides/tools-computer-use)).
+
+Computer use is getting good enough that people will reach for it by default. That is the problem. Use it as a fallback, not a shortcut around building an API.
+
+---
+
+## Agent-to-agent: when the other side reasons
+
+A2A (Agent2Agent) is for delegating work to another agent that has its own reasoning, tools, and sometimes a long-running task. The remote agent owns its internals, and you only see the surface it publishes.
+
+### How it works
+
+Google launched A2A on April 9, 2025 with more than 50 partners, positioned as complementing MCP ([Google Developers Blog](https://developers.googleblog.com/en/a2a-a-new-era-of-agent-interoperability/)). The Linux Foundation launched the A2A project on June 23, 2025, with Google, AWS, Cisco, Microsoft, Salesforce, SAP, and ServiceNow as founding members and more than 100 supporting companies ([Linux Foundation](https://www.linuxfoundation.org/press/linux-foundation-launches-the-agent2agent-protocol-project-to-enable-secure-intelligent-communication-between-ai-agents)). The first stable release, v1.0.0, shipped on March 12, 2026, with OAuth modernized to device code plus PKCE. The latest at the time of writing is v1.0.1, released May 28, 2026 ([A2A releases](https://github.com/a2aproject/A2A/releases)). IBM's Agent Communication Protocol is now part of A2A under the Linux Foundation ([IBM Research](https://research.ibm.com/projects/agent-communication-protocol)).
+
+A remote agent publishes an Agent Card: JSON metadata describing its identity, capabilities, skills, service endpoint, and authentication requirements. A client reads the card, then sends it a task. Abridged, with generic fields:
+
+```json
+{
+  "name": "Invoice Reconciliation Agent",
+  "description": "Matches invoices to purchase orders and flags mismatches.",
+  "url": "https://agents.example.com/reconcile",
+  "skills": [{ "name": "reconcile-invoices" }],
+  "capabilities": { "pushNotifications": true }
+}
+```
+
+Tasks have a lifecycle: `SUBMITTED`, `WORKING`, `INPUT_REQUIRED`, `AUTH_REQUIRED`, `COMPLETED`, `FAILED`, `CANCELED`, and `REJECTED`. The protocol offers JSON-RPC, gRPC, and HTTP+JSON/REST bindings ([A2A specification](https://a2a-protocol.org/latest/specification/)).
+
+### Choose it when
+
+- The other side is an agent that decides how to do the work, not a function with a fixed contract.
+- The task takes a while and may need to ask you questions halfway through. `INPUT_REQUIRED` exists for that.
+- The remote agent belongs to another team or company, and you should not see its tools or prompts.
+
+### Avoid it when
+
+- The other side is a deterministic service. Wrapping an API in an agent adds latency, cost, and a second source of nondeterminism.
+- You control both sides and one process can do the job. Not every task needs a protocol between two agents.
+
+### What it costs you
+
+You lose visibility. You hand over a goal and get back a result, so verification becomes your job. You also take on identity and authorization between agents, which is its own design problem.
+
+A rule of thumb I use: MCP is how an agent reaches tools, and A2A is how an agent reaches another agent. If you could describe the remote side as "a set of operations," that is MCP. If you would describe it as "a colleague," that is A2A.
+
+---
+
+## Events: when the outside world calls first
+
+The first five patterns start with the model deciding to act. Events reverse the direction. Something outside, such as a webhook, a queue message, or a repository event, wakes the agent. This is the amber lane in the diagram.
+
+### How it works
+
+Three flavors show up in practice.
+
+**Triggers.** Claude Code's GitHub Actions integration (`anthropics/claude-code-action@v1`) responds to `@claude` mentions and can "run automatically on any GitHub event." Bot actors are rejected unless listed in `allowed_bots` ([Claude Code GitHub Actions docs](https://code.claude.com/docs/en/github-actions)). The event is the entry point, and the agent does the rest.
+
+**Durable tasks over MCP.** Long operations break the request-response shape. The MCP Tasks extension lets servers "return a durable handle instead of blocking, so clients can poll for progress, provide input when needed, and retrieve the final result after reconnecting." Clients poll with `tasks/get` and supply input through `tasks/update`. The stated reason is practical: "Many clients and transport intermediaries impose timeouts that make this impractical beyond a few seconds" ([MCP Tasks overview](https://modelcontextprotocol.io/extensions/tasks/overview)). MCP also offers change notifications through `subscriptions/listen`, a single long-lived POST response stream.
+
+**Push notifications over A2A.** When a task changes state, the remote agent delivers an HTTP POST to a webhook endpoint the client registered ([A2A specification](https://a2a-protocol.org/latest/specification/)).
+
+### Choose it when
+
+- The work outlives one request or one model turn.
+- The trigger comes from outside: a pull request, a message, a schedule, a finished job.
+- You want the agent to react without a human opening a chat window.
+
+### Avoid it when
+
+- The result is needed immediately and the call finishes in seconds. Polling machinery for a fast call is overhead.
+- Anyone on the internet can fire the trigger. An event source you do not authenticate is an open door to your agent's permissions.
+
+### What it costs you
+
+You need durable state, idempotency, and a plan for failure. If a webhook is delivered twice, does the agent act twice? If a task is canceled halfway, what is left half-done? The agent's reasoning is the easy part. The queue semantics are the work.
+
+---
+
+## When tool count grows: the scaling problem
+
+Tool definitions and intermediate results are the two token costs that grow with success. As you add servers, more of every request goes to describing tools instead of doing the job.
+
+Anthropic's tool search docs give a concrete picture: a typical multi-server setup with GitHub, Slack, Sentry, Grafana, and Splunk can consume around 55k tokens in definitions. Tool search typically reduces that by over 85 percent, loading three to five tools on demand. You mark tools with `defer_loading: true`, and up to 10,000 deferred tools are supported ([tool search docs](https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool)). The docs recommend it at 10 or more tools, or when definitions exceed 10k tokens. OpenAI offers its own `tool_search` for deferring tools.
+
+```json
+{
+  "name": "create_sentry_issue",
+  "description": "Create a new issue in a Sentry project.",
+  "input_schema": { "type": "object", "properties": {} },
+  "defer_loading": true
+}
+```
+
+Selection quality matters as much as cost. In Anthropic's internal MCP evaluations with large tool libraries, tool search improved Opus 4 from 49% to 74% and Opus 4.5 from 79.5% to 88.1%. In the same post, Anthropic's internal testing found tool use examples raised accuracy on complex parameter handling from 72% to 90% ([Advanced tool use, November 24, 2025](https://www.anthropic.com/engineering/advanced-tool-use)).
+
+<figure>
+<svg role="img" aria-labelledby="tok-title tok-desc" viewBox="0 0 720 400" xmlns="http://www.w3.org/2000/svg">
+  <title id="tok-title">Token cost before and after three context-reduction techniques</title>
+  <desc id="tok-desc">Horizontal bar chart on a shared linear scale. Code execution with MCP: 150,000 tokens before and 2,000 after. Programmatic tool calling: 43,588 before and 27,297 after. Tool search: about 55,000 before and at most about 8,250 after, which is the upper bound implied by Anthropic's statement of an over 85 percent reduction.</desc>
+  <rect x="0" y="0" width="720" height="400" fill="#0f172a" />
+  <text x="20" y="28" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="15" fontWeight="600">Tokens before and after</text>
+  <text x="20" y="46" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="11">Shared linear scale. Three different tasks, so compare each pair, not the groups.</text>
+
+  <text x="40" y="78" fill="#e5e7eb" fontFamily="system-ui, sans-serif" fontSize="12" fontWeight="600">Code execution with MCP (98.7% saving)</text>
+  <rect x="40" y="88" width="460" height="22" fill="#fbbf24" />
+  <text x="510" y="104" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="11">150,000 before</text>
+  <rect x="40" y="116" width="6" height="22" fill="#34d399" />
+  <text x="56" y="132" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="11">2,000 after</text>
+
+  <text x="40" y="180" fill="#e5e7eb" fontFamily="system-ui, sans-serif" fontSize="12" fontWeight="600">Programmatic tool calling (37% saving)</text>
+  <rect x="40" y="190" width="134" height="22" fill="#fbbf24" />
+  <text x="184" y="206" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="11">43,588 before</text>
+  <rect x="40" y="218" width="84" height="22" fill="#34d399" />
+  <text x="134" y="234" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="11">27,297 after</text>
+
+  <text x="40" y="282" fill="#e5e7eb" fontFamily="system-ui, sans-serif" fontSize="12" fontWeight="600">Tool search (over 85% reduction, shown as an upper bound)</text>
+  <rect x="40" y="292" width="169" height="22" fill="#fbbf24" />
+  <text x="219" y="308" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="11">about 55,000 before</text>
+  <rect x="40" y="320" width="25" height="22" fill="#34d399" />
+  <text x="75" y="336" fill="#f9fafb" fontFamily="system-ui, sans-serif" fontSize="11">at most about 8,250 after (85% reduction or better)</text>
+
+  <text x="20" y="378" fill="#9ca3af" fontFamily="system-ui, sans-serif" fontSize="10">The 8,250 figure is 15% of 55,000, derived from "over 85 percent." Anthropic does not publish an exact after-count.</text>
+</svg>
+<figcaption>Token cost before (amber) and after (green). Sources: Anthropic, "Code execution with MCP" (November 4, 2025); Anthropic, "Advanced tool use" (November 24, 2025); Anthropic tool search documentation. The three figures come from different tasks and are vendor-reported. The tool search "after" bar is an upper bound derived from "over 85 percent."</figcaption>
+</figure>
+
+The three techniques fix different problems. Tool search shrinks the definitions you carry. Code execution keeps intermediate data out of context. Programmatic tool calling is the same idea inside the vendor's tool-use API. They stack, and you will usually want tool search for discovery and code execution for the heavy work.
+
+---
+
+## How to choose
+
+Start from the shape of the work, not the protocol you heard about most recently. The table summarizes each pattern across the three decisions from the beginning of this post.
+
+| Pattern | Best for | Interface owner | Where data lives | Main risk |
+|---|---|---|---|---|
+| Function calling | A few private tools used on most requests | You | Model context | Tool sprawl and token cost |
+| MCP | Reusable integrations across hosts | The server author | Model context (by default) | Untrusted servers, token handling |
+| Code execution | Loops, filtering, large intermediate data | You, via the code APIs you expose | The sandbox | Running model-written code |
+| Computer and browser use | Systems with no API | The UI's vendor | Screen and model context | Hostile on-screen content |
+| A2A | Delegating to a reasoning agent | The remote agent | The remote agent | Loss of visibility, trust between agents |
+| Events and tasks | Long-running or externally triggered work | The event source | Queues and durable task state | Duplicate delivery, open triggers |
+
+Then work down this sequence. The first yes usually wins, though later steps can apply too.
+
+1. **Is there an API?** If not, you are in computer-use territory. Sandbox it.
+2. **Is the other side an agent with its own reasoning, or a long-running task?** Use A2A.
+3. **Does the integration need to work across hosts and clients?** Use MCP.
+4. **Fewer than about ten tools, small definitions, used on every request?** Use native function calling.
+5. **Ten or more tools, or more than 10k tokens of definitions?** Add tool search.
+6. **Multi-step data shaping, loops, or large intermediate results?** Use code execution or programmatic tool calling.
+7. **Does the work outlive a request, or does the outside world trigger it?** Add events and tasks.
+
+The sequence is my rule of thumb, built from the vendor thresholds cited above, not a standard. Notice that steps 4 through 7 are not exclusive. They are additive.
+
+Real systems layer these patterns. A GitHub event triggers an agent. The agent uses MCP servers through code execution, so the large results stay in the sandbox. For one subtask, it delegates to a remote agent over A2A, and gets a push notification when that task completes. Each layer solves a different problem, and none of them replaces the others.
+
+---
+
+## Security: the pattern sets the blast radius
+
+Every outward lane is also an inward lane for untrusted content. The more authority the pattern gives the agent, the more a manipulated agent can do.
+
+OWASP's LLM01:2025 describes indirect prompt injection as occurring when an LLM accepts input from external sources such as websites or files. Its mitigations include restricting privileges to the minimum necessary, human-in-the-loop for privileged operations, and separating and clearly denoting untrusted content ([OWASP LLM01:2025](https://genai.owasp.org/llmrisk/llm01-prompt-injection/)). Every pattern above returns external content to the model, so every pattern has this exposure.
+
+OWASP's LLM06:2025 on excessive agency names three root causes: excessive functionality, excessive permissions, and excessive autonomy ([OWASP LLM06:2025](https://genai.owasp.org/llmrisk/llm062025-excessive-agency/)). Those map onto the patterns neatly. Too many tools is excessive functionality. A broad token is excessive permissions. An agent that clicks through a checkout without a human is excessive autonomy. OWASP also published a Top 10 for Agentic Applications 2026 on December 9, 2025, if you want the broader treatment ([OWASP](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/)).
+
+A few pattern-specific rules:
+
+- **MCP: do not forward tokens.** The security best practices say MCP servers "MUST NOT accept any tokens that were not explicitly issued for the MCP server" ([MCP security best practices](https://modelcontextprotocol.io/docs/tutorials/security/security_best_practices)). The full reasoning, including the confused-deputy problem, is in [MCP Server Authorization](/blog/mcp-server-authorization).
+- **MCP: tool annotations are hints.** The spec says annotations "should be considered untrusted, unless obtained from a trusted server" ([MCP specification](https://modelcontextprotocol.io/specification/2026-07-28)). A tool that claims to be read-only has told you what it says, not what it does.
+- **Computer use: isolate it.** Anthropic recommends a dedicated VM or container with minimal privileges, no access to sensitive data, internet limited to an allowlist of domains, and a human confirming consequential decisions. OpenAI recommends an isolated browser or VM and an allow list of sites and actions.
+- **Code execution: `allowed_callers` is not a boundary.** The docs say so directly. Enforce permissions in the tools and in the sandbox.
+- **Events: authenticate the source.** Claude Code's GitHub Actions rejecting bot actors unless listed in `allowed_bots` is the right instinct: decide who may wake the agent before deciding what it does.
+
+A simple test applies to all six. If the model were fully convinced by the worst piece of text it could read, what is the most it could do through this lane? That is the pattern's blast radius, and you size it with permissions, not with prompts.
+
+---
+
+## Frequently Asked Questions
+
+### Is MCP replacing function calling?
+
+No. MCP standardizes how tools are described and reached, and the model still emits a tool request that your client executes. From the model's side an MCP tool looks like any other tool. Function calling is the mechanism, and MCP is one way of supplying the tools.
+
+### Should I use A2A or MCP to call another agent?
+
+Use A2A if the other side reasons, may run for a while, and may need to ask you something mid-task. Use MCP if it is better described as a set of operations. Google positioned A2A as complementing MCP when it launched, and the two often appear in the same system.
+
+### When is computer use acceptable in production?
+
+When no API exists, the environment is isolated, and a human confirms consequential actions. That means a dedicated VM or container with minimal privileges, a domain allowlist, and no sensitive data in reach. Benchmark progress is real, but the screen remains untrusted input.
+
+### Does code execution make MCP unnecessary?
+
+No. In Anthropic's "Code execution with MCP" design, MCP servers are still what the code calls. Code execution changes how the agent uses them: as code APIs inside a sandbox, so definitions and intermediate results stay out of context. MCP still supplies the reusable, standardized interface.
+
+### What changed in MCP in 2026?
+
+The `2026-07-28` revision made the protocol stateless: no `initialize` handshake, no `Mcp-Session-Id`, and version and capabilities in `_meta` on each request. It added `server/discover`, deprecated Roots, Sampling, and Logging, formally deprecated HTTP+SSE, replaced server-initiated requests with Multi Round-Trip Requests, and moved Tasks into an official extension. The [changelog](https://modelcontextprotocol.io/specification/2026-07-28/changelog) has the details.
+
+---
+
+## The short version
+
+- The model emits a request, and the harness acts. Every pattern is a different answer to what sits on the other side and who defines its shape.
+- Use native function calling for a few private tools. Use MCP when the integration must be reusable. Use A2A when the other side is an agent.
+- Reach for code execution or tool search when definitions and intermediate results start crowding out the actual task.
+- Treat computer use as a sandboxed fallback for systems with no API, however good the benchmarks look.
+- Events and tasks cover work that outlives a request or starts from outside, and they need idempotency and authenticated sources.
+- Layer the patterns, and size each lane's permissions as if the model might read the worst text on the internet.
+
+---
+
+## References
+
+- [Anthropic: Tool use overview](https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview)
+- [Anthropic: Tool search tool](https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool)
+- [Anthropic: Programmatic tool calling](https://platform.claude.com/docs/en/agents-and-tools/tool-use/programmatic-tool-calling)
+- [Anthropic: Computer use tool](https://platform.claude.com/docs/en/agents-and-tools/tool-use/computer-use-tool)
+- [Anthropic Engineering: Advanced tool use](https://www.anthropic.com/engineering/advanced-tool-use)
+- [Anthropic Engineering: Code execution with MCP](https://www.anthropic.com/engineering/code-execution-with-mcp)
+- [Anthropic Engineering: Equipping agents for the real world with Agent Skills](https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills)
+- [Agent Skills open standard](https://agentskills.io/)
+- [Anthropic: Introducing Claude Sonnet 4.5](https://www.anthropic.com/news/claude-sonnet-4-5)
+- [Anthropic: Introducing Claude Sonnet 4.6](https://www.anthropic.com/news/claude-sonnet-4-6)
+- [Anthropic: Donating MCP and establishing the Agentic AI Foundation](https://www.anthropic.com/news/donating-the-model-context-protocol-and-establishing-of-the-agentic-ai-foundation)
+- [Linux Foundation: Agentic AI Foundation announcement](https://www.linuxfoundation.org/press/linux-foundation-announces-the-formation-of-the-agentic-ai-foundation)
+- [OpenAI: Function calling guide](https://developers.openai.com/api/docs/guides/function-calling)
+- [OpenAI: Computer use guide](https://developers.openai.com/api/docs/guides/tools-computer-use)
+- [Google DeepMind: Gemini 2.5 Computer Use model](https://blog.google/technology/google-deepmind/gemini-computer-use-model/)
+- [Cloudflare: Code Mode](https://blog.cloudflare.com/code-mode/)
+- [OSWorld](https://osworld-v1.xlang.ai/)
+- [MCP specification, revision 2026-07-28](https://modelcontextprotocol.io/specification/2026-07-28)
+- [MCP changelog, revision 2026-07-28](https://modelcontextprotocol.io/specification/2026-07-28/changelog)
+- [MCP Tasks extension overview](https://modelcontextprotocol.io/extensions/tasks/overview)
+- [MCP security best practices](https://modelcontextprotocol.io/docs/tutorials/security/security_best_practices)
+- [Google Developers Blog: A2A, a new era of agent interoperability](https://developers.googleblog.com/en/a2a-a-new-era-of-agent-interoperability/)
+- [Linux Foundation: Agent2Agent protocol project launch](https://www.linuxfoundation.org/press/linux-foundation-launches-the-agent2agent-protocol-project-to-enable-secure-intelligent-communication-between-ai-agents)
+- [A2A releases](https://github.com/a2aproject/A2A/releases)
+- [A2A specification](https://a2a-protocol.org/latest/specification/)
+- [IBM Research: Agent Communication Protocol](https://research.ibm.com/projects/agent-communication-protocol)
+- [Claude Code GitHub Actions](https://code.claude.com/docs/en/github-actions)
+- [OWASP LLM01:2025 Prompt Injection](https://genai.owasp.org/llmrisk/llm01-prompt-injection/)
+- [OWASP LLM06:2025 Excessive Agency](https://genai.owasp.org/llmrisk/llm062025-excessive-agency/)
+- [OWASP Top 10 for Agentic Applications 2026](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/)
+
+All specification and product claims in this post were verified against the linked pages on October 4, 2026.
