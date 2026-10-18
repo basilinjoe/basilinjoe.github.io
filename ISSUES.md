@@ -35,7 +35,17 @@ that a problem spotted during unrelated work does not evaporate when the session
 
 Severity says how bad something is; this says what to do next.
 
-_Empty — nothing is open._
+1. **[P2-054] Blog preflight skips required visual verification when no renderer is installed.**
+
+### [P2-054] Blog preflight reports a visual gate pass without a renderer
+
+`.claude/scripts/blog_preflight.py:597` returns `passed: true` when neither
+Patchright nor Playwright is installed. This contradicts the strict renderer
+requirement in `.claude/skills/blog/references/blog-delivery-contract.md` Gate 3.
+Observed on 2026-10-13 while preparing the RAG article: both Python renderer
+packages are absent. Fix by blocking strict delivery when no renderer is
+available, or accepting recorded results from an explicitly supported equivalent
+renderer. Until then, a preflight pass alone is not evidence of visual QA.
 
 When issues are logged again, rank them here. The ordering that worked: correctness
 first, then documentation accuracy (a wrong `DESIGN.md` makes every later review start
@@ -45,6 +55,29 @@ decision rather than a defect, and do not resolve those unilaterally.
 ---
 
 ## Open
+
+### [P2-056] Inline SVG figure labels shrink to about 6px on phone-width screens
+
+The RAG posts' figures (`content/blog/anatomy-of-rag.mdx`, `content/blog/rag-in-production.mdx`)
+use `viewBox` widths of 680-760 with label `fontSize` 12-13 and scale to the content
+column. At a 360px viewport with 16px gutters (about 328px of figure width), a 13-unit
+label in a 760-wide viewBox renders at 13 x 328 / 760 = 5.6px, well under the
+body-text floor in `DESIGN.md`. Older posts with similar figures likely share this.
+Not yet checked in a browser. Fix: raise label font sizes and reduce viewBox width
+for narrow layouts, or wrap figures so they scroll horizontally below a breakpoint
+instead of shrinking.
+
+### [P2-055] Hero generator's Openverse fallback points at a retired API host
+
+`.claude/scripts/generate_hero.py:56` sets `OPENVERSE_API` to
+`https://api.openverse.engineering/v1/images/`. That host now answers
+`301 Moved Permanently` with `Location: https://api.openverse.org/v1/images/`
+(checked with `curl -sI` on 2026-10-17), and the script does not follow it, so the
+stock-image fallback logs `[openverse] no results` for every topic. With no Gemini or
+stock API key set, the generator then always fails with `no-image-gen-path`. Observed
+while preparing `rag-in-production.mdx`; the cover was drawn locally instead. Fix:
+change the constant to `https://api.openverse.org/v1/images/` (validate the new host
+under the same SSRF rules rather than following redirects blindly).
 
 ### [P2-053] Internal editorial markers ship inside the served HTML payload
 

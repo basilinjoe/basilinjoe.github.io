@@ -1,0 +1,489 @@
+---
+title: "The Anatomy of RAG: From Document to Cited Answer"
+date: "2026-10-13"
+modified: "2026-10-17"
+excerpt: "Ten named parts of a RAG system, each with its real data shape, what it connects to, and how it fails, traced through one policy question."
+description: "Ten named parts of a RAG system, each with its real data shape, what it connects to, and how it fails, traced through one policy question."
+author: "Basilin Joe"
+canonical: "https://basilinjoe.github.io/blog/anatomy-of-rag"
+tags: ["AI", "RAG", "LLMs", "Architecture"]
+coverImage: "/blog/rag-anatomy-cover.png"
+draft: true
+---
+
+The model can write the answer. It still needs the right evidence.
+
+Ask an assistant whether a contractor in India can claim reimbursement for an international flight. A fluent answer is easy. A useful answer requires the current travel policy, the contractor exception, the right regional rules, and permission to read each source.
+
+Retrieval-augmented generation, or RAG, is the pattern that connects those sources to generation. Your application retrieves relevant information and supplies it to a model when answering. The [original RAG paper](https://arxiv.org/abs/2005.11401) combined a generative model with an external dense retrieval index. Production systems expand that idea into a set of distinct parts.
+
+A RAG system is really two systems sharing parts. One prepares evidence ahead of time, at indexing time. The other answers a question, at query time. This post names ten parts across those two systems and shows what each one actually looks like: a record, a JSON object, a table, or a prompt. We trace one question through all ten.
+
+Everything about the policy collection in this post is hypothetical: a travel policy for employees, a contractor appendix with an exception, and an India regional addendum. The IDs, scores, and model names are made up to show shapes. If you want the model basics first, start with [Generative AI Explained](/blog/generative-ai-introduction).
+
+> **Key Takeaways**
+> - A RAG system has ten parts: five built at indexing time (source document, parsed record, chunk, embedding, indexes) and five used at query time (query, candidate set, reranked shortlist, context window, grounded answer).
+> - Each part has a concrete data shape, and each fails in its own way. Knowing the shape tells you what to inspect.
+> - Hybrid retrieval merges ranked lists from lexical and vector search. Reranking then scores each question and passage pair together.
+> - A stable chunk ID with a version, carried through every hop, is what lets you trace an answer back to its source and delete it cleanly.
+> - Permissions show up as data: access fields on chunks, and filters derived from validated identity rather than from the question text.
+
+## The whole system at a glance
+
+The ten parts form one path from an authoritative document to a cited answer. The first five are built before anyone asks anything. The last five exist only for the length of a request. The indexes are where the two systems meet: indexing writes to them, and the query path reads from them.
+
+<figure>
+<svg role="img" aria-labelledby="anatomy-map-title anatomy-map-desc" viewBox="0 0 760 350" xmlns="http://www.w3.org/2000/svg">
+  <title id="anatomy-map-title">The ten parts of a RAG system in two groups</title>
+  <desc id="anatomy-map-desc">Top row, indexing time: source document, parsed record, chunk, embedding, indexes. Bottom row, query time: query, candidate set, reranked shortlist, context window, grounded answer with citations. An arrow runs from the indexes down to the candidate set, showing that retrieval reads what indexing built.</desc>
+  <defs>
+    <marker id="anatomy-arrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#93c5fd" />
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="760" height="350" rx="12" fill="#0f172a" />
+  <g fontFamily="system-ui, sans-serif" fontSize="13" fill="#f8fafc" textAnchor="middle">
+    <text x="20" y="30" fontSize="14" fill="#93c5fd" textAnchor="start">INDEXING TIME</text>
+    <rect x="20" y="44" width="124" height="84" rx="6" fill="#1e3a5f" />
+    <text x="82" y="64" fill="#cbd5e1" fontSize="12">1</text>
+    <text x="82" y="87">Source</text>
+    <text x="82" y="105">document</text>
+    <rect x="166" y="44" width="124" height="84" rx="6" fill="#1e3a5f" />
+    <text x="228" y="64" fill="#cbd5e1" fontSize="12">2</text>
+    <text x="228" y="87">Parsed</text>
+    <text x="228" y="105">record</text>
+    <rect x="312" y="44" width="124" height="84" rx="6" fill="#1e3a5f" />
+    <text x="374" y="64" fill="#cbd5e1" fontSize="12">3</text>
+    <text x="374" y="96">Chunk</text>
+    <rect x="458" y="44" width="124" height="84" rx="6" fill="#1e3a5f" />
+    <text x="520" y="64" fill="#cbd5e1" fontSize="12">4</text>
+    <text x="520" y="96">Embedding</text>
+    <rect x="604" y="44" width="124" height="84" rx="6" fill="#1e3a5f" />
+    <text x="666" y="64" fill="#cbd5e1" fontSize="12">5</text>
+    <text x="666" y="96">Indexes</text>
+    <text x="520" y="162" fontSize="12" fill="#93c5fd">retrieval reads the indexes</text>
+    <text x="20" y="222" fontSize="14" fill="#6ee7b7" textAnchor="start">QUERY TIME</text>
+    <rect x="20" y="236" width="124" height="84" rx="6" fill="#134e4a" />
+    <text x="82" y="256" fill="#cbd5e1" fontSize="12">6</text>
+    <text x="82" y="288">Query</text>
+    <rect x="166" y="236" width="124" height="84" rx="6" fill="#134e4a" />
+    <text x="228" y="256" fill="#cbd5e1" fontSize="12">7</text>
+    <text x="228" y="279">Candidate</text>
+    <text x="228" y="297">set</text>
+    <rect x="312" y="236" width="124" height="84" rx="6" fill="#134e4a" />
+    <text x="374" y="256" fill="#cbd5e1" fontSize="12">8</text>
+    <text x="374" y="279">Reranked</text>
+    <text x="374" y="297">shortlist</text>
+    <rect x="458" y="236" width="124" height="84" rx="6" fill="#134e4a" />
+    <text x="520" y="256" fill="#cbd5e1" fontSize="12">9</text>
+    <text x="520" y="279">Context</text>
+    <text x="520" y="297">window</text>
+    <rect x="604" y="236" width="124" height="84" rx="6" fill="#134e4a" />
+    <text x="666" y="256" fill="#cbd5e1" fontSize="12">10</text>
+    <text x="666" y="279">Grounded answer</text>
+    <text x="666" y="297">+ citations</text>
+  </g>
+  <g stroke="#93c5fd" strokeWidth="2" fill="none" markerEnd="url(#anatomy-arrow)">
+    <line x1="144" y1="86" x2="162" y2="86" />
+    <line x1="290" y1="86" x2="308" y2="86" />
+    <line x1="436" y1="86" x2="454" y2="86" />
+    <line x1="582" y1="86" x2="600" y2="86" />
+    <line x1="144" y1="278" x2="162" y2="278" />
+    <line x1="290" y1="278" x2="308" y2="278" />
+    <line x1="436" y1="278" x2="454" y2="278" />
+    <line x1="582" y1="278" x2="600" y2="278" />
+  </g>
+  <g stroke="#93c5fd" strokeWidth="2" fill="none">
+    <polyline points="666,128 666,172 228,172" />
+  </g>
+  <line x1="228" y1="172" x2="228" y2="232" stroke="#93c5fd" strokeWidth="2" markerEnd="url(#anatomy-arrow)" />
+</svg>
+<figcaption>Ten parts in two groups. Indexing builds the indexes ahead of time, and the query path reads from them.</figcaption>
+</figure>
+
+Keep four terms separate. An **embedding** is a numeric representation used to compare items. A **vector database** stores and searches vectors, often alongside metadata. **RAG** is the application pattern that retrieves evidence for generation. **Fine-tuning** changes model parameters through training.
+
+You can build RAG with keyword search, SQL, or APIs without a vector database. You can also fine-tune a model and use retrieval with it. Neither an embedding nor fine-tuning supplies a complete mechanism for current, permission-aware source retrieval.
+
+## 1. The source document
+
+**What it is.** The source document is the authoritative original, in whatever system owns it: a PDF in a document store, a page in a wiki, a row in a database. RAG never replaces it. Everything downstream is a derived copy that should point back to it.
+
+The source system also knows things the text doesn't say. It knows who owns the document, which version is current, when the version takes effect, and who is allowed to read it. Those facts are part of the evidence.
+
+**What it looks like.** A small metadata block, kept next to the file rather than inside it:
+
+```json
+{
+  "source_id": "contractor-appendix",
+  "version": "v3",
+  "owner": "people-ops",
+  "effective_from": "2026-04-01",
+  "status": "current",
+  "permissions": ["grp:finance", "grp:contractors-in"],
+  "url": "https://intranet.example/policies/contractor-appendix"
+}
+```
+
+**Connects to.** The parser reads the file. The same metadata block must reach every chunk, because later parts can't recover it from the text alone. Change detection also starts here: a new version or a deletion at the source is what triggers reprocessing.
+
+**How it fails.** The usual failure is a stale or ambiguous source. Two versions are both marked current, the effective date is missing, or the permission list lives in a system the pipeline never reads. Deletions are the quiet version. A retired policy that is removed from the source but never from the index will keep answering questions.
+
+## 2. The parsed record
+
+**What it is.** The parsed record is the document turned into structured text. Parsing handles PDFs, HTML, scans, and tables. Its job is to keep the structure that gives words their meaning: the heading path, the table relationships, and a locator that can return a reader to the original page or section.
+
+**What it looks like.** A table stays a table, with its headers attached to its rows:
+
+```json
+{
+  "source_id": "contractor-appendix",
+  "version": "v3",
+  "locator": {"page": 2, "section": "C.2"},
+  "heading_path": ["Contractor Appendix", "C. Travel", "C.2 International airfare"],
+  "table": {
+    "headers": ["Item", "Employee", "Contractor"],
+    "rows": [
+      ["International airfare", "Reimbursable", "Only if the contract allows it"]
+    ]
+  }
+}
+```
+
+Notice that the cell "Only if the contract allows it" is meaningless without the header above it.
+
+**Connects to.** The parsed record feeds the chunker, which decides where to cut. It also feeds the metadata that every chunk will carry: the heading path and locator become part of how a chunk is found and cited.
+
+**How it fails.** Clean-looking text that has lost its meaning. If the parser flattens that table into a stream of words and drops the header row, a later part may read "Reimbursable" as the answer for contractors. Nothing looks broken. The text is fluent and the retrieval is confident. Inspect parsed records by eye before you experiment with embedding models.
+
+## 3. The chunk
+
+**What it is.** A chunk is the unit that retrieval returns. Chunking divides parsed records into retrievable pieces: a paragraph, a section, a table with its headers, or a smaller passage that carries its parent heading. Small chunks isolate precise facts but lose conditions. Large chunks keep context but mix topics and consume prompt space.
+
+**What it looks like.** A chunk is text plus everything needed to find, filter, and cite it:
+
+```json
+{
+  "id": "contractor-appendix@v3#C.2",
+  "parent_id": "contractor-appendix@v3#C",
+  "heading_path": ["Contractor Appendix", "C. Travel", "C.2 International airfare"],
+  "text": "International airfare for contractors is reimbursable only if the contract allows it.",
+  "worker_type": "contractor",
+  "country": "any",
+  "effective_from": "2026-04-01",
+  "acl": ["grp:finance", "grp:contractors-in"],
+  "source_url": "https://intranet.example/policies/contractor-appendix"
+}
+```
+
+The ID names the document, its version, and the section. The `parent_id` lets the system recover the surrounding section later. The text has been rewritten from the table row so the condition survives on its own, and the `worker_type` field lets a filter find it without relying on wording.
+
+**Connects to.** The chunk is the object every later part refers to. Embeddings, index entries, candidates, context labels, and citations all point back to this ID. The `acl` field is how permissions travel with the text.
+
+**How it fails.** The correct sentence exists, but its exception, date, or identity is missing from the retrievable record. There is no universal best chunk size. [Microsoft's chunking guidance](https://learn.microsoft.com/en-us/azure/search/vector-search-how-to-chunk-documents) describes fixed, structure-based, and semantic approaches, so test with representative documents and questions. Overlap preserves continuity, but it doesn't guarantee that an exception stays attached to its rule.
+
+## 4. The embedding
+
+**What it is.** An embedding is a list of numbers that represents a chunk's meaning, produced by an embedding model. Chunks with related meaning end up with vectors that sit close together, which is what lets a search match "reimbursement" to "expense claim" even when the words differ.
+
+**What it looks like.** A vector, stored with the model that produced it:
+
+```json
+{
+  "chunk_id": "contractor-appendix@v3#C.2",
+  "model": "example-embed-v2",
+  "dims": 1024,
+  "vector": [0.0132, -0.0871, 0.0419, "..."]
+}
+```
+
+The model name and the dimension are placeholders. Real models differ, and so do their dimensions.
+
+**Connects to.** The vector is written into a vector index, keyed by the chunk ID. At query time, the same model must embed the question, or the comparison means nothing. Vectors from different models are not comparable, so the model identifier travels with the vector. Changing models means re-embedding everything. The migration process is covered in [Taking RAG to Production](/blog/rag-in-production).
+
+**How it fails.** The embedding captures topic well and conditions poorly. A chunk about contractor airfare and a chunk about employee airfare can sit very close together, because they are about the same subject. The vector doesn't reliably say which one applies to the asker. That is one reason the system keeps metadata fields and a lexical index alongside the vectors, instead of trusting similarity alone.
+
+## 5. The indexes
+
+**What it is.** The indexes are the structures that make chunks searchable quickly. A typical system keeps two kinds, plus metadata fields it can filter on. A lexical index, usually an inverted index searched with BM25, maps words to chunks. A vector index maps a query vector to nearby vectors using an approximate nearest neighbor structure.
+
+**What it looks like.** Both indexes point back to chunk IDs:
+
+```text
+Lexical (inverted) index
+  "contractor" -> [contractor-appendix@v3#C.2, india-addendum@v2#2]
+  "TRV-INTL"   -> [expense-codes@v9#TRV-INTL]
+  "airfare"    -> [travel-policy@v14#3.1, contractor-appendix@v3#C.2, india-addendum@v2#2, expense-codes@v9#TRV-INTL]
+
+Vector index
+  ANN structure over chunk vectors
+  query vector in -> chunk IDs + similarity scores out
+
+Filterable fields on each chunk
+  worker_type, country, effective_from, acl
+```
+
+**Connects to.** The chunk writes to all three: the inverted index, the vector index, and the filter fields. At query time, retrieval reads all of them, usually in one request. Authorization filters apply here. [Azure's document-level access guidance](https://learn.microsoft.com/en-us/azure/search/search-document-level-access-overview) describes retaining permission metadata and applying access restrictions during retrieval. The implementation varies by engine, but the requirement doesn't.
+
+**How it fails.** The two indexes drift apart. A chunk is removed from the vector index but remains in the lexical one, or the reverse, and a retired policy keeps resurfacing through one path. Deletions must remove entries from both. A second failure is an index built with the wrong embedding model for the query path, which returns plausible but unrelated chunks.
+
+Everything up to this point happened before anyone asked a question. From here, the parts exist only for the length of one request, and they start with the question itself.
+
+## 6. The query
+
+**What it is.** The query is the user's question turned into a request the indexes can serve. That means more than the raw text. It includes rewritten searches, constraints taken from the request, and a permission scope taken from who is asking. The trick is keeping those three sources separate.
+
+**What it looks like.** Separate fields, because they have different levels of trust:
+
+```json
+{
+  "raw_question": "Can a contractor in India claim reimbursement for an international flight?",
+  "subqueries": [
+    "contractor eligibility international airfare reimbursement",
+    "India regional addendum airfare",
+    "international airfare reimbursement policy"
+  ],
+  "boosts_from_request": {"country": ["IN", "any"], "worker_type": "contractor"},
+  "scope_from_identity": {"groups": ["grp:finance", "grp:contractors-in"]}
+}
+```
+
+**Connects to.** The subqueries and boosts go to the lexical and vector indexes. The identity scope goes into the access filter on the same call.
+
+The two kinds of constraint behave differently. The identity scope is a hard filter: a chunk outside it is never returned. The request-derived fields are boosts. They raise matching chunks in the ranking without excluding the rest, because the general employee rule is still useful context for a contractor's question. A value of `"any"` on a chunk means it applies in every country. [Microsoft's RAG overview](https://learn.microsoft.com/en-us/azure/search/retrieval-augmented-generation-overview) describes conversation-aware planning and targeted subqueries.
+
+If you expose retrieval to an agent as a tool, the application still runs the call and enforces the scope. [How AI Agents Talk to External Systems](/blog/how-agents-talk-to-external-systems) explains that boundary. For the identity side, [MCP Server Authorization](/blog/mcp-server-authorization) distinguishes an authenticated caller from permission to access a specific object.
+
+**How it fails.** A well-executed search for a subtly different question. A rewrite can expand "expense" into "reimbursement" safely. It must not turn "contractor" into "employee." Keep the original question and log the derived searches. Authorization comes from validated identity, never from the text. A model should not grant access because the user wrote "search all departments."
+
+## 7. The candidate set
+
+**What it is.** The candidate set is the list of chunks that retrieval returns for the query. Its first job is coverage: the passages needed to answer must be somewhere in it. Hybrid retrieval builds it by running lexical and vector searches and merging the two ranked lists.
+
+**What it looks like.** Take five documents. A is the travel policy section on international airfare (employees). B is the contractor appendix exception, C.2. C is the India addendum, section 2. D is an onboarding FAQ that mentions flights, which is semantically similar but not useful. E is an expense code table entry, "TRV-INTL: international airfare". It is short and made almost entirely of query terms, so BM25 ranks it first even though it answers nothing.
+
+| Doc | Chunk ID | BM25 rank | Vector rank | RRF score |
+|---|---|---|---|---|
+| A: travel policy, international airfare | `travel-policy@v14#3.1` | 2 | 1 | 0.03252 |
+| B: contractor appendix exception | `contractor-appendix@v3#C.2` | 3 | 3 | 0.03175 |
+| C: India addendum | `india-addendum@v2#2` | 4 | 4 | 0.03125 |
+| E: expense code entry | `expense-codes@v9#TRV-INTL` | 1 | absent | 0.01639 |
+| D: onboarding FAQ | `onboarding-faq@v5#4` | absent | 2 | 0.01613 |
+
+The scores use reciprocal rank fusion, or RRF, with k = 60. Each list contributes 1/(60 + rank), and the contributions add up. This worked example is illustrative, not measured from a real system.
+
+[Microsoft's hybrid search ranking page](https://learn.microsoft.com/en-us/azure/search/hybrid-search-ranking) gives the score as "1/(rank + k)" and says "Experiments show the algorithm performs best when you set `k` to a small value, such as 60."
+
+**Connects to.** The candidate set is built from the lexical and vector indexes, and it hands its fused order to the reranker. RRF merges ranks rather than comparing raw scores, which matters because BM25 scores and vector similarities live on different scales. It rewards documents that appear in both lists, so the single-list matches E and D fall below the three that both methods found. [Azure's hybrid search overview](https://learn.microsoft.com/en-us/azure/search/hybrid-search-overview) explains why lexical and vector search complement each other. Hybrid search does not inherently mean RRF, since other systems use other fusion methods.
+
+**How it fails.** Relevant-looking results that omit one necessary source. If the contractor exception never makes the candidate set, no later part can recover it. Search across the needed subquestions, keep provenance, and deduplicate repeated passages without deleting distinct conditions.
+
+## 8. The reranked shortlist
+
+**What it is.** The reranked shortlist is the candidate set reordered and cut down by a model that looks at the question and each passage together. Retrieval compares a query vector to precomputed vectors. A reranker reads the pair, so it can notice that a passage answers a different question than the one asked.
+
+**What it looks like.** A short list with scores and a cut-off. These scores are illustrative, not from a real reranker:
+
+```text
+Question: Can a contractor in India claim reimbursement for an international flight?
+
+rank  doc                                   rerank score (illustrative)
+1     B  contractor-appendix@v3#C.2         0.91
+2     C  india-addendum@v2#2                0.84
+3     A  travel-policy@v14#3.1              0.77
+----- cut-off at 0.50 -----
+      E  expense-codes@v9#TRV-INTL          0.22   dropped
+      D  onboarding-faq@v5#4                0.18   dropped
+```
+
+Notice that the order changed. The contractor exception now leads, because it addresses the asker directly.
+
+**Connects to.** The reranker takes the fused candidate set and passes a shortlist to context assembly. In Azure's pipeline, per the ranking page, "Semantic ranking occurs after RRF merging of results." Reranking and fusion are separate jobs, and a system can use one without the other.
+
+**How it fails.** A reranker can only reorder what it receives. Azure's [semantic ranker](https://learn.microsoft.com/en-us/azure/search/semantic-search-overview), for example, reranks the top results handed to it by the first-stage search. So a missing exception stays missing. The other failure is the cut-off. Set it too tight, and a necessary condition gets dropped along with the noise. Check what the shortlist drops, not just what it keeps.
+
+## 9. The context window
+
+**What it is.** The context window is the assembled prompt: instructions, evidence, the question, and room left for the answer. Context assembly turns the shortlist into a bounded, readable package. It removes redundant text, recovers parent sections where a chunk lost its conditions, and labels each passage so the answer can cite it.
+
+**What it looks like.** A layout, shown here as plain text:
+
+```text
+INSTRUCTIONS
+Answer only from the evidence below. Cite each claim with its label.
+If the evidence is insufficient, say what is missing.
+
+EVIDENCE
+[S1] contractor-appendix@v3#C.2 (effective 2026-04-01)
+International airfare for contractors is reimbursable only if the contract allows it.
+
+[S2] india-addendum@v2#2 (effective 2026-04-01)
+Contractors in India submit claims through the regional finance team.
+
+[S3] travel-policy@v14#3.1 (effective 2026-04-01)
+International airfare is reimbursable for employees when booked through the approved portal.
+
+QUESTION
+Can a contractor in India claim reimbursement for an international flight?
+
+ANSWER BUDGET
+Reserve space for the reply. Do not fill the window with evidence.
+```
+
+**Connects to.** The labels connect the prompt to the chunk IDs and, later, to citations. The window is also bounded, so everything competes for space. Filling it with loosely relevant chunks is not a quality target.
+
+Placement deserves testing. The [Lost in the Middle study](https://arxiv.org/abs/2307.03172) found that tested models could perform worse when relevant information appeared in the middle of long contexts. It is evidence to test ordering with your chosen model, not proof that every current model behaves the same way.
+
+**How it fails.** The right evidence was retrieved but truncated, buried, or detached from its conditions. The other failure is trust. Retrieved text is untrusted input, and a document can contain instructions aimed at the model. [OWASP's prompt-injection guidance](https://genai.owasp.org/llmrisk/llm01-prompt-injection/) covers this indirect attack. The `[S1]` labels exist for citation, not as a security boundary.
+
+## 10. The grounded answer and its citations
+
+**What it is.** The grounded answer is a reply written from the supplied evidence, with citations a reader can inspect. Grounding is a property of the answer and its sources, not of the prompt wording.
+
+**What it looks like.** An answer with inline markers, and a resolver that turns each marker into a stored location:
+
+```text
+Contractors can claim reimbursement for an international flight only if their
+contract allows it [S1]. Claims from contractors in India go through the
+regional finance team [S2]. The general airfare rule in the travel policy
+covers employees [S3].
+```
+
+```json
+{
+  "S1": {"chunk_id": "contractor-appendix@v3#C.2", "url": "https://intranet.example/policies/contractor-appendix", "section": "C.2"},
+  "S2": {"chunk_id": "india-addendum@v2#2", "url": "https://intranet.example/policies/india-addendum", "section": "2"},
+  "S3": {"chunk_id": "travel-policy@v14#3.1", "url": "https://intranet.example/policies/travel-policy", "section": "3.1"}
+}
+```
+
+Application code resolves the markers from stored metadata. A model-written URL is never a substitute for provenance.
+
+If the contractor's contract isn't available, the answer should abstain on that point and name the missing condition:
+
+```text
+The contractor appendix says international airfare is reimbursable only if the
+contract allows it [S1]. I can't see this contractor's contract, so I can't
+tell whether it does. Check the contract terms or ask the people-ops team.
+```
+
+**Connects to.** Citations connect back to chunk IDs, which connect to source documents. A lack of retrieved evidence means the system can't establish an answer. It does not establish that reimbursement is forbidden.
+
+**How it fails.** A cited answer whose citation doesn't support the claim. The marker is present, the link works, and the passage says something else. Check each claim against the exact passage it cites.
+
+## The chunk ID is the spine
+
+One identifier runs through the whole system. If it survives every hop, you can trace any answer backward. If it breaks anywhere, you lose the ability to debug and to delete cleanly.
+
+<figure>
+<svg role="img" aria-labelledby="spine-title spine-desc" viewBox="0 0 760 290" xmlns="http://www.w3.org/2000/svg">
+  <title id="spine-title">One chunk ID carried through seven hops</title>
+  <desc id="spine-desc">The ID contractor-appendix@v3#C.2 starts as the source ID, version, and section locator in the parsed record, then appears whole in the chunk, embedding, index entries, candidate set, context label S1, and citation. Each hop keeps the ID and version so the final citation can be traced back to the parsed record.</desc>
+  <rect x="0" y="0" width="760" height="290" rx="12" fill="#0f172a" />
+  <g fontFamily="system-ui, sans-serif" fill="#f8fafc" textAnchor="middle">
+    <text x="380" y="44" fontSize="20" fill="#fde68a">contractor-appendix@v3#C.2</text>
+    <line x1="70" y1="150" x2="688" y2="150" stroke="#93c5fd" strokeWidth="3" />
+    <circle cx="70" cy="150" r="9" fill="#1e3a5f" stroke="#93c5fd" strokeWidth="2" />
+    <circle cx="173" cy="150" r="9" fill="#1e3a5f" stroke="#93c5fd" strokeWidth="2" />
+    <circle cx="276" cy="150" r="9" fill="#1e3a5f" stroke="#93c5fd" strokeWidth="2" />
+    <circle cx="379" cy="150" r="9" fill="#1e3a5f" stroke="#93c5fd" strokeWidth="2" />
+    <circle cx="482" cy="150" r="9" fill="#134e4a" stroke="#6ee7b7" strokeWidth="2" />
+    <circle cx="585" cy="150" r="9" fill="#134e4a" stroke="#6ee7b7" strokeWidth="2" />
+    <circle cx="688" cy="150" r="9" fill="#134e4a" stroke="#6ee7b7" strokeWidth="2" />
+    <g fontSize="13">
+      <text x="70" y="120">Parsed</text>
+      <text x="70" y="136">record</text>
+      <text x="173" y="128">Chunk</text>
+      <text x="276" y="128">Embedding</text>
+      <text x="379" y="120">Index</text>
+      <text x="379" y="136">entries</text>
+      <text x="482" y="120">Candidate</text>
+      <text x="482" y="136">set</text>
+      <text x="585" y="120">Context</text>
+      <text x="585" y="136">label</text>
+      <text x="688" y="128">Citation</text>
+    </g>
+    <g fontSize="12" fill="#cbd5e1">
+      <text x="70" y="184">locator</text>
+      <text x="70" y="200">+ version</text>
+      <text x="173" y="184">id field</text>
+      <text x="276" y="184">chunk_id</text>
+      <text x="276" y="200">+ model id</text>
+      <text x="379" y="184">posting and</text>
+      <text x="379" y="200">ANN ids</text>
+      <text x="482" y="184">id + rank</text>
+      <text x="585" y="184">[S1]</text>
+      <text x="688" y="184">[S1] maps</text>
+      <text x="688" y="200">to URL</text>
+    </g>
+    <text x="380" y="258" fontSize="13" fill="#93c5fd">Indexing time on the left, query time on the right. The ID and version never change.</text>
+  </g>
+</svg>
+<figcaption>One ID, seven hops. Tracing an answer backward means following the same identifier in reverse.</figcaption>
+</figure>
+
+Treat the ID as the spine. Include the document version in it, so `v3` and `v4` of the same appendix never collide. Keep a table that maps each context label to its chunk ID for every request. Then a bad citation leads to a chunk, a chunk leads to a parsed record, and a parsed record leads to a source version.
+
+The same ID makes deletion possible. When a source version retires, you can find every entry that references it: the chunk, its vector, both index entries, and any cached answer that cited it. Without that lineage, deletion becomes a guess.
+
+## Where each part usually fails
+
+Trace one failed answer backward from its claims to its evidence. The first missing or distorted piece usually gives you a more useful next action than changing the whole architecture.
+
+| Symptom | Part to inspect | First check |
+|---|---|---|
+| The rule never appears in search | 2. Parsed record, 3. Chunk | Was the passage parsed with its headings and table headers, and did it become a chunk? |
+| Results concern employees rather than contractors | 6. Query | Did rewriting preserve worker type, and is the worker-type boost applied? |
+| Only the general rule is found | 7. Candidate set | Can the query retrieve the exception on its own, and does it appear in both lists? |
+| An exact code or name is missed | 5. Indexes | Is the term in the lexical index, and is the analyzer splitting it? |
+| The exception was found but ignored | 8. Reranked shortlist, 9. Context window | Did it survive the cut-off, deduplication, and the token budget? |
+| The answer invents approval | 10. Grounded answer | Which exact passage supports that claim? |
+| The answer uses a retired policy | 1. Source document, 5. Indexes | Were the deletion and the new version applied to both indexes? |
+| Another group's text appears | 3. Chunk, 6. Query | Is the `acl` field set, and does the scope come from validated identity? |
+
+## Variations on the same anatomy
+
+Advanced, agentic, and graph RAG are design choices on the same ten parts, not a maturity ladder. "Advanced RAG" is a broad label for techniques such as query rewriting, hybrid search, and reranking, which are all already in this anatomy.
+
+Agentic RAG repeats parts 6 through 8 in a loop. A reasoning step decides whether to search again, reformulate a query, or use another tool, so one question can produce several candidate sets. Graph RAG adds a relationship index alongside part 5. [Microsoft's GraphRAG documentation](https://microsoft.github.io/graphrag/) illustrates this with extracted entities, relationships, and community summaries, which can help questions that connect entities or ask about a corpus broadly.
+
+Each variation adds cost. Loops add latency and stopping decisions. Graphs need extraction, maintenance, and evaluation of relationship quality. Neither repairs missing source text or replaces authorization. For the contractor question, plain hybrid retrieval may be enough. Choose from the question and the failure you've measured.
+
+## Keeping it working in production
+
+This post describes the parts. It doesn't cover how to keep them healthy once real users arrive. [Taking RAG to Production](/blog/rag-in-production) picks that up: evaluation sets and release gates, tracing, caching, permissions at scale, and reindexing without breaking anything. Read it once you can name the part that failed.
+
+## Frequently Asked Questions
+
+### Do I need a reranker?
+
+Not always. A reranker helps when the candidate set contains the right passages in the wrong order, or when too many near-matches fill the context window. It does nothing when the needed passage never reached the candidate set. Check whether the right chunk appears in the candidates and where it ranks, then decide. Test the added latency against the improvement.
+
+### Does a long context window replace retrieval?
+
+No. Retrieval also supplies permission filtering, freshness, and provenance. If you load the whole corpus into the prompt instead, the model sees text the asker may not be allowed to read, and citations lose the chunk IDs that make them checkable. Long contexts also cost tokens on every request, and the position effects described in part 9 still apply.
+
+## The short version
+
+A RAG system is ten parts: five built ahead of time and five used per question. Each has a shape you can inspect and a failure you can name. Keep one chunk ID and its version intact from parsed record to citation, and any answer can be traced back to its source.
+
+When an answer is wrong, find the first part where the evidence went missing or changed, and fix that part before touching the rest.
+
+**Know the shape of each part, and you'll know where to look.**
+
+---
+
+## References
+
+- Lewis et al., ["Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks"](https://arxiv.org/abs/2005.11401), arXiv:2005.11401.
+- Microsoft Learn, [Chunk large documents for vector search solutions (Azure AI Search)](https://learn.microsoft.com/en-us/azure/search/vector-search-how-to-chunk-documents).
+- Microsoft Learn, [Retrieval-augmented generation overview (Azure AI Search)](https://learn.microsoft.com/en-us/azure/search/retrieval-augmented-generation-overview).
+- Microsoft Learn, [Hybrid search overview (Azure AI Search)](https://learn.microsoft.com/en-us/azure/search/hybrid-search-overview).
+- Microsoft Learn, [Hybrid search scoring and ranking (Azure AI Search)](https://learn.microsoft.com/en-us/azure/search/hybrid-search-ranking).
+- Microsoft Learn, [Semantic ranking overview (Azure AI Search)](https://learn.microsoft.com/en-us/azure/search/semantic-search-overview).
+- Microsoft Learn, [Document-level access control overview (Azure AI Search)](https://learn.microsoft.com/en-us/azure/search/search-document-level-access-overview).
+- Liu et al., ["Lost in the Middle: How Language Models Use Long Contexts"](https://arxiv.org/abs/2307.03172), TACL, arXiv:2307.03172.
+- OWASP GenAI Security Project, ["LLM01:2025 Prompt Injection"](https://genai.owasp.org/llmrisk/llm01-prompt-injection/).
+- Microsoft, [GraphRAG documentation](https://microsoft.github.io/graphrag/).
+
+Sources were checked against the linked pages between October 13 and October 17, 2026.

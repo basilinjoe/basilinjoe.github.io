@@ -1,0 +1,393 @@
+---
+title: "Taking RAG to Production: What Changes After the Demo Works"
+date: "2026-10-17"
+modified: "2026-10-17"
+excerpt: "A RAG demo that answers 20 questions is not a production system. Evaluation gates, tracing, permissions, injection defense, and safe reindexing close the gap."
+description: "A RAG demo that answers 20 questions is not a production system. Evaluation gates, tracing, permissions, injection defense, and safe reindexing close the gap."
+author: "Basilin Joe"
+canonical: "https://basilinjoe.github.io/blog/rag-in-production"
+tags: ["AI", "RAG", "LLMs", "Architecture", "MLOps"]
+coverImage: "/blog/rag-production-cover.png"
+draft: true
+---
+
+The demo worked. Twenty questions went in, twenty good answers came out, and everyone in the room nodded.
+
+Now suppose that hypothetical internal policy assistant goes live. Thousands of employees start asking it questions. They have different permissions. The policies change every week. Next quarter, someone will want to upgrade the model. None of that was in the demo.
+
+This post is about that gap. It assumes you know the moving parts of a RAG pipeline. If you want the architecture first, read [The Anatomy of RAG](/blog/anatomy-of-rag). Here we cover what you add around the pipeline so it keeps working when nobody is watching: evaluation, tracing, budgets, permissions, safety, freshness, failure behavior, and rollout.
+
+> **Key Takeaways**
+> - A production RAG system is one you can measure, observe, change, and roll back. Answer quality in a demo tells you none of those things.
+> - Build an evaluation set from real questions and their supporting passages, score retrieval separately from generation, and run it as a release gate on every change.
+> - Enforce permissions in retrieval with trusted identity, not in the prompt. Apply the same scoping to caches, logs, and evaluation data.
+> - Treat retrieved text as untrusted input, and design the system to abstain, degrade visibly, and fail safely.
+> - Make reindexing routine and reversible, then feed every confirmed production failure back into the evaluation set.
+
+## What "production-ready" means for RAG
+
+A production-ready RAG system gives acceptable answers for the people who actually use it, shows you when it doesn't, protects the data it touches, and lets you change it without guessing.
+
+That definition is mostly about the things around the model. The retrieval-and-generation pipeline is the same one you built for the demo. What changes is how much you can trust it, see into it, and change it. The table below compares the two states.
+
+| Concern | Prototype | Production |
+|---|---|---|
+| Quality | A few hand-picked questions that look right | A versioned evaluation set, scored per metric and per slice |
+| Latency and cost | Whatever it takes | A budget per stage, with caching where it is safe |
+| Permissions | One shared corpus, or a note in the prompt | Filters applied at query time from trusted identity |
+| Freshness | Index built once | Incremental ingestion, deletions, and a measured index lag |
+| Visibility | Print statements | End-to-end traces with versions and retrieved document IDs |
+| Failure behavior | Confident answer or a stack trace | Abstention, explicit degraded modes, and tested fallbacks |
+| Change management | Edit the prompt and hope | Release gates, staged rollout, and a rollback path |
+
+The nine sections below expand on these rows, plus one the table leaves out, untrusted content, in the order you will probably need them.
+
+## 1. Build an evaluation set before you tune anything
+
+Build the evaluation set first. Without it, every tuning decision is an opinion, and every regression is invisible until a user finds it.
+
+A useful evaluation case has three parts: a realistic question, the passages that support the correct answer, and the expected behavior. Store the supporting passages, not just a reference answer. Without them you can't tell whether a wrong answer came from missing evidence or from misusing evidence that was there.
+
+For the policy assistant, a good set includes questions in the words employees actually use. It also includes questions the corpus can't answer, where the right behavior is to say so. Add questions whose answer depends on who is asking, such as a policy only HR staff may read. Those permission-restricted cases test whether the system leaks.
+
+### Score retrieval and generation separately
+
+If you only score the final answer, you can't tell which part failed. Score the retriever and the generator on their own.
+
+The [RAGAS paper](https://arxiv.org/abs/2309.15217) describes "a framework for reference-free evaluation of Retrieval Augmented Generation (RAG) pipelines." The project's documentation defines four metrics worth knowing:
+
+- **Faithfulness** "measures how factually consistent a response is with the retrieved context." It is computed as supported claims divided by total claims, on a 0 to 1 scale ([RAGAS docs](https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/faithfulness/)).
+- **Answer relevancy** "measures how relevant a response is to the user input" ([RAGAS docs](https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/answer_relevance/)).
+- **Context precision** "evaluates the retriever's ability to rank relevant chunks higher than irrelevant ones" ([RAGAS docs](https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/context_precision/)).
+- **Context recall** "measures how many of the relevant documents (or pieces of information) were successfully retrieved" ([RAGAS docs](https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/context_recall/)).
+
+Context recall needs a reference, meaning ground truth to compare against. That is one more reason to store supporting passages in your golden set. Faithfulness and answer relevancy can be computed without one, but a faithful answer built on the wrong policy is still wrong. You need both families.
+
+### Calibrate any LLM judge against people
+
+Many of these metrics use a language model as the judge. That is practical, and it comes with known biases.
+
+[Zheng et al.](https://arxiv.org/abs/2306.05685) studied LLM judges on MT-Bench and Chatbot Arena. They documented biases "including position, verbosity, and self-enhancement biases." They also reported that GPT-4 judges reached "over 80% agreement, the same level of agreement between humans." Read both findings together. Strong judges can track human preferences, and they have systematic blind spots.
+
+That study used general chat tasks, not your policy corpus. So take a sample of your own cases, have people label them, and compare the judge's scores to the human labels. If they diverge on a slice, fix the judge prompt or stop trusting that metric for that slice. Repeat the check when you change the judge model.
+
+## 2. Make the evaluation a release gate
+
+An evaluation set that nobody runs is a document. Wire it into your release process so a change can't ship without passing it.
+
+Any of these changes should rerun the full set: chunking, embedding model, prompt, reranker, retrieval parameters, or LLM version. Each one can move quality in either direction, and the effect is rarely obvious from a handful of spot checks.
+
+Three rules make the gate useful.
+
+First, set a threshold per metric. A single blended score hides the case where retrieval improved and faithfulness fell.
+
+Second, set thresholds per slice. An average over all questions can look fine while permission-restricted questions or unanswerable questions get worse. Track those slices explicitly.
+
+Third, compare against the last release, not against an ideal. Your system probably won't hit a perfect score on anything. What you need to know is whether this change made things worse. A regression budget relative to the current baseline is easier to hold than an absolute bar.
+
+Here is an illustrative gate configuration. The format and numbers are made up for the example, so treat it as a shape, not a recommendation.
+
+```yaml
+# Illustrative only: the metric names, slices, and tolerances are placeholders.
+release_gate:
+  baseline: release/2026-10-10        # compare to the last shipped version
+  run_on_changes:
+    - chunking
+    - embedding_model
+    - prompt
+    - reranker
+    - llm_version
+  metrics:
+    context_recall:    { max_drop: 0.02 }
+    context_precision: { max_drop: 0.03 }
+    faithfulness:      { max_drop: 0.02 }
+    answer_relevancy:  { max_drop: 0.03 }
+  slices:
+    unanswerable:          { abstain_rate: { max_drop: 0.0 } }
+    permission_restricted: { leaks_allowed: 0 }
+  on_failure: block_release
+```
+
+One line deserves attention: `leaks_allowed: 0`. Quality metrics tolerate small drops. A permission leak does not get a tolerance.
+
+## 3. Trace every request end to end
+
+When an answer is wrong in production, you need to reconstruct what happened without asking the user to reproduce it. That takes a trace for every request.
+
+Record one span per stage, and put enough in each span to answer "why did it say that?" At minimum, capture:
+
+- The original question and the rewritten query or queries.
+- Retrieved document IDs, their scores, and their versions.
+- The order after reranking.
+- The token count of the final assembled context.
+- The model name and version, latency, and token usage.
+- The citations the answer produced, and whether the system abstained.
+
+Document versions matter more than they look. "It retrieved the travel policy" is much less useful than "it retrieved version 14 of the travel policy, which was replaced two days earlier."
+
+OpenTelemetry has [GenAI semantic conventions](https://github.com/open-telemetry/semantic-conventions-genai/blob/main/docs/gen-ai/gen-ai-spans.md) that include sections for embeddings and retrievals. Those sections are marked "Status: Development." That means attribute names can change. If you adopt them, pin the version you use and plan to migrate. Using a standard shape is still better than inventing your own, because your tracing backend and your tooling will understand it.
+
+One warning. These traces contain user questions and document text. Treat them as sensitive data. Apply the same access controls and retention rules to the traces as to the sources they quote. A trace store that every engineer can read becomes a side door into your restricted documents.
+
+## 4. Set latency and cost budgets per stage
+
+A single end-to-end latency target tells you that you're slow. A budget per stage tells you where.
+
+Give query rewriting, retrieval, reranking, context assembly, and generation each a share of the total, and measure each in your traces. Then you can decide on purpose. Maybe the reranker earns its latency, and maybe a second query rewrite doesn't.
+
+### Retrieve fewer, better chunks
+
+Sending more context is the easy way to buy recall, and it costs tokens, latency, and sometimes quality. [Liu et al.](https://arxiv.org/abs/2307.03172) found that "performance is often highest when relevant information occurs at the beginning or end of the input context" and "significantly degrades when models must access relevant information in the middle of long contexts." Those results came from the models they tested. Test your own model and context lengths. The practical lesson holds regardless: a short, well-ordered context is a better default than a long, padded one.
+
+### Cache stable prefixes
+
+If every request starts with the same system prompt and instructions, a provider's prompt caching can cut the cost of reprocessing them. Pricing differs by vendor, so keep the two apart.
+
+Anthropic's [prompt caching documentation](https://platform.claude.com/docs/en/docs/build-with-claude/prompt-caching) states that "Cache read tokens are 0.1 times the base input tokens price." Writing to the cache costs more than sending the same tokens uncached: "5-minute cache write tokens are 1.25 times" the base price and "1-hour cache write tokens are 2 times." And "By default, the cache has a 5-minute lifetime."
+
+[OpenAI's prompt caching guide](https://developers.openai.com/api/docs/guides/prompt-caching) describes a different arrangement. Cached input is "discounted up to 95%," and "The minimum cacheable prompt length is 1,024 tokens for GPT-5.6 and later." Those are separate vendors with separate rules. Check the current page for the model you use before you plan around either.
+
+<figure>
+<svg role="img" aria-labelledby="cache-chart-title cache-chart-desc" viewBox="0 0 680 300" xmlns="http://www.w3.org/2000/svg">
+  <title id="cache-chart-title">Anthropic prompt caching price multipliers relative to base input</title>
+  <desc id="cache-chart-desc">Horizontal bar chart. Base input is 1.0 times. A 5-minute cache write is 1.25 times. A 1-hour cache write is 2.0 times. A cache read is 0.1 times the base input price.</desc>
+  <rect x="0" y="0" width="680" height="300" rx="12" fill="#0f172a" />
+  <g fontFamily="system-ui, sans-serif" fontSize="14" fill="#f8fafc">
+    <text x="24" y="34" fontSize="16" fill="#f8fafc">Prompt caching price, relative to base input</text>
+    <text x="24" y="86" fill="#cbd5e1">Base input</text>
+    <rect x="200" y="68" width="200" height="26" rx="4" fill="#64748b" />
+    <text x="410" y="87">1.0x</text>
+    <text x="24" y="136" fill="#cbd5e1">5-min cache write</text>
+    <rect x="200" y="118" width="250" height="26" rx="4" fill="#f59e0b" />
+    <text x="460" y="137">1.25x</text>
+    <text x="24" y="186" fill="#cbd5e1">1-hour cache write</text>
+    <rect x="200" y="168" width="400" height="26" rx="4" fill="#ef4444" />
+    <text x="610" y="187">2.0x</text>
+    <text x="24" y="236" fill="#cbd5e1">Cache read</text>
+    <rect x="200" y="218" width="20" height="26" rx="4" fill="#34d399" />
+    <text x="230" y="237">0.1x</text>
+    <text x="24" y="280" fontSize="12" fill="#94a3b8">Bar length is proportional to the multiplier.</text>
+  </g>
+</svg>
+<figcaption>Anthropic prompt caching multipliers, relative to the base input token price. Source: Claude prompt caching documentation, retrieved 2026-10-17. At the time of writing, the same page lists a 0.05x cache read multiplier for some newer models, so check the pricing table for your model.</figcaption>
+</figure>
+
+The shape of the numbers tells you when caching pays. A cache write costs more than uncached input, and a cache read costs a fraction of it. So caching helps most when many requests reuse the same prefix before it expires.
+
+### Scope answer and semantic caches
+
+You can also cache whole answers, or reuse an answer when a new question looks similar to an old one. That saves a model call, and it creates a risk. A cache hit skips retrieval, so it also skips your permission filter.
+
+The cache key must include the permission scope of the asker and the version of the index. Otherwise one user's cached answer can be served to another who isn't allowed to see its sources. A stale index version in the key has a milder failure: the cache serves an answer built on a policy that has since changed. Treat cache design as part of your access control, not as an optimization layered on top.
+
+## 5. Enforce permissions in retrieval, not in the prompt
+
+Filter by permission at query time, using an identity your application has verified. Don't hand the model restricted text and ask it to keep quiet.
+
+A prompt instruction is a request, and models can be talked out of requests. If a restricted passage is in the context window, assume a determined user can get it out. The only reliable approach is to never retrieve what the user can't read.
+
+[OWASP's LLM08:2025](https://genai.owasp.org/llmrisk/llm082025-vector-and-embedding-weaknesses/) on vector and embedding weaknesses lists this as a mitigation: "Implement fine-grained access controls and permission-aware vector and embedding stores." It also warns that in shared stores, "there's a risk of context leakage between users or queries."
+
+Azure AI Search is one concrete example of how this looks in a managed service. Microsoft's [document-level access control overview](https://learn.microsoft.com/en-us/azure/search/search-document-level-access-overview) says it "supports document-level access control, enabling organizations to enforce fine-grained permissions at the document level, from data ingestion through query execution." As of October 2026, native ACL enforcement in that service is a preview feature. The older [security filter pattern](https://learn.microsoft.com/en-us/azure/search/search-security-trimming-for-azure-search) is generally available, and its documentation is blunt about the trust model: "The principal is just a string," and "There's no authentication or authorization through the security principal."
+
+That second quote is the important one. The search engine applies whatever principal your application sends. If your application passes a user-supplied group name, the filter is only as trustworthy as that input. Authenticate the caller in your own code, resolve their groups from a trusted source, and build the filter from that.
+
+Permission changes also take time to arrive. The same overview notes that permission changes in the source system "are only reflected in search results after that metadata is synchronized to the index." So there is a window between revoking someone's access and the index agreeing. Measure it. Revocation latency is a metric, and someone should own its target.
+
+Finally, apply the same scoping everywhere the content travels. Caches, traces, and evaluation datasets all hold copies of restricted text. If your golden set includes a passage from an HR-only document, the people who can read the golden set are now people who can read that document. For the identity side of this boundary, [MCP Server Authorization](/blog/mcp-server-authorization) draws the line between an authenticated caller and permission to touch a specific object.
+
+## 6. Treat retrieved text as untrusted input
+
+Everything your system retrieves is data from outside your control, and it can contain instructions aimed at your model.
+
+[Greshake et al.](https://arxiv.org/abs/2302.12173) described this as indirect prompt injection. Adversaries can "strategically inject prompts into data likely to be retrieved," and "LLM-Integrated Applications blur the line between data and instructions." In a RAG system, that means a document, a web page, or a ticket comment can carry text written to steer the model once it lands in context.
+
+[OWASP's LLM01:2025](https://genai.owasp.org/llmrisk/llm01-prompt-injection/) lists the same pattern: "Indirect prompt injections occur when an LLM accepts input from external sources, such as websites or files." It is also direct about whether RAG itself protects you. Of RAG and fine-tuning, it says "research shows that they do not fully mitigate prompt injection vulnerabilities."
+
+So design as if some retrieved text is hostile. These measures reduce the damage:
+
+- **Least-privilege tools.** If the assistant can only read, an injected instruction can't send email or change a record.
+- **No automatic actions from retrieved text.** Retrieved content can inform an answer. It should never be what triggers a side effect.
+- **Delimit sources.** Mark where evidence starts and ends, and tell the model that content inside is data. This helps, but it is not a security boundary.
+- **Validate outputs and links.** Check citations against stored sources. Don't render model-generated URLs as trusted links.
+- **Human approval for side effects.** Anything that writes, sends, or spends goes through a person.
+- **Red-team cases in the evaluation set.** Plant documents with injected instructions and check that the gate catches a model that follows them.
+
+Notice that most of these are application design, not prompt wording. That is deliberate. A prompt can lower the odds of a successful attack, and your architecture decides how much a successful attack can do.
+
+## 7. Keep the index fresh, and make changes reversible
+
+An index is a copy of your sources, and copies go stale. Plan for that from the start.
+
+Ingest incrementally, with change detection, so an edited policy is re-processed without rebuilding everything. Treat deletions as first-class events. When a policy is retired, remove its chunks, or mark them with a tombstone so retrieval skips them. Store the document version and effective dates with each chunk, so you can tell which rule applied when. Then measure index lag: the time between a change in the source and the change being searchable.
+
+This is engineering practice, not a cited result. The test is simple. Edit a policy, delete another, and see how long the assistant takes to reflect both.
+
+### Change embedding models with a blue/green index
+
+Changing the embedding model is the change most likely to hurt if you do it in place. Old and new vectors aren't comparable, so you can't mix them in one index.
+
+Instead, build a new index from scratch with the new model. Run your evaluation set against it. If it passes the gate, switch an alias or pointer from the old index to the new one. Keep the old index around for a while. If something goes wrong in production, switching back is a pointer change rather than a rebuild. This is the same blue/green idea used for service deployments, applied to your index.
+
+### Why reindexing has to be routine
+
+Retrieval quality changes are worth measuring, because they can be large. Anthropic's [Contextual Retrieval](https://www.anthropic.com/news/contextual-retrieval) post reports the top-20-chunk retrieval failure rate for its test setup:
+
+<figure>
+<svg role="img" aria-labelledby="ctx-chart-title ctx-chart-desc" viewBox="0 0 680 340" xmlns="http://www.w3.org/2000/svg">
+  <title id="ctx-chart-title">Top-20 retrieval failure rate with contextual retrieval techniques</title>
+  <desc id="ctx-chart-desc">Column chart of retrieval failure rate. The baseline is 5.7 percent. Contextual embeddings reduce it to 3.7 percent. Adding contextual BM25 reduces it to 2.9 percent. Adding reranking reduces it to 1.9 percent.</desc>
+  <rect x="0" y="0" width="680" height="340" rx="12" fill="#0f172a" />
+  <g fontFamily="system-ui, sans-serif" fontSize="14" fill="#f8fafc" textAnchor="middle">
+    <text x="340" y="30" fontSize="16">Top-20 retrieval failure rate (lower is better)</text>
+    <line x1="50" y1="270" x2="640" y2="270" stroke="#475569" strokeWidth="1" />
+    <rect x="90" y="99" width="90" height="171" rx="4" fill="#64748b" />
+    <text x="135" y="90">5.7%</text>
+    <rect x="230" y="159" width="90" height="111" rx="4" fill="#38bdf8" />
+    <text x="275" y="150">3.7%</text>
+    <rect x="370" y="183" width="90" height="87" rx="4" fill="#818cf8" />
+    <text x="415" y="174">2.9%</text>
+    <rect x="510" y="213" width="90" height="57" rx="4" fill="#34d399" />
+    <text x="555" y="204">1.9%</text>
+    <g fontSize="12" fill="#cbd5e1">
+      <text x="135" y="290">Baseline</text>
+      <text x="275" y="290">Contextual</text>
+      <text x="275" y="306">embeddings</text>
+      <text x="415" y="290">+ Contextual</text>
+      <text x="415" y="306">BM25</text>
+      <text x="555" y="290">+ Reranking</text>
+    </g>
+    <text x="340" y="330" fontSize="11" fill="#94a3b8">Bar height is proportional to the failure rate.</text>
+  </g>
+</svg>
+<figcaption>Retrieval failure rate for the top 20 chunks, from Anthropic's Contextual Retrieval benchmark (published 2024-09-19). These are Anthropic's datasets and setup, not a prediction for your corpus.</figcaption>
+</figure>
+
+The baseline was 5.7%. Anthropic reports that contextual embeddings "reduced the top-20-chunk retrieval failure rate by 35%" (to 3.7%), that adding contextual BM25 brought it down "by 49%" (to 2.9%), and that adding reranking brought it down "by 67%" (to 1.9%). It also gives a cost for the contextualization step: "the one-time cost to generate contextualized chunks is $1.02 per million document tokens."
+
+Two cautions apply. This is one vendor's benchmark on its own datasets, so measure on yours. And the first two gains come from changing what gets indexed, which means regenerating the index. That is the point for this section. If rebuilding the index is a rare, frightening event, you can't adopt improvements like these safely. If it is routine and reversible, with an evaluation gate in front and an alias to roll back, you can try them as ordinary changes.
+
+## 8. Design how the system fails
+
+Every component will fail eventually, and the model will sometimes have nothing good to work with. Decide in advance what the user sees.
+
+**Abstain when evidence is missing or weak.** If retrieval returns nothing relevant, the assistant should say it couldn't find support. Better, it should say what it searched, such as "I checked the travel and expense policies and found no rule for contractors." That tells the user what to try next, and it gives your team a signal to review.
+
+**Never answer from model memory silently.** A model can produce a plausible policy answer with no retrieved evidence at all. In a grounded system that is a defect, because it looks identical to a cited answer. If you allow general knowledge in some cases, label it clearly.
+
+**Set timeouts, and define fallbacks.** Suppose the vector store is down. The assistant might fall back to lexical-only retrieval and still answer many questions. Suppose the reranker times out. It might use the fused order. Each fallback has its own quality profile, so test it with your evaluation set rather than assuming it is good enough.
+
+**Make degraded mode visible.** If the system is running on a fallback, tell the user. "Search is running in reduced mode, so results may be less complete" is better than quietly worse answers. It also helps you: a degraded flag in the trace lets you see how often fallbacks fire.
+
+## 9. Roll out in stages and feed production back into evaluation
+
+Ship in steps, with a way back at each one. A staged rollout limits the damage from a problem your evaluation set didn't catch, and there will be one.
+
+A sensible sequence:
+
+1. **Shadow mode.** Run the new system on real traffic without showing results. Compare its traces to the current system.
+2. **Internal users.** Release to a small group who will report problems.
+3. **Percentage rollout.** Increase exposure gradually, and watch your slice metrics.
+4. **Kill switch.** Keep a switch that disables the feature or reverts to the previous version immediately.
+
+Then close the loop. Collect feedback signals such as thumbs up or down, user flags, and citation clicks. A user who opens the cited source and then flags the answer has told you something specific. Triage each failure by the part responsible, using the [table of where each RAG part usually fails](/blog/anatomy-of-rag): trace the failed answer back to the first missing or distorted piece of evidence.
+
+Every confirmed failure becomes a new evaluation case, with its supporting passages. That is how the evaluation set grows from realistic questions rather than from guesses. Over time, your release gate comes to encode everything you have learned from running the system.
+
+<figure>
+<svg role="img" aria-labelledby="loop-title loop-desc" viewBox="0 0 680 300" xmlns="http://www.w3.org/2000/svg">
+  <title id="loop-title">The production feedback loop for a RAG system</title>
+  <desc id="loop-desc">A loop with six steps. Production traffic produces traces and feedback. Those go to failure triage. Triage creates new evaluation cases. The cases feed the release gate. Changes that pass the gate go to staged rollout. Rollout returns to production traffic, closing the loop.</desc>
+  <defs>
+    <marker id="loop-arrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#93c5fd" />
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="680" height="300" rx="12" fill="#0f172a" />
+  <g fontFamily="system-ui, sans-serif" fontSize="14" fill="#f8fafc" textAnchor="middle">
+    <text x="340" y="32" fontSize="16">Production feeds evaluation</text>
+    <rect x="30" y="70" width="180" height="50" rx="6" fill="#1e293b" />
+    <text x="120" y="100">Production traffic</text>
+    <rect x="250" y="70" width="180" height="50" rx="6" fill="#1e3a5f" />
+    <text x="340" y="100">Traces and feedback</text>
+    <rect x="470" y="70" width="180" height="50" rx="6" fill="#1e3a5f" />
+    <text x="560" y="100">Failure triage</text>
+    <rect x="470" y="190" width="180" height="50" rx="6" fill="#134e4a" />
+    <text x="560" y="220">New eval cases</text>
+    <rect x="250" y="190" width="180" height="50" rx="6" fill="#134e4a" />
+    <text x="340" y="220">Release gate</text>
+    <rect x="30" y="190" width="180" height="50" rx="6" fill="#1e293b" />
+    <text x="120" y="220">Staged rollout</text>
+  </g>
+  <g stroke="#93c5fd" strokeWidth="2" markerEnd="url(#loop-arrow)">
+    <line x1="210" y1="95" x2="246" y2="95" />
+    <line x1="430" y1="95" x2="466" y2="95" />
+    <line x1="560" y1="120" x2="560" y2="186" />
+    <line x1="470" y1="215" x2="434" y2="215" />
+    <line x1="250" y1="215" x2="214" y2="215" />
+    <line x1="120" y1="190" x2="120" y2="124" />
+  </g>
+</svg>
+<figcaption>The production feedback loop. Failures found in production become evaluation cases, and the release gate checks every later change against them.</figcaption>
+</figure>
+
+## Production readiness checklist
+
+Use this as a review before launch and again before each major change. A row isn't done until you can show the evidence.
+
+| Area | Ready when... |
+|---|---|
+| Evaluation set | It holds real questions with supporting passages, plus unanswerable and permission-restricted cases |
+| Metrics | Retrieval and generation are scored separately, and any LLM judge is calibrated against human labels |
+| Release gate | Changes to chunking, embeddings, prompt, reranker, or model rerun the set and block on regressions versus the last release |
+| Tracing | Every request records the rewritten query, retrieved IDs with scores and versions, model version, latency, tokens, and abstention |
+| Budgets | Each stage has a latency and cost target, and caches are keyed by permission scope and index version |
+| Permissions | Filters come from authenticated identity at query time, and revocation latency is measured |
+| Data handling | Logs, caches, and evaluation data carry the same access controls and retention as their sources |
+| Injection defense | Tools are least-privilege, retrieved text can't trigger actions, and red-team cases are in the gate |
+| Freshness | Ingestion is incremental, deletions are handled, and index lag is measured |
+| Reversibility | Reindexing is routine, new indexes are evaluated before an alias switch, and the old one is kept for rollback |
+
+## Frequently Asked Questions
+
+### Do I need a vector database for production RAG?
+
+Not necessarily. What you need is retrieval that finds the right evidence, applies permissions, and can be measured. A vector database is one way to get semantic search. Lexical search, SQL, or a mix can serve many corpora, and hybrid approaches can beat either alone: in Anthropic's benchmark above, adding BM25 to contextual embeddings cut failures from 3.7% to 2.9%. Choose by what your evaluation set shows, and by whether the store supports the permission filtering and versioning you need. [The Anatomy of RAG](/blog/anatomy-of-rag) covers the difference between embeddings, vector databases, and RAG itself.
+
+### How many evaluation questions do I need to start?
+
+Start with dozens of real questions, and make sure they cover your important slices: common questions, rare but costly ones, unanswerable ones, and permission-restricted ones. There is no magic number. A small set that mirrors real use beats a large set of invented questions. Then grow it from production failures, so each confirmed problem adds a case. If a metric swings wildly between runs, the set is probably too small for that slice.
+
+### Should I use an LLM as a judge?
+
+Yes, with calibration. It lets you score many cases quickly, which a manual review can't. But Zheng et al. found position, verbosity, and self-enhancement biases, even while GPT-4 judges agreed with humans over 80% of the time on their tasks. So label a sample of your own cases by hand, compare the judge to those labels, and recheck when you change the judge model. Keep humans in the loop for the cases where the stakes are highest.
+
+### When should I fine-tune instead of improving retrieval?
+
+Improve retrieval first when the problem is missing, outdated, or restricted knowledge, because fine-tuning doesn't give a model current, permission-aware access to your documents. Consider fine-tuning when the evidence is retrieved correctly and the model still struggles with format, tone, or a domain-specific task. Your traces and evaluation scores tell you which case you're in. If context recall is low, retrieval is the problem. If recall is high and the answers are still poor, look at generation.
+
+## The short version
+
+A working demo shows that the pipeline can answer. Production asks whether you can prove it keeps answering well, for the right people, as everything around it changes. Build the evaluation set, gate releases on it, trace every request, and enforce permissions before text reaches the model. Make reindexing and rollout reversible, and turn every real failure into a new test.
+
+**If you can't measure it, trace it, and roll it back, it isn't ready for production.**
+
+---
+
+## References
+
+- Anthropic, ["Introducing Contextual Retrieval"](https://www.anthropic.com/news/contextual-retrieval), September 19, 2024.
+- OWASP GenAI Security Project, ["LLM01:2025 Prompt Injection"](https://genai.owasp.org/llmrisk/llm01-prompt-injection/).
+- OWASP GenAI Security Project, ["LLM08:2025 Vector and Embedding Weaknesses"](https://genai.owasp.org/llmrisk/llm082025-vector-and-embedding-weaknesses/).
+- Es et al., ["RAGAS: Automated Evaluation of Retrieval Augmented Generation"](https://arxiv.org/abs/2309.15217), arXiv:2309.15217.
+- RAGAS documentation: [Faithfulness](https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/faithfulness/), [Answer Relevancy](https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/answer_relevance/), [Context Precision](https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/context_precision/), [Context Recall](https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/context_recall/).
+- Liu et al., ["Lost in the Middle: How Language Models Use Long Contexts"](https://arxiv.org/abs/2307.03172), TACL, arXiv:2307.03172.
+- Anthropic, [Claude prompt caching documentation](https://platform.claude.com/docs/en/docs/build-with-claude/prompt-caching), retrieved October 17, 2026.
+- OpenAI, [Prompt caching guide](https://developers.openai.com/api/docs/guides/prompt-caching).
+- Microsoft Learn, [Document-level access control overview (Azure AI Search)](https://learn.microsoft.com/en-us/azure/search/search-document-level-access-overview).
+- Microsoft Learn, [Security filters for trimming results in Azure AI Search](https://learn.microsoft.com/en-us/azure/search/search-security-trimming-for-azure-search).
+- Greshake et al., ["Not what you've signed up for: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection"](https://arxiv.org/abs/2302.12173), AISec '23, arXiv:2302.12173.
+- Zheng et al., ["Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena"](https://arxiv.org/abs/2306.05685), NeurIPS 2023, arXiv:2306.05685.
+- OpenTelemetry, [GenAI semantic conventions: spans](https://github.com/open-telemetry/semantic-conventions-genai/blob/main/docs/gen-ai/gen-ai-spans.md) (status: Development).
+
+All cited claims were verified against the linked pages on October 17, 2026.
